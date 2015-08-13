@@ -1,7 +1,7 @@
 
 # genaf dbmgr script will override both rhombus' and fatools' dbmgr
 
-import transaction
+import sys, transaction
 
 from rhombus.lib.utils import cout, cerr, cexit
 from rhombus.scripts.dbmgr import ( init_argparser as rhombus_init_argparser,
@@ -47,7 +47,7 @@ def main(args):
     else:
         cerr('** WARNING -- running without database COMMIT **')
         if not args.rollback and not args.test:
-            keys = input('Do you want to continue?')
+            keys = input('Do you want to continue [y/n]: ')
             if keys.lower()[0] != 'y':
                 sys.exit(1)
         do_dbmgr( args, settings )

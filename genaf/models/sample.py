@@ -162,6 +162,8 @@ class Batch(BaseMixIn, Base, BatchMixIn):
                 self.group_id = obj['group_id']
             if 'assay_provider_id' in obj:
                 self.assay_provider_id = obj['assay_provider_id']
+            if 'species_id' in obj:
+                self.species_id = obj['species_id']
             if 'data' in obj:
                 self.data = obj['data']
 

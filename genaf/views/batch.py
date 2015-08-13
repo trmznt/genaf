@@ -3,11 +3,9 @@ import logging
 log = logging.getLogger(__name__)
 
 from rhombus.lib.utils import random_string, silent_remove
-from rhombus.views.generics import forwarding_page, error_page
 
 from genaf.views import *
 from genaf.lib.dictfmt import csv2dict
-#from genaf.lib.configs import get_temp_path
 from genaf.views import uploadmgr
 
 import os, json, yaml
@@ -69,11 +67,11 @@ def edit(request):
         if not request.user.in_group( batch.group ):
             return error_page('Current user is not part of Batch group')
 
+    editform = edit_form(batch, dbh, request)
+
     return render_to_response( "genaf:templates/batch/edit.mako",
         {   'batch': batch,
-            'user_groups': [ (x[1], x[0]) for x in request.user.groups
-                                            if not x[0].startswith('_') ],
-            'all_groups': [ (g.id, g.name) for g in dbh.get_groups() ],
+            'editform': editform,
         },
         request = request )
 
@@ -127,14 +125,41 @@ def save(request):
     return HTTPFound(location = request.route_url('genaf.batch-view', id = batch.id))
 
 
+def edit_form(batch, dbh, request):
+
+    eform = form( name='genaf/batch', method=POST,
+                action=request.route_url('genaf.batch-save', id=batch.id))
+    eform.add(
+        fieldset(
+            input_hidden(name='genaf-batch_id', value=batch.id),
+            input_text('genaf-batch_code', 'Batch code', value=batch.code),
+            input_select('genaf-batch_group_id', 'Primary group', value=batch.group_id,
+                options = [ (x[1], x[0]) for x in request.user.groups
+                            if not x[0].startswith('_') ]),
+            input_select('genaf-batch_assay_provider_id', 'Assay provider group',
+                value = batch.assay_provider_id,
+                options = [ (g.id, g.name) for g in dbh.get_groups() ]),
+            input_select_ek('genaf-batch_species_id', 'Species', batch.species_id,
+                    dbh.get_ekey('@SPECIES')),
+            input_textarea('genaf-batch_desc', 'Description', value=batch.description),
+            input_textarea('genaf-batch_remark', 'Remarks', value=batch.remark),
+            submit_bar(),
+        )
+    )
+                
+    return eform
+
+
 def parse_form( f ):
 
     d = dict()
     d['id'] = int(f['genaf-batch_id'])
     d['code'] = f['genaf-batch_code']
     d['group_id'] = f['genaf-batch_group_id']
-    d['assay_provider_id'] = f['genaf-assay_provider_id']
+    d['assay_provider_id'] = f['genaf-batch_assay_provider_id']
+    d['species_id'] = f['genaf-batch_species_id']
     d['description'] = f['genaf-batch_desc']
+    d['remark'] = f['genaf-batch_remark']
 
     return d
 

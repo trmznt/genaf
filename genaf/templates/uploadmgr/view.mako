@@ -49,7 +49,9 @@
 <div id="infoupload_panel" class='col-md-12'>
     <div id="infoupload_filecheck">
     </div>
-    <p><span class="btn btn-info" onclick="_infofile=false; check_files();">Change file</span> or <span class="btn btn-info">Verify file</span></p>
+    <div id="verifyinfofile_report">
+    </div>
+    <p><span class="btn btn-info" onclick="_infofile=false; check_files();">Change file</span> or <span class="btn btn-info" id="verifyinfofile">Verify file</span></p>
 </div>
 
 
@@ -128,6 +130,20 @@ $(function () {
 
         return false;
     });
+
+
+    $('#verifyinfofile').click( function() {
+        $.getJSON( "${request.route_url('genaf.uploadmgr-verifyinfofile', id=sesskey)}",
+                    function(data) {
+            if (data) {
+                $('#verifyinfofile_report').html( data.html );
+            }
+        });
+
+        return false;
+    });
+
+
 });
 
 

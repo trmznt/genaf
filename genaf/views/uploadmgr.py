@@ -9,7 +9,9 @@ from rhombus.lib.tags import *
 
 from genaf.views import *
 
-import os, yaml, re, shutil, time
+from fatools.lib.utils import tokenize
+
+import os, yaml, re, shutil, time, csv
 
 from pprint import pprint
 
@@ -142,13 +144,14 @@ class UploaderSession(object):
 
     def upload_payload(self, dry_run=False):
 
-        with open('%s/assay_list.yaml' % self.rootpath, 'w') as f:
+        with open('%s/assay_list.yaml' % self.rootpath) as f:
             assay_files = yaml.load( f )
 
-        inrows = csv.DictReader( open(self.meta['infofile']),
+        inrows = csv.DictReader( open('%s/tmp/%s' % (self.rootpath, self.meta['infofile'])),
                         delimiter = ',' if self.meta['infofile'].endswith('.csv') else '\t' )
 
-        batch = get_dbhandler().get_batch( self.meta['batch'] )
+        dbh = get_dbhandler()
+        batch = dbh.get_batch( self.meta['batch'] )
 
         total_assay = 0
         line_counter = 1
@@ -181,7 +184,7 @@ class UploaderSession(object):
                     continue
 
                 try:
-                    with open( assay_file[ r['ASSAY'] ], 'rb') as f:
+                    with open( assay_files[ r['ASSAY'] ], 'rb') as f:
                         trace = f.read()
             
                     a = sample.add_assay( trace, filename=r['ASSAY'], panel_code = r['PANEL'],
@@ -190,19 +193,20 @@ class UploaderSession(object):
 
                     total_assay += 1
 
-                except:
-                    pass
+                except RuntimeError as err:
+                    err_log.append('Line %03d - runtime error: %s' % str(err))
 
-            except:
-                pass
-        
+
+            except RuntimeError as err:
+                raise
+
+
+        return total_assay, err_log
 
     def verify_infofile(self):
 
-        with open('%s/assay_list.yaml' % self.rootpath, 'w') as f:
+        with open('%s/assay_list.yaml' % self.rootpath) as f:
             assay_files = yaml.load( f )
-
-        
 
 
 
@@ -408,7 +412,29 @@ def verifyinfofile(request):
         raise error_page('You are not authorized to view this session')
 
     uploader_session.extract_payload()
-    result = uploader_session.verify_infofile()
+    result = uploader_session.upload_payload(dry_run=True)
+    assay_no, err_log = result
+
+    container = div(class_='container')
+    container.add(
+        row()[  div(class_='col-sm-2')[ span(class_='pull-right')['No of assay'] ],
+                div(class_='col-sm-5')[ '%d' % assay_no ]
+        ]
+    )
+    if err_log:
+        container.add(
+            row()[ div(class_='col-sm-8')[ '<br/>'.join( err_log ) ]]
+        )
+    else:
+        container.add(
+            row()[ div(class_='col-sm-8')[ 'No errors found' ] ]
+        )
+
+
+    return dict(html = str(container), status=True)
+
+
+
 
 
 

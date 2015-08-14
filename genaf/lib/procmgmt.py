@@ -70,6 +70,10 @@ class ProcQueue(object):
             self.procs[procid].status = 'S'     # set status to Stop
 
 
+    def get(self, procid):
+        return self.procs[procid]
+
+
 
 class PoolExecuter(futures.ProcessPoolExecutor):
 
@@ -95,5 +99,13 @@ def submit( uid, wd, func, *args, **kwargs ):
     if _PROC_QUEUE_ is None:
         raise RuntimeERror("PROG/ERR - PROC_QUEUE has not been initialized")
     return _PROC_QUEUE_.submit( uid, wd, func, *args, **kwargs )
+
+
+def get( procid ):
+    global _PROC_QUEUE_
+    if _PROC_QUEUE_ is None:
+        raise RuntimeERror("PROG/ERR - PROC_QUEUE has not been initialized")
+    return _PROC_QUEUE_.submit( uid, wd, func, *args, **kwargs )
+
 
 

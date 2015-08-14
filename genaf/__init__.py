@@ -80,6 +80,7 @@ def includeme( config ):
         ('/uploadmgr/{id}@@checkinfofile', 'checkinfofile', 'json'),
         ('/uploadmgr/{id}@@verifydatafile', 'verifydatafile', 'json'),
         ('/uploadmgr/{id}@@verifyinfofile', 'verifyinfofile', 'json'),
+        ('/uploadmgr/{id}@@commitpayload', 'commitpayload', 'json'),
         ('/uploadmgr/{id}', 'view')
 
     )

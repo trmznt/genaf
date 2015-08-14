@@ -291,6 +291,7 @@ def edit(request):
 def save(request):
     pass
 
+
 @roles( PUBLIC )
 def action(request):
     pass
@@ -411,7 +412,6 @@ def verifyinfofile(request):
     if not uploader_session.is_authorized( request.user.login ):
         raise error_page('You are not authorized to view this session')
 
-    uploader_session.extract_payload()
     result = uploader_session.upload_payload(dry_run=True)
     assay_no, err_log = result
 
@@ -432,9 +432,6 @@ def verifyinfofile(request):
 
 
     return dict(html = str(container), status=True)
-
-
-
 
 
 
@@ -462,6 +459,36 @@ def checkinfofile(request):
         return dict(html = str(content), status=True)
     return None
 
+
+@roles( PUBLIC )
+def commitpayload(request):
+
+    sesskey = request.matchdict.get('id')
+    uploader_session = UploaderSession( sesskey = sesskey )
+
+    if not uploader_session.is_authorized( request.user.login ):
+        raise error_page('You are not authorized to view this session')
+
+    result = uploader_session.upload_payload()
+    assay_no, err_log = result
+
+    container = div(class_='container')
+    container.add(
+        row()[  div(class_='col-sm-2')[ span(class_='pull-right')['No of assay'] ],
+                div(class_='col-sm-5')[ '%d' % assay_no ]
+        ]
+    )
+    if err_log:
+        container.add(
+            row()[ div(class_='col-sm-8')[ '<br/>'.join( err_log ) ]]
+        )
+    else:
+        container.add(
+            row()[ div(class_='col-sm-8')[ 'No errors found' ] ]
+        )
+
+
+    return dict(html = str(container), status=True)
 
 
 @roles( PUBLIC )

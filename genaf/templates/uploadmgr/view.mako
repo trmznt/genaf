@@ -56,8 +56,11 @@
 
 
 <div id="verify">
-  <p><a href="${request.route_url('genaf.uploadmgr-verifydatafile', id=sesskey)}"><span class="btn btn-info">Verify assays</span></a></p>
+  <p><span class="btn btn-info" id="commitpayload">Proceed</span></a></p>
+  <div id="commitpayload_report">
+  </div>
 </div>
+
 
 
 ##
@@ -142,6 +145,18 @@ $(function () {
 
         return false;
     });
+
+    $('#commitpayload').click( function() {
+        $.getJSON( "${request.route_url('genaf.uploadmgr-commitpayload', id=sesskey)}",
+                    function(data) {
+            if (data) {
+                $('#commitpayload_report').html( data.html );
+            }
+        });
+
+        return false;
+    });
+
 
 
 });

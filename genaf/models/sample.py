@@ -142,6 +142,7 @@ class Batch(BaseMixIn, Base, BatchMixIn):
     remark = deferred(Column(types.String(1024), nullable=True))
     data = deferred(Column(YAMLCol(4096), nullable=False, default=''))
     species_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
+    species = EK.proxy('species_id', '@SPECIES')
 
     ## GenAF spesific schema
     group_id = Column(types.Integer, ForeignKey('groups.id'), nullable=False)

@@ -100,7 +100,7 @@ def init_app( global_config, settings, prefix = '/mgr' ):
     temp_path = settings['genaf.temp_directory']
     set_temp_path( temp_path )
 
-    init_queue()
+    init_queue(settings)
 
     config = rhombus_init_app( global_config, settings, prefix=prefix )
 

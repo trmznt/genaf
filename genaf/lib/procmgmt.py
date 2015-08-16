@@ -4,6 +4,7 @@ log = logging.getLogger(__name__)
 
 from concurrent import futures
 from threading import Lock
+import multiprocessing
 
 from rhombus.lib.utils import random_string, cerr
 
@@ -34,7 +35,8 @@ class ProcUnit(object):
 
 class ProcQueue(object):
 
-    def __init__(self, max_workers = 2, max_queue = 25):
+    def __init__(self, settings, max_workers = 2, max_queue = 25):
+        self._manager = multiprocessing.Manager()
         self.pool = futures.ProcessPoolExecutor(max_workers=max_workers)
         self.pool._adjust_process_count()
 
@@ -42,6 +44,8 @@ class ProcQueue(object):
         self.queue = 0
         self.max_queue = max_queue
         self.lock = Lock()
+
+        self.settings = settings
 
 
     def submit(self, uid, wd, func, *args, **kwargs):
@@ -59,19 +63,32 @@ class ProcQueue(object):
             procunit = ProcUnit(proc, uid, wd)
             self.procs[procid] = procunit
             self.queue += 1
-            proc.add_done_callback( lambda x=procid: self.callback(x) )
+            proc.add_done_callback( lambda x: self.callback(x, procid) )
 
         return (procid, "Task submitted to queue")
 
 
-    def callback(self, procid):
+    def callback(self, proc, procid):
+        print('callback(): procid = %s' % procid)
+        status = 'D' if proc.done() else 'U'
+        exc = proc.exception()
+        result = proc.result()
+
         with self.lock:  # can use with self.lock.acquire() ???
             self.queue -= 1
-            self.procs[procid].status = 'S'     # set status to Stop
+            procunit = self.procs[procid]
+            if procunit.proc != proc:
+                raise RuntimeError('FATAL PROG/ERR!')
+            procunit.status = status     # set status to Stop
+            procunit.exc = exc
+            procunit.result = result
 
 
     def get(self, procid):
         return self.procs[procid]
+
+    def manager(self):
+        return self._manager
 
 
 
@@ -84,28 +101,30 @@ class PoolExecuter(futures.ProcessPoolExecutor):
 
 _PROC_QUEUE_ = None
 
-def init_queue( max_workers = 2, max_queue = 10 ):
-
-    global _PROC_QUEUE_
+def init_queue( settings, max_workers = 2, max_queue = 10 ):
+    global _PROC_QUEUE_, _MANAGER_
     if _PROC_QUEUE_ is None:
-        _PROC_QUEUE_ = ProcQueue( max_workers, max_queue )
+        _PROC_QUEUE_ = ProcQueue( settings, max_workers, max_queue )
         log.info("Multiprocessing queue has been setup with %d process" % max_workers)
     else:
         raise RuntimeError("PROC_QUEUE has been defined!!")
 
 
-def submit( uid, wd, func, *args, **kwargs ):
+def get_queue():
     global _PROC_QUEUE_
     if _PROC_QUEUE_ is None:
         raise RuntimeERror("PROG/ERR - PROC_QUEUE has not been initialized")
-    return _PROC_QUEUE_.submit( uid, wd, func, *args, **kwargs )
+    return _PROC_QUEUE_
 
 
-def get( procid ):
-    global _PROC_QUEUE_
-    if _PROC_QUEUE_ is None:
-        raise RuntimeERror("PROG/ERR - PROC_QUEUE has not been initialized")
-    return _PROC_QUEUE_.submit( uid, wd, func, *args, **kwargs )
+def subproc( uid, wd, func, *args, **kwargs ):
+    return get_queue().submit( uid, wd, func, *args, **kwargs )
 
 
+def getproc( procid ):
+    return get_queue().get(procid)
+
+
+def getmanager():
+    return get_queue().manager()
 

@@ -6,16 +6,21 @@ log = logging.getLogger(__name__)
 
 from rhombus.views.fso import save_file
 from rhombus.lib.tags import *
+from rhombus.lib.utils import get_dbhandler, get_dbhandler_notsafe
 
 from genaf.views import *
+from genaf.lib.procmgmt import subproc, getproc, getmanager
 
 from fatools.lib.utils import tokenize
 
-import os, yaml, re, shutil, time, csv
+import os, yaml, re, shutil, time, csv, threading, transaction
 
 from pprint import pprint
 
 TEMP_ROOTDIR = 'uploadmgr'
+
+glock = threading.Lock()
+commit_procs = {}
 
 
 ## at some point, the metadata will be stored in dogpile.cache rather than in individual
@@ -142,7 +147,7 @@ class UploaderSession(object):
         return (len(assay_files), err_log)
 
 
-    def upload_payload(self, dry_run=False):
+    def upload_payload(self, dry_run=False, comm = None):
 
         with open('%s/assay_list.yaml' % self.rootpath) as f:
             assay_files = yaml.load( f )
@@ -154,6 +159,7 @@ class UploaderSession(object):
         batch = dbh.get_batch( self.meta['batch'] )
 
         total_assay = 0
+        failed_assay = 0
         line_counter = 1
         err_log = []
 
@@ -195,11 +201,21 @@ class UploaderSession(object):
 
                 except RuntimeError as err:
                     err_log.append('Line %03d - runtime error: %s' % str(err))
+                    failed_assay += 1
 
 
             except RuntimeError as err:
+                failed_assay += 1
                 raise
 
+            if (total_assay + failed_assay) % 20 == 0 and comm is not None:
+                comm.output = 'Processed %d successful assay(s), %d failed assay(s)' % (
+                                total_assay, failed_assay )
+
+
+        if comm is not None:
+            comm.output = 'Processed %d successful assay(s), %d failed assay(s)' % (
+                                total_assay, failed_assay )
 
         return total_assay, err_log
 
@@ -289,7 +305,66 @@ def edit(request):
 
 @roles( PUBLIC )
 def save(request):
-    pass
+
+    sesskey = request.matchdict.get('id')
+    uploader_session = UploaderSession( sesskey = sesskey )
+
+    if not uploader_session.is_authorized( request.user.login ):
+        raise error_page('You are not authorized to view this session')
+
+    if sesskey in commit_procs:
+
+        # check whether we have done or not
+        procid, ns = commit_procs[sesskey]
+        procunit = getproc(procid)
+        if procunit.status in [ 'D', 'U' ]:
+            seconds = 0
+            if procunit.exc:
+                msg = div()[ p('Uploading failed. Please see the following error and log:'),
+                                p( procunit.exc ),
+                    ]
+
+                result = procunit.result
+                if result[1]:
+                    msg.add( div()[ p( *result[1] ) ] )
+
+            else:
+                result = procunit.result
+                msg = div()[ p('Uploading finished.'),
+                             p('Total uploaded assay: %d' % result[0] )
+                    ]
+            del ns
+            del commit_procs[sesskey]
+        else:
+            seconds = 10
+            msg = div()[ p('Output: %s' % ns.output),
+                        p('Processing...') 
+                ]
+
+        #return dict(html = str( p('Processing') ), status=True)
+
+    else:
+
+        with glock:
+            ns = getmanager().Namespace()
+            ns.output = ''
+            procid, msg = subproc( request.user.login, uploader_session.rootpath,
+                                mp_commit_payload, request.registry.settings,
+                                sesskey, request.user.login, ns )
+            commit_procs[sesskey] = (procid, ns)
+
+        msg = div()[ p('Submitting...') ]
+        seconds = 10
+
+
+    batch_code = uploader_session.meta['batch']
+
+    return render_to_response('genaf:templates/uploadmgr/save.mako',
+            {   'msg':   msg,
+                'batch_code': batch_code,
+                'seconds': seconds,
+            }, request = request )
+
 
 
 @roles( PUBLIC )
@@ -461,7 +536,7 @@ def checkinfofile(request):
 
 
 @roles( PUBLIC )
-def commitpayload(request):
+def commitpayload_XXX(request):
 
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
@@ -491,6 +566,26 @@ def commitpayload(request):
     return dict(html = str(container), status=True)
 
 
+
+@roles( PUBLIC )
+def commitpayload(request):
+
+    sesskey = request.matchdict.get('id')
+    uploader_session = UploaderSession( sesskey = sesskey )
+
+    if not uploader_session.is_authorized( request.user.login ):
+        raise error_page('You are not authorized to view this session')
+
+    if sesskey in commit_procs:
+        return dict(html = str( p('Processing') ), status=True)
+
+    procid = submit( request.user.login, uploader_session.rootpath, mp_commit_payload,
+                        request.registry.settings, sesskey, request.user.login )
+    commit_procs[sesskey] = procid
+
+    return dict(html = str( p('Submitting...') ), status=True)
+
+
 @roles( PUBLIC )
 def verifyassay(request):
 
@@ -509,4 +604,27 @@ def verifyassay(request):
             }, request = request )
 
 
+## prototype multiprocessing stuff
 
+
+def mp_commit_payload(settings, sesskey, login, ns):
+    """ this function will be started in different process, so it must initialize
+        everything from scratch, including database connection
+    """
+
+    cerr('mp_commit_payload(): connecting to db')
+    dbh = get_dbhandler_notsafe()
+    if dbh is None:
+        dbh = get_dbhandler(settings)
+
+    cerr('mp_commit_payload(): uploading payload...')
+    uploader_session = UploaderSession( sesskey = sesskey)
+
+    cerr('mp_commit_payload(): returning result...')
+    with transaction.manager:
+        result = uploader_session.upload_payload( comm = ns)
+
+    return result
+
+
+    

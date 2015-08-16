@@ -56,7 +56,8 @@
 
 
 <div id="verify">
-  <p><span class="btn btn-info" id="commitpayload">Proceed</span></a></p>
+  <p><a href="${request.route_url('genaf.uploadmgr-save', id=sesskey)}">
+        <span class="btn btn-info" id="commitpayload2">Proceed</span></a></p>
   <div id="commitpayload_report">
   </div>
 </div>

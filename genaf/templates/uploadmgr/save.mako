@@ -23,8 +23,8 @@ var delay = 1000;
 function InitializeTimer(seconds) {
     // Set the length of the timer, in seconds
     secs = seconds;
-    $("#refresh_status").text(
-        "<p>This page will refresh in <span id='refresh_time'>10</span> seconds</p>");
+    $("#refresh_status").html(
+        "<p>This page will refresh in <span id='second_label'>10</span> seconds</p>");
     StopTheClock();
     StartTheTimer();
 }

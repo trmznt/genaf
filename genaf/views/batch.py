@@ -188,7 +188,11 @@ def action(request):
             return error_page(request, 'Please provide sample info file')
 
 
-        path, errlog = add_sample_info(batch, sampleinfo_file)
+        retval = add_sample_info(batch, sampleinfo_file, request)
+        if type(retval) == tuple:
+            path, errlog = retval
+        else:
+            return retval
 
         if not path:
             return error_page(request,
@@ -313,7 +317,7 @@ def lookup(request):
 
 ## helper
 
-def add_sample_info( batch, ifile):
+def add_sample_info( batch, ifile, request):
     """ parse file and save it to temporary file as YAML file """
 
 
@@ -330,18 +334,18 @@ def add_sample_info( batch, ifile):
         try:
             ## the csv2dict function has to be sample-specific method
             ## use batch.Sample.csv2dict() ??
-            dict_samples, errlog = batch.get_sample_class().csv2dict(
+            dict_samples, errlog, sample_codes = batch.get_sample_class().csv2dict(
                             StringIO(ifile.file.read().decode('UTF-8')),
                             with_report=True,
                             delimiter = delim )
         except ValueError as err:
-            return error_page( 'ValueError: {0}'.format(err) )
+            return error_page(request,  'ValueError: {0}'.format(err) )
 
         if dict_samples is None:
             return render_to_response( "msaf:templates/upload/error.mako",
                 { 'report_log': '<br/>'.join(errlog) }, request = request )
 
-        dict_text = yaml.dump( dict_samples )
+        dict_text = yaml.dump( dict(codes = sample_codes, samples = dict_samples) )
 
     elif ext in ['.json', '.yaml']:
         dict_text = yaml.dump( yaml.load( input_file.file.read().decode('UTF-8') ) )
@@ -367,7 +371,10 @@ def verify_sample_info( batch, path ):
     # open YAML
 
     with open(temppath) as f:
-        samples = yaml.load( f )
+        payload = yaml.load( f )
+        samples = payload['samples']
+        codes = payload['codes']
+
 
     dbh = get_dbhandler()
     session = dbh.session()
@@ -403,7 +410,9 @@ def process_sample_info( batch, path, option ):
     temppath = get_temp_path( path )
 
     with open(temppath) as f:
-        samples = yaml.load( f )
+        payload = yaml.load( f )
+        samples = payload['samples']
+        codes = payload['codes']
 
     inserts = 0
     updates = 0
@@ -416,7 +425,9 @@ def process_sample_info( batch, path, option ):
 
     with session.no_autoflush:
 
-      for (sample_code, dict_sample) in samples.items():
+      #for (sample_code, dict_sample) in samples.items():
+      for sample_code in codes:
+        dict_sample = samples[sample_code]
         # check sanity
         #if sample_code != sample['code']:
         #    pass
@@ -446,7 +457,8 @@ def process_sample_info( batch, path, option ):
             return error_page('Invalid option')
         db_sample.subject = null_subject # <- this shouldn't be here too !!!
         db_sample.update( dict_sample )
-        session.flush()
+        session.flush([db_sample])
+        print('Flushing sample: %s' % db_sample.code)
 
     # remove the yaml/json file
     silent_remove( temppath )

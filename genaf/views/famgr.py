@@ -111,6 +111,8 @@ def summarize_assay( assay_list ):
 @roles( PUBLIC )
 def process(request):
 
+    pass
+
 
 
 def process_assays(batch_id, login, comm = None, stage = None):

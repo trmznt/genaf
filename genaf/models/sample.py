@@ -264,8 +264,8 @@ class Sample(BaseMixIn, Base, SampleMixIn):
                 nullable=False)
     batch = relationship(Batch, uselist=False,
                 backref=backref('samples', lazy='dynamic', passive_deletes=True))
-    int1 = Column(types.Integer, nullable=False, default=-1)        # custom usage
-    int2 = Column(types.Integer, nullable=False, default=-1)        # custom usage
+    int1 = Column(types.Integer, nullable=False, default=0)        # custom usage
+    int2 = Column(types.Integer, nullable=False, default=0)        # custom usage
     string1 = Column(types.String(16), nullable=False, default='')  # custom usage
     string2 = Column(types.String(16), nullable=False, default='')  # custom usage
     remark = deferred(Column(types.String(1024), nullable=True))

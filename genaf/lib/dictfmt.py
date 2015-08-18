@@ -6,9 +6,9 @@ from dateutil.parser import parse as parse_date
 from datetime import date
 from io import StringIO
 
-csv_headers = { 'SAMPLE', 'PANEL', 'ASSAY', 'MARKER', 'DYE', 'NEST', 'STANDARD',
+csv_headers = { 'SAMPLE', 'PANEL', 'ASSAY', 'MARKER', 'DYE', 'NEST', 'STANDARD', 'TYPE',
                 'COUNTRY', 'ADMINL1', 'ADMINL2', 'ADMINL3', 'ADMINL4', 'COLLECTION_DATE',
-                'COMMENTS', 'FSA_COMMENTS' }
+                'REMARK', 'INT1', 'INT2', 'STRING1', 'STRING2' }
 
 csv_alleles = { 'ALLELE', 'HEIGHT', 'AREA', 'SIZE' }
 
@@ -39,9 +39,15 @@ def row2sample(r):
     sample = dict(
         
         collection_date = collection_date.strftime('%Y/%m/%d'),
-        location = (    r.get('COUNTRY', ''), r.get('ADMINL1',''), r.get('ADMINL2',''),
-                        r.get('ADMINL3',''), r.get('ADMINL4','') ),
-        comments = r.get('COMMENTS', None),
+        type = r.get('TYPE',''),
+        location = (    r.get('COUNTRY', '').strip(),
+                        r.get('ADMINL1','').strip(), r.get('ADMINL2','').strip(),
+                        r.get('ADMINL3','').strip(), r.get('ADMINL4','').strip() ),
+        remark = r.get('REMARK', None),
+        int1 = int(r.get('INT1','') or 0),
+        int2 = int(r.get('INT2','') or 0),
+        string1 = r.get('STRING1', '').strip(),
+        string2 = r.get('STRING2', '').strip(),
 
         assays = {}
     )
@@ -78,6 +84,7 @@ def parse_csv( reader, log, sample_func = None, existing_samples = None ):
     allele_set = list(zip(allele_field, size_field, height_field, area_field))
 
     samples = existing_samples or {}
+    sample_codes = existing_samples.keys() if existing_samples else []
 
     for row in reader:
 
@@ -87,10 +94,15 @@ def parse_csv( reader, log, sample_func = None, existing_samples = None ):
             sample = samples[name]
         else:
             # create new sample
-            sample = row2sample( row )
-            if sample_func:
-                sample_func( sample, row )
-            samples[name] = sample
+            try:
+                sample = row2sample( row )
+                if sample_func:
+                    sample_func( sample, row )
+                samples[name] = sample
+                sample_codes.append( name )
+            except ValueError as err:
+                raise RuntimeError('ERROR in sample code: %s with err msg: %s' % (
+                        name, str(err)))
 
         assay_code = row.get('ASSAY', None)
         if assay_code is None:
@@ -128,7 +140,7 @@ def parse_csv( reader, log, sample_func = None, existing_samples = None ):
             allele_list.append( (int(allele), float(size), int(height), int(float(area))) )
         markers[marker_name] = dict( dye=row['DYE'], alleles=allele_list )
 
-    return samples, log
+    return samples, log, sample_codes
 
 
 def read_dictfile(pathname):

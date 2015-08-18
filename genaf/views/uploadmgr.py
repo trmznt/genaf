@@ -314,7 +314,11 @@ def save(request):
             else:
                 result = procunit.result
                 msg = div()[ p('Uploading finished.'),
-                             p('Total uploaded assay: %d' % result[0] )
+                             p('Total uploaded assay: %d' % result[0] ),
+                             p('Click ', a('here',
+                                    href=request.route_url('genaf.batch-view',
+                                        id = uploader_session.meta['batch_id'])),
+                                ' to continue.')
                     ]
             del ns
             del commit_procs[sesskey]

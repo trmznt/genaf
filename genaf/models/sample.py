@@ -332,6 +332,8 @@ class Sample(BaseMixIn, Base, SampleMixIn):
         self._update(obj)
 
         if type(obj) == dict:
+            if 'type' in obj:
+                self.type = obj['type']
             if 'collection_date' in obj:
                 collection_date = obj['collection_date']
                 if type(collection_date) is str:
@@ -351,8 +353,16 @@ class Sample(BaseMixIn, Base, SampleMixIn):
                 self.longitude = obj['longitude']
             if 'altitute' in obj:
                 self.altitute = obj['altitude']
-            if 'comments' in obj:
-                self.comments = obj['comments']
+            if 'remark' in obj:
+                self.remark = obj['remark']
+            if 'int1' in obj:
+                self.int1 = obj['int1']
+            if 'int2' in obj:
+                self.int2 = obj['int2']
+            if 'string1' in obj:
+                self.string1 = obj['string1']
+            if 'string2' in obj:
+                self.string2 = obj['string2']
 
         else:
 

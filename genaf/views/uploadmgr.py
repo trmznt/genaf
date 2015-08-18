@@ -26,23 +26,6 @@ commit_procs = {}
 ## at some point, the metadata will be stored in dogpile.cache rather than in individual
 ## meta.dat file
 
-CLASS = 'class_'
-
-def container(*args, **kwargs):
-    if CLASS in kwargs:
-        class_ = 'container ' + kwargs[CLASS]
-        del kwargs[CLASS]
-    else:
-        class_ = 'container'
-    return div(*args, class_=class_, **kwargs)
-
-def row(*args, **kwargs):
-    if CLASS in kwargs:
-        class_ = 'row ' + kwargs[CLASS]
-        del kwargs[CLASS]
-    else:
-        class_ = 'row'
-    return div(*args, class_=class_, **kwargs)
 
 
 class UploaderSession(object):

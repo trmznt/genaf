@@ -86,6 +86,12 @@ def includeme( config ):
     )
 
 
+    add_route_view( config, 'genaf.views.famgr', 'genaf.famgr',
+        '/famgr',
+        '/famgr/{id}@@process',
+        ('/famgr/{id}', 'view')
+    )
+
     # tools and analysis
 
     config.add_route('tools-allele', '/tools/allele')

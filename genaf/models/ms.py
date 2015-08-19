@@ -466,9 +466,9 @@ class Allele(BaseMixIn, Base, AlleleMixIn):
     type_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
     type = EK.proxy('type_id', '@PEAK-TYPE')
 
-    #method = Column(types.String(32), nullable=False, default='')   # calling method
+    #method = Column(types.String(32), nullable=False, default='')   # binning method
     method_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
-    method = EK.proxy('method_id', '@ALLELE-METHOD')
+    method = EK.proxy('method_id', '@BINNING-METHOD')
 
     brtime = Column(types.Integer, nullable=False, default=-1)
     ertime = Column(types.Integer, nullable=False, default=-1)

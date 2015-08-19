@@ -5,8 +5,7 @@ import logging
 log = logging.getLogger(__name__)
 
 from rhombus.views.fso import save_file
-from rhombus.lib.tags import *
-from rhombus.lib.utils import get_dbhandler, get_dbhandler_notsafe
+from rhombus.lib.utils import get_dbhandler, get_dbhandler_notsafe, silent_rmdir
 
 from genaf.views import *
 from genaf.lib.procmgmt import subproc, getproc, getmanager
@@ -207,6 +206,8 @@ class UploaderSession(object):
         with open('%s/assay_list.yaml' % self.rootpath) as f:
             assay_files = yaml.load( f )
 
+    def clear(self):
+        silent_rmdir(self.rootpath)
 
 
 
@@ -315,13 +316,15 @@ def save(request):
                 result = procunit.result
                 msg = div()[ p('Uploading finished.'),
                              p('Total uploaded assay: %d' % result[0] ),
-                             p('Click ', a('here',
-                                    href=request.route_url('genaf.batch-view',
-                                        id = uploader_session.meta['batch_id'])),
-                                ' to continue.')
+                             p()[ a(href=request.route_url('genaf.batch-view',
+                                        id = uploader_session.meta['batch_id']))[
+                                            span(class_='btn btn-success')[ 'Continue' ]
+                                        ]
+                            ]
                     ]
             del ns
             del commit_procs[sesskey]
+            uploader_session.clear()
         else:
             seconds = 10
             msg = div()[ p('Output: %s' % ns.output),

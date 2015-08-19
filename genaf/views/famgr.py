@@ -4,10 +4,16 @@ import logging
 
 log = logging.getLogger(__name__)
 
+from rhombus.lib.utils import get_dbhandler, get_dbhandler_notsafe, silent_rmdir
+
 from genaf.views import *
+from genaf.lib.procmgmt import subproc, getproc, getmanager
+
+from fatools.lib import params
+from fatools.lib.const import assaystatus
 
 from collections import defaultdict
-import threading
+import threading, transaction
 
 TEMP_ROOTDIR = 'famgr'
 
@@ -111,7 +117,73 @@ def summarize_assay( assay_list ):
 @roles( PUBLIC )
 def process(request):
 
-    pass
+    batch_id = request.matchdict.get('id')
+
+    if batch_id in local_procs:
+        (procid, login, batch_code, ns) = local_procs[batch_id]
+
+        if login != request.user.login:
+            seconds = 0
+            msg = div()[ p('Another task started by %s is currently running batch: %s' %
+                                ( login, batch_code ))
+                    ]
+        else:
+
+            procunit = getproc(procid)
+            if procunit.status in ['D', 'U']:
+                seconds = 0
+                if procunit.exc:
+                    msg = div()[
+                        p('Assay processing failed. Please see the following error:'),
+                        p( procunit.exc ),
+                    ]
+
+                else:
+                    result = procunit.result
+                    msg = div()[ p('Assay processing finished.'),
+                             p('Statistics: %s' % str(result[0]) ),
+                             p()[ a(href=request.route_url('genaf.famgr-view',id=batch_id))[
+                                            span(class_='btn btn-success')[ 'Continue' ]
+                                        ]
+                            ]
+                        ]
+                    if result[1]:
+                        msg.add( div()[ p( *result[1] ) ] )
+
+                del ns
+                del local_procs[batch_id]
+
+            else:
+                seconds = 10
+                msg = div()[ p('Output: %s' % ns.output), p('Processing...') ]
+
+    else:
+
+        batch = get_dbhandler().get_batch_by_id(batch_id)
+        batch_code = batch.code
+
+        # check authorization
+        if not request.user.in_group( batch.group ):
+            error_page('You are not authorized to view this batch!')
+
+        with glock:
+
+            ns = getmanager().Namespace()
+            ns.output = ''
+            procid, msg = subproc( request.user.login, None,
+                    mp_process_assays, request.registry.settings,
+                    batch_id, request.user.login, ns )
+            local_procs[batch_id] = (procid, request.user.login, batch_code, ns)
+
+        msg = div()[ p('Starting assay processing task') ]
+        seconds = 10
+                
+    return render_to_response('genaf:templates/famgr/process.mako',
+        {   'msg': msg,
+            'batch_code': batch_code,
+            'seconds': seconds,
+        }, request = request )
+
 
 
 
@@ -120,17 +192,81 @@ def process_assays(batch_id, login, comm = None, stage = None):
     dbh = get_dbhandler()
 
     # get assay list
-    batch = dbh.get_batch_by_id(batch_id)
+    assay_list = get_assay_ids( batch_id )
+
+    log = []
+    stats = {}
+
+    scanning_parameter = params.Params()
+
+    # scan peaks
+    success = failed = 0
+    if True:
+        for (assay_id, sample_code) in assay_list:
+            with transaction.manager:
+                assay = dbh.get_assay_by_id(assay_id)
+                try:
+                    if assay.status == assaystatus.assigned:
+                        print('scanning assay: %s | %s' % (assay.filename, sample_code))
+                        assay.scan( scanning_parameter )
+                        success += 1
+
+                except RuntimeError as err:
+                    log.append('ERR scan - assay %s | %s - error: %s' %
+                        ( assay.filename, sample_code, str(err) ) )
+                    failed += 1
+
+            if comm and (success + failed) % 2 == 0:
+                comm.output = 'Scanned %d successful assay(s), %d failed assay(s)' % (
+                     success, failed )
+
+    if comm:
+        comm.output = 'Scanned %d successful assay(s), %d failed assay(s)' % (
+            success, failed )
+    stats['scan'] = (success, failed)
+
+    # preannotated
+    success = failed = 0
+
+    for (assay_id, sample_code) in assay_list:
+        with transaction.manager:
+            assay = dbh.get_assay_by_id(assay_id)
+            try:
+                if assay.status == assaystatus.scanned:
+                    assay.preannotate( scanning_parameter )
+                    success += 1
+
+            except RuntimeError as err:
+                log.append('ERR preannotate - assay %s | %s - error: %s' %
+                    ( assay.filename, sample_code, str(err) ) )
+                failed += 1
+
+        if comm and (success + failed) % 10 == 0:
+            comm.output = 'Preannotated %d successful assay(s), %d failed assay(s)' % (
+                     success, failed )
+
+    if comm:
+        comm.output = 'Preannotated %d successful assay(s), %d failed assay(s)' % (
+            success, failed )
+    stats['preannotate'] = (success, failed)
+
+    return stats, log
+
+
+def get_assay_ids(batch_id):
+
+    dbh = get_dbhandler()
 
     assay_list = []
-    for sample in batch.samples:
-        for assay in sample.assays:
-            assay_list.append( (assay, sample.code) )
+    with transaction.manager:
+        batch = dbh.get_batch_by_id(batch_id)
 
-    
+        for sample in batch.samples:
+            for assay in sample.assays:
+                assay_list.append( (assay.id, sample.code) )
 
-
-    
+    return assay_list
+        
 
 
 def mp_process_assays(settings, batch_id, login, ns):

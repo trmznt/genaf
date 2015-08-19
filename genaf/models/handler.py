@@ -13,6 +13,7 @@ class DBHandler(rho_handler.DBHandler, base_sqlhandler):
     Batch = Batch
     Location = Location
     Panel = Panel
+    Assay = Assay
     Sample = None
 
     def initdb(self, create_table=True, init_data=True):

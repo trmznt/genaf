@@ -49,6 +49,7 @@
     <a href="${request.route_url('genaf.batch-action',
         _query = dict( batch_id = batch.id, _method = 'new-assay-upload-session'))}">
         <button>Start upload session</button></a>
+    <br />
     <a href="${request.route_url('genaf.batch-action',
         _query = dict( batch_id = batch.id, _method = 'list-assay-upload-session'))}">
         <button>List pending sessions</button></a>
@@ -59,12 +60,9 @@
 <div class='col-md-6'>
 
   <h4>FSA Processing</h4>
-  <button>Scan peaks</button>
-    <button>Preannotate peaks</button>
-    <button>Align ladders</button>
-    <button>Call peaks</button>
-    <button>Bin peaks</button>
-    <button>Annotate peaks</button>
+  <a href="${request.route_url('genaf.famgr-view', id=batch.id)}">
+    <button>Start FSA Process Session</button>
+  </a>
   </ul>
 
 </div>

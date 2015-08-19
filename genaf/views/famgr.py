@@ -100,8 +100,16 @@ def view(request):
                 ]
             )
 
+    summary_content.add(
+        row()[ div(class_='col-md-3')[ 
+            a(href=request.route_url('genaf.famgr-process', id=batch_id)) [
+                span(class_='btn btn-success')[ 'Process assays' ] ] ]
+        ]
+    )
+
     return render_to_response('genaf:templates/famgr/view.mako',
-        { 'content': summary_content,
+        {   'content': summary_content,
+            'batch': batch,
         }, request = request )
 
 
@@ -113,6 +121,7 @@ def summarize_assay( assay_list ):
         counter[assay.status] += 1
 
     return counter
+
 
 @roles( PUBLIC )
 def process(request):
@@ -249,6 +258,59 @@ def process_assays(batch_id, login, comm = None, stage = None):
         comm.output = 'Preannotated %d successful assay(s), %d failed assay(s)' % (
             success, failed )
     stats['preannotate'] = (success, failed)
+
+    for (assay_id, sample_code) in assay_list:
+        with transaction.manager:
+            assay = dbh.get_assay_by_id(assay_id)
+            try:
+                if assay.status == assaystatus.preannotated:
+                    retval = assay.alignladder(excluded_peaks = None)
+                    (dpscore, rss, peaks_no, ladders_no, qcscore, remarks, method) = retval
+                    if qcscore < 0.9:
+                        log.append('WARN alignladder - '
+                            'low qcscore %3.2f %4.2f %5.2f %d/%d %s for %s | %s'
+                                % ( qcscore, dpscore, rss, peaks_no, ladders_no,
+                                    method, sample_code, assay.filename) )
+
+                    success += 1
+
+            except RuntimeError as err:
+                log.append('ERR alignladder - assay %s | %s - error: %s' %
+                    ( assay.filename, sample_code, str(err) ) )
+                failed += 1
+
+        if comm and (success + failed) % 10 == 0:
+            comm.output = 'Aligned ladder with %d successful assay(s), %d failed assay(s)' % (
+                     success, failed )
+
+    if comm:
+        comm.output = 'Aligned ladder with %d successful assay(s), %d failed assay(s)' % (
+            success, failed )
+    stats['aligned'] = (success, failed)
+
+    # calling peaks
+    for (assay_id, sample_code) in assay_list:
+        with transaction.manager:
+            assay = dbh.get_assay_by_id(assay_id)
+            try:
+                if assay.status == assaystatus.aligned:
+                    assay.call(scanning_parameter.nonladder)
+                    success += 1
+
+            except RuntimeError as err:
+                log.append('ERR call - assay %s | %s - error: %s' %
+                    ( assay.filename, sample_code, str(err) ) )
+                failed += 1
+
+        if comm and (success + failed) % 10 == 0:
+            comm.output = 'Called %d successful assay(s), %d failed assay(s)' % (
+                     success, failed )
+
+    if comm:
+        comm.output = 'Called %d successful assay(s), %d failed assay(s)' % (
+            success, failed )
+    stats['called'] = (success, failed)
+
 
     return stats, log
 

@@ -72,7 +72,7 @@ class ProcQueue(object):
         print('callback(): procid = %s' % procid)
         status = 'D' if proc.done() else 'U'
         exc = proc.exception()
-        result = proc.result()
+        result = proc.result() if exc is None else None
 
         with self.lock:  # can use with self.lock.acquire() ???
             self.queue -= 1

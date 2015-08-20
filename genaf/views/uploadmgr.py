@@ -53,7 +53,9 @@ class UploaderSession(object):
         os.makedirs(self.rootpath)
         os.makedirs(self.rootpath + '/tmp')
         os.makedirs(self.rootpath + '/payload')
-        self.meta = dict( user = user, batch = batch.code, batch_id = batch.id, state = 'N' )
+        self.meta = dict(   user = user, batch = batch.code, batch_id = batch.id,
+                            payload = '',
+                            state = 'N' )
         self.save_metadata()
 
 
@@ -77,6 +79,12 @@ class UploaderSession(object):
 
     def get_sesskey(self):
         return self.sesskey
+
+    def has_payload(self):
+        return 'payload' in self.meta and self.meta['payload']
+
+    def payload_verified(self):
+        return 'payload_count' in self.meta and self.meta['payload_count'] >= 0
 
 
     def add_file(self, filename, filestorage, request):
@@ -275,12 +283,81 @@ def view(request):
 
     batch = get_dbhandler().get_batch_by_id( uploader_session.meta['batch_id'] )
 
-    return render_to_response('genaf:templates/uploadmgr/view.mako',
+    return render_to_response('genaf:templates/uploadmgr/view2.mako',
             {   'meta': uploader_session.meta,
                 'batch': batch,
                 'sesskey': sesskey,
             },
             request = request)
+
+
+@roles( PUBLIC )
+def mainpanel(request):
+    """ return JSON response """
+
+    sesskey = request.matchdict.get('id')
+
+    uploader_session = UploaderSession( sesskey = sesskey )
+
+    if not uploader_session.has_payload():
+        # doesn't have payload yet, show upload panel
+
+        html = div()[
+            p('Please upload archived file (zip, tgz, tar.gz) containing FSA files'),
+            span(class_="btn btn-info fileinput-button")[
+                span('Select files...'),
+                input(id='dataupload', type='file', name='files[]') ],
+            br(), br(),
+            div(id='fileprogress', class_='progress col-sm-6')[
+                div(class_='progress-bar progress-bar-success')
+            ],
+        ]
+
+        code = '''
+    'use strict';
+
+    $('#dataupload').fileupload({
+        url: '%(url)s',
+        dataType: 'json',
+        maxChunkSize: 1000000,
+        done: function (e, data) {
+            get_main_panel();
+        },
+        progressall: function (e, data) {
+            var progress = parseInt(data.loaded / data.total * 100, 10);
+            $('#dataprogress .progress-bar').css(
+                'width',
+                progress + '%%'
+            );
+        }
+    }).prop('disabled', !$.support.fileInput)
+        .parent().addClass($.support.fileInput ? undefined : 'disabled');
+''' % dict( url = request.route_url("genaf.uploadmgr-uploaddata", id = sesskey) )
+
+    else:
+        
+        html = div()[
+            row()[
+                div(class_='col-md-3')[ span(class_='pull-right')['FSA archived file :'] ],
+                div(class_='col-md-5')[ self.meta['payload'] ],
+            ],
+            row()[
+                div(class_='col-md-3')[ span(class_='pull-right')['File size :'] ],
+                div(class_='col-md-5')[ self.meta['payload_size'] ],
+            ]
+        ]
+
+        if not uploader_session.payload_verified():
+            html.add(
+                row()[
+                    p()[ button()[ 'Change file' ], ' or ', button()[ 'Verify file' ] ]
+                ]
+            )
+
+        code = ''
+
+    print(str(html))
+    return dict( html = str(html), code = code)
 
 
 @roles( PUBLIC )
@@ -380,7 +457,7 @@ def uploaddata(request):
         # the last chunk
         uploader_session.meta['payload'] = filename
         uploader_session.meta['payload_size'] = total
-        uploader_session.meta['payload_count'] = 0
+        uploader_session.meta['payload_count'] = -1
         uploader_session.save_metadata()
 
     cerr('Uploaded data for %s with %d/%d bytes!' % (filename, current_size, total))

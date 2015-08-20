@@ -2,7 +2,7 @@
 
 <h2>FSA Bulk Upload Manager</h2>
 
-<p>Batch: ${batch.code}</p>
+<p>Batch: <a href="${request.route_url('genaf.batch-view', id=batch.id)}">${batch.code}</a></p>
 
 
 
@@ -23,11 +23,12 @@
 <div id="dataupload_panel" class='col-md-12'>
     <div id="dataupload_filecheck">
     </div>
+    <div id="verifydatafile_report">
+    </div>
+
     <p> <span class="btn btn-info" onclick="_datafile=false; check_files();">Change file</span>
         or 
         <span class="btn btn-info" id="verifydatafile">Verify file</span></p>
-    <div id="verifydatafile_report">
-    </div>
 </div>
 
 

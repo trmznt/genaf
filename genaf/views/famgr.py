@@ -195,8 +195,54 @@ def process(request):
 
 
 
+def scan_assays(assay_list, dbh, log, scanning_parameter, comm):
 
-def process_assays(batch_id, login, comm = None, stage = None):
+    success = failed = skipped = 0
+    for (assay_id, sample_code) in assay_list:
+        with transaction.manager:
+            assay = dbh.get_assay_by_id(assay_id)
+            try:
+                if assay.status == assaystatus.assigned:
+                    assay.scan( scanning_parameter )
+                    success += 1
+                else:
+                    skipped += 1
+            except RuntimeError as err:
+                log.append('ERR scan -- assay %s | %s - error: %s' %
+                    ( assay.filename, sample_code, str(err) )
+                )
+        if comm:
+            comm.output = 'scanned: %s | failed: %s | skipped: %s' % (success, failed, skipped)
+
+    return (success, failed, skipped)
+
+
+
+def bin_assays(assay_list, dbh, log, scanning_parameter, comm):
+
+    success = failed = skipped = 0
+    for (assay_id, sample_code) in assay_list:
+        with transaction.manager:
+            assay = dbh.get_assay_by_id(assay_id)
+            try:
+                if assay.status == assaystatus.assigned:
+                    assay.bin( scanning_parameter )
+                    success += 1
+                else:
+                    skipped += 1
+            except RuntimeError as err:
+                log.append('ERR scan -- assay %s | %s - error: %s' %
+                    ( assay.filename, sample_code, str(err) )
+                )
+        if comm:
+            comm.output = 'scanned: %s | failed: %s | skipped: %s' % (success, failed, skipped)
+
+    return (success, failed, skipped)
+
+
+
+
+def process_assays(batch_id, login, comm = None, stage = 'all'):
 
     dbh = get_dbhandler()
 
@@ -210,7 +256,7 @@ def process_assays(batch_id, login, comm = None, stage = None):
 
     # scan peaks
     success = failed = 0
-    if True:
+    if stage in ['all', 'scan']:
         for (assay_id, sample_code) in assay_list:
             with transaction.manager:
                 assay = dbh.get_assay_by_id(assay_id)
@@ -229,10 +275,10 @@ def process_assays(batch_id, login, comm = None, stage = None):
                 comm.output = 'Scanned %d successful assay(s), %d failed assay(s)' % (
                      success, failed )
 
-    if comm:
-        comm.output = 'Scanned %d successful assay(s), %d failed assay(s)' % (
-            success, failed )
-    stats['scan'] = (success, failed)
+        if comm:
+            comm.output = 'Scanned %d successful assay(s), %d failed assay(s)' % (
+                success, failed )
+        stats['scan'] = (success, failed)
 
     # preannotated
     success = failed = 0
@@ -259,6 +305,8 @@ def process_assays(batch_id, login, comm = None, stage = None):
             success, failed )
     stats['preannotate'] = (success, failed)
 
+    # ladder alignment
+    success = failed = 0
     for (assay_id, sample_code) in assay_list:
         with transaction.manager:
             assay = dbh.get_assay_by_id(assay_id)
@@ -289,6 +337,7 @@ def process_assays(batch_id, login, comm = None, stage = None):
     stats['aligned'] = (success, failed)
 
     # calling peaks
+    success = failed = 0
     for (assay_id, sample_code) in assay_list:
         with transaction.manager:
             assay = dbh.get_assay_by_id(assay_id)
@@ -310,6 +359,10 @@ def process_assays(batch_id, login, comm = None, stage = None):
         comm.output = 'Called %d successful assay(s), %d failed assay(s)' % (
             success, failed )
     stats['called'] = (success, failed)
+
+    # binning peaks
+    if stage in ['all', 'bin']:
+        stats['binned'] = bin_assays(assay_list, dbh, log, comm)
 
 
     return stats, log

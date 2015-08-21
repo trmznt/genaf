@@ -21,7 +21,6 @@ TEMP_ROOTDIR = 'uploadmgr'
 glock = threading.Lock()
 commit_procs = {}
 
-
 ## at some point, the metadata will be stored in dogpile.cache rather than in individual
 ## meta.dat file
 
@@ -339,11 +338,11 @@ def mainpanel(request):
         html = div()[
             row()[
                 div(class_='col-md-3')[ span(class_='pull-right')['FSA archived file :'] ],
-                div(class_='col-md-5')[ self.meta['payload'] ],
+                div(class_='col-md-5')[ uploader_session.meta['payload'] ],
             ],
             row()[
                 div(class_='col-md-3')[ span(class_='pull-right')['File size :'] ],
-                div(class_='col-md-5')[ self.meta['payload_size'] ],
+                div(class_='col-md-5')[ uploader_session.meta['payload_size'] ],
             ]
         ]
 
@@ -670,6 +669,27 @@ def verifyassay(request):
                 'errlog': errlog,
             }, request = request )
 
+
+@roles( PUBLIC )
+def rpc(request):
+    """ this function return JSON: true or false
+    """
+
+    sesskey = request.matchdict.get('id')
+    uploader_session = UploaderSession( sesskey = sesskey )
+
+    if request.POST and request.POST['_method'] == 'changepayload':
+
+        uploader_session.meta['prev_payload'] = uploader_session.meta['payload']
+        uploader_session.meta['payload'] = ''
+        uploader_session.save_metadata()
+
+    elif request.GET and request.GET['_method'] == 'verifypayload':
+
+        assay_no, errlog = uploader_session.verify_datafile()
+
+
+    
 
 ## prototype multiprocessing stuff
 

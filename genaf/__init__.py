@@ -75,6 +75,7 @@ def includeme( config ):
         '/uploadmgr/{id}@@edit',
         '/uploadmgr/{id}@@save',
         ('/uploadmgr/{id}@@mainpanel', 'mainpanel', 'json'),
+        ('/uploadmgr/{id}@@rpc', 'rpc', 'json'),
         ('/uploadmgr/{id}@@uploaddata', 'uploaddata', 'json'),
         ('/uploadmgr/{id}@@checkdatafile', 'checkdatafile', 'json'),
         ('/uploadmgr/{id}@@uploadinfo', 'uploadinfo', 'json'),

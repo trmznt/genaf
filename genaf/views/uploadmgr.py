@@ -85,6 +85,12 @@ class UploaderSession(object):
     def payload_verified(self):
         return 'payload_count' in self.meta and self.meta['payload_count'] >= 0
 
+    def has_metaassay(self):
+        return 'infofile' in self.meta and self.meta['infofile']
+
+    def metaassay_verified(self):
+        return 'infofile_count' in self.meta and self.meta['infofile_count'] >= 0
+
 
     def add_file(self, filename, filestorage, request):
 
@@ -120,7 +126,6 @@ class UploaderSession(object):
 
         self.extract_payload()
 
-
         assay_files = {}
         err_log = []
         for (rootdir, _, filenames) in os.walk( '%s/payload/' % self.rootpath ):
@@ -132,6 +137,9 @@ class UploaderSession(object):
 
         with open('%s/assay_list.yaml' % self.rootpath, 'w') as f:
             yaml.dump( assay_files, f)
+        
+        if not err_log:
+            self.meta['payload_count'] = len(assay_files)
 
         return (len(assay_files), err_log)
 
@@ -205,6 +213,9 @@ class UploaderSession(object):
         if comm is not None:
             comm.output = 'Processed %d successful assay(s), %d failed assay(s)' % (
                                 total_assay, failed_assay )
+
+        if not err_log:
+            self.meta['infofile_count'] = total_assay
 
         return total_assay, err_log
 
@@ -298,21 +309,92 @@ def mainpanel(request):
 
     uploader_session = UploaderSession( sesskey = sesskey )
 
-    if not uploader_session.has_payload():
-        # doesn't have payload yet, show upload panel
+    if not uploader_session.is_authorized( request.user.login ):
+        return dict( html = p('You are not authorized to view this session') )
 
-        html = div()[
+    html, code = compose_mainpanel(uploader_session, request)
+
+    return dict( html = str(html), code = code)
+
+def compose_mainpanel(uploader_session, request):
+
+    payload_panel = get_payload_info(uploader_session, request)
+    payload_buttons, payload_code = get_payload_bar(uploader_session, request)
+    metaassay_panel = get_metaassay_info(uploader_session, request)
+    metaassay_buttons, metaassay_code = get_metaassay_bar(uploader_session, request)
+    html = div( payload_panel, payload_buttons, metaassay_panel, metaassay_buttons )
+
+    code = payload_code + metaassay_code
+
+    return (html, code)
+
+
+def get_payload_info(up_session, request):
+
+    info_panel = div()
+    if up_session.has_payload():
+        # doesn't have payload yet, show upload pan
+        
+        info_panel.add(
+            row()[
+                div(class_='col-md-3')[ span(class_='pull-right')['FSA archived file :'] ],
+                div(class_='col-md-5')[ up_session.meta['payload'] ],
+            ],
+            row()[
+                div(class_='col-md-3')[ span(class_='pull-right')['File size :'] ],
+                div(class_='col-md-5')[ up_session.meta['payload_size'] ],
+            ]
+        )
+
+    if up_session.payload_verified():
+        info_panel.add(
+            row()[
+                div(class_='col-md-3')[ span(class_='pull-right')['Assay count :'] ],
+                div(class_='col-md-5')[ up_session.meta['payload_count'] ],
+            ]
+        )
+
+        info_panel.add( div(id="payload_error_report") )
+    return info_panel
+    
+
+def get_payload_bar(up_session, request):
+
+    if not up_session.has_payload():
+        html = row()[
             p('Please upload archived file (zip, tgz, tar.gz) containing FSA files'),
             span(class_="btn btn-info fileinput-button")[
-                span('Select files...'),
-                input(id='dataupload', type='file', name='files[]') ],
-            br(), br(),
-            div(id='fileprogress', class_='progress col-sm-6')[
-                div(class_='progress-bar progress-bar-success')
-            ],
+                span('Select file'),
+                input(id='dataupload', type='file', name='files[]'),
+            ]
         ]
 
-        code = '''
+    elif not up_session.payload_verified():
+        html = row()[
+            p()[
+                button(id='verifypayload')[ 'Verify assay file' ],
+                ' or ', 
+                span(class_="btn btn-info fileinput-button")[
+                    span('Change file'),
+                    input(id='dataupload', type='file', name='files[]')
+                ],
+            ]
+        ]
+
+    else:
+        html = row()[
+            p()[
+                button(id='gettemplatefile')[ 'Get assay metadata template file' ],
+                ' or ',
+                span(class_="btn btn-info fileinput-button")[
+                    span('Change file...'),
+                    input(id='dataupload', type='file', name='files[]')
+                ],
+                ' or proceed by uploading assay metadata file below.'
+            ]
+        ]
+
+    code = '''
     'use strict';
 
     $('#dataupload').fileupload({
@@ -324,39 +406,144 @@ def mainpanel(request):
         },
         progressall: function (e, data) {
             var progress = parseInt(data.loaded / data.total * 100, 10);
-            $('#dataprogress .progress-bar').css(
-                'width',
-                progress + '%%'
-            );
+            $('#fileprogress .progress-bar').css('width', progress + '%%');
+        },
+        start: function (e) {
+            $('#fileprogress .progress-bar').css('width','0%%');
+            $('#fileprogress').show();
+        },
+        stop: function(e) {
+            $('#fileprogress').hide();
         }
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
-''' % dict( url = request.route_url("genaf.uploadmgr-uploaddata", id = sesskey) )
+    ''' % dict( url = request.route_url("genaf.uploadmgr-uploaddata", id = up_session.sesskey) )
 
-    else:
-        
-        html = div()[
+    if 'verifypayload' in html:
+        code += '''
+
+    $('#verifypayload').click( function() {
+        $.getJSON( "%(url)s", { _method: 'verifypayload' },
+            function(data) { show_main_panel(data); } );
+        return false;
+    });
+
+    ''' % dict( url = request.route_url('genaf.uploadmgr-rpc', id=up_session.sesskey) )
+
+
+    return (html, code)
+
+
+def get_metaassay_info(up_session, request):
+
+    if not up_session.payload_verified():
+        return ''
+
+    info_panel = div()
+    if up_session.has_metaassay():
+        info_panel.add(
             row()[
-                div(class_='col-md-3')[ span(class_='pull-right')['FSA archived file :'] ],
-                div(class_='col-md-5')[ uploader_session.meta['payload'] ],
+                div(class_='col-md-3')[ span(class_='pull-right')['Assay info file :'] ],
+                div(class_='col-md-5')[ up_session.meta['infofile'] ],
             ],
             row()[
                 div(class_='col-md-3')[ span(class_='pull-right')['File size :'] ],
-                div(class_='col-md-5')[ uploader_session.meta['payload_size'] ],
+                div(class_='col-md-5')[ up_session.meta['infofile_size'] ],
             ]
-        ]
+        )
 
-        if not uploader_session.payload_verified():
-            html.add(
+        if up_session.metaassay_verified():
+            info_panel.add(
                 row()[
-                    p()[ button()[ 'Change file' ], ' or ', button()[ 'Verify file' ] ]
+                    div(class_='col-md-3')[ span(class_='pull-right')['Assay info count :'] ],
+                    div(class_='col-md-5')[ up_session.meta['infofile_count'] ],
                 ]
             )
 
-        code = ''
+        info_panel.add( div(id="infofile_error_report") )
 
-    print(str(html))
-    return dict( html = str(html), code = code)
+
+    return info_panel
+
+
+def get_metaassay_bar(up_session, request):
+
+    html = ''
+    if up_session.metaassay_verified():
+        html = row()[
+            p()[
+                span(class_="btn btn-info fileinput-button")[
+                    span('Change file'),
+                    input(id='infoupload', type='file', name='files[]')
+                ],
+                ' or ',
+                a(href=request.route_url('genaf.uploadmgr-save', id=up_session.sesskey))[
+                        button()[ 'Proceed to save assays' ]
+                ]
+            ]
+        ]
+
+    elif up_session.has_metaassay():
+        html = row()[
+            p()[
+                button(id='verifymetaassay')[ 'Verify info file' ],
+                ' or ', 
+                span(class_="btn btn-info fileinput-button")[
+                    span('Change file'),
+                    input(id='infoupload', type='file', name='files[]')
+                ],
+            ]
+        ]
+
+    elif up_session.payload_verified():
+
+        html = row()[
+            p('Please upload assay information file in CSV or tab-delimited format'),
+            span(class_="btn btn-info fileinput-button")[
+                span('Select file'),
+                input(id='infoupload', type='file', name='files[]'),
+            ]
+        ]
+
+    code = '''
+    'use strict';
+
+    $('#infoupload').fileupload({
+        url: '%(url)s',
+        dataType: 'json',
+        maxChunkSize: 1000000,
+        done: function (e, data) {
+            get_main_panel();
+        },
+        progressall: function (e, data) {
+            var progress = parseInt(data.loaded / data.total * 100, 10);
+            $('#fileprogress .progress-bar').css('width', progress + '%%');
+        },
+        start: function (e) {
+            $('#fileprogress .progress-bar').css('width','0%%');
+            $('#fileprogress').show();
+        },
+        stop: function(e) {
+            $('#fileprogress').hide();
+        }
+    }).prop('disabled', !$.support.fileInput)
+        .parent().addClass($.support.fileInput ? undefined : 'disabled');
+    ''' % dict( url = request.route_url("genaf.uploadmgr-uploadinfo", id = up_session.sesskey) )
+
+    if html and 'verifymetaassay' in html:
+        code += '''
+
+    $('#verifymetaassay').click( function() {
+        $.getJSON( "%(url)s", { _method: 'verifymetaassay' },
+            function(data) { show_main_panel(data); } );
+        return false;
+    });
+
+    ''' % dict( url = request.route_url('genaf.uploadmgr-rpc', id=up_session.sesskey) )
+
+
+    return (html, code)
+
 
 
 @roles( PUBLIC )
@@ -457,6 +644,8 @@ def uploaddata(request):
         uploader_session.meta['payload'] = filename
         uploader_session.meta['payload_size'] = total
         uploader_session.meta['payload_count'] = -1
+        uploader_session.meta['infofile'] = ''
+        uploader_session.meta['infofile_count'] = -1
         uploader_session.save_metadata()
 
     cerr('Uploaded data for %s with %d/%d bytes!' % (filename, current_size, total))
@@ -537,7 +726,7 @@ def uploadinfo(request):
         # the last chunk
         uploader_session.meta['infofile'] = filename
         uploader_session.meta['infofile_size'] = total
-        uploader_session.meta['infofile_count'] = 0
+        uploader_session.meta['infofile_count'] = -1
         uploader_session.save_metadata()
 
     return []
@@ -678,15 +867,33 @@ def rpc(request):
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
 
-    if request.POST and request.POST['_method'] == 'changepayload':
+    if not uploader_session.is_authorized( request.user.login ):
+        return dict( html = p('You are not authorized to view this session') )
 
-        uploader_session.meta['prev_payload'] = uploader_session.meta['payload']
-        uploader_session.meta['payload'] = ''
+    if request.params.get('_method','') == 'verifypayload':
+
+        assay_no, err_log = uploader_session.verify_datafile()
+        html, code = compose_mainpanel(uploader_session, request)
+        if err_log:
+            html.get('payload_error_report').add( div()[ err_log ] )
         uploader_session.save_metadata()
+        return dict( html = str(html), code = code )
 
-    elif request.GET and request.GET['_method'] == 'verifypayload':
+    if request.params.get('_method','') == 'verifymetaassay':
+        assay_no, err_log = uploader_session.upload_payload(dry_run=True)
+        html, code = compose_mainpanel(uploader_session, request)
+        if err_log:
+            html.get('infofile_error_report').add(
+                    div()[ 'Error message:'],
+                    pre()[ '\n'.join( err_log ) ]
+            )
+        uploader_session.save_metadata()
+        return dict( html = str(html), code = code )
 
-        assay_no, errlog = uploader_session.verify_datafile()
+
+
+
+    return dict( html='', code='' )
 
 
     

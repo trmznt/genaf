@@ -92,14 +92,24 @@ def view(request):
 
     summaries = summarize_assay( assay_list )
 
-    summary_content = div()
-    for (item, value) in summaries.items():
-        summary_content.add(
-            row()[ div(class_='col-md-4')[ item ],
+    assay_status_panel = div()
+    for (label, key) in [ ('Assigned', assaystatus.assigned),
+                            ('Scanned', assaystatus.scanned),
+                            ('Preannotated', assaystatus.preannotated),
+                            ('Ladder aligned', assaystatus.aligned),
+                            ('Called', assaystatus.called),
+                            ('Annotated', assaystatus.annotated),
+                            ('Binned', assaystatus.binned)
+                        ]:
+        if key in summaries:
+            value = summaries[key]
+            assay_status_panel.add(
+                row()[ div(class_='col-md-4')[ label ],
                     div(class_='col-md-3')[ value ]
-                ]
-            )
+                    ]
+                )
 
+    summary_content = div()[ div('Assay status:'), assay_status_panel ]
     summary_content.add(
         row()[ div(class_='col-md-3')[ 
             a(href=request.route_url('genaf.famgr-process', id=batch_id)) [

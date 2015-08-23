@@ -13,24 +13,18 @@
   <div class='progress-bar progress-bar-success'></div>
 </div>
 
+<!-- spinner -->
+<div id='spinner' class='spinner' style='display:none;'>
+  <img id='img-spinner' src="${request.static_url('genaf:static/spinner.gif')}" alt='Loading...' />
+</div>
+
+<div id='screen'>
+</div>
+
 ##
 ##
 <%def name="stylelink()">
     <link href="${request.static_url('genaf:static/jquery.fileupload/css/jquery.fileupload.css')}" rel="stylesheet" />
-    <style>
-.progressbar-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-left: -200px; /* half width of the spinner gif */
-    margin-top: -5px; /* half height of the spinner gif */
-    text-align:center;
-    z-index:1234;
-    overflow: auto;
-    width: 400px; /* width of the spinner gif */
-    height: 10px; /*hight of the spinner gif +2px to fix IE8 issue */
-}
-    </style>
 </%def>
 ##
 ##
@@ -43,12 +37,33 @@
 ##
 <%def name="jscode()">
 
+var _fileop = false;
+
 $(function () {
     'use strict';
+
+    $(document)
+    .ajaxStart(function() { show_spinner(); } )
+    .ajaxStop(function() { hide_spinner(); });
+
+    $(window).resize( function() {
+        $('#spinner').css('display') == 'block' ? show_spinner() : '';
+    });
 
     get_main_panel();
 
 });
+
+function show_spinner() {
+    $('#screen').css({  "display": "block", opacity: 0.05, "width":$(document).width(),"height":$(document).height()});
+    $('#spinner').show();
+}
+
+function hide_spinner() {
+    $('#spinner').hide();
+    $('#screen').hide();
+}
+    
 
 function get_main_panel() {
     $.getJSON( "${request.route_url('genaf.uploadmgr-mainpanel', id=sesskey)}",

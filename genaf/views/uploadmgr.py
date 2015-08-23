@@ -146,6 +146,8 @@ class UploaderSession(object):
 
     def upload_payload(self, dry_run=False, comm = None):
 
+        print('running upload_payload')
+
         with open('%s/assay_list.yaml' % self.rootpath) as f:
             assay_files = yaml.load( f )
 
@@ -197,7 +199,7 @@ class UploaderSession(object):
                     total_assay += 1
 
                 except RuntimeError as err:
-                    err_log.append('Line %03d - runtime error: %s' % str(err))
+                    err_log.append('Line %03d - runtime error: %s' % (line_counter, str(err)))
                     failed_assay += 1
 
 
@@ -520,6 +522,7 @@ def get_metaassay_bar(up_session, request):
             $('#fileprogress .progress-bar').css('width', progress + '%%');
         },
         start: function (e) {
+            $('#spinner').hide();
             $('#fileprogress .progress-bar').css('width','0%%');
             $('#fileprogress').show();
         },
@@ -589,6 +592,7 @@ def save(request):
             del commit_procs[sesskey]
             uploader_session.clear()
         else:
+            # XXX: need to check whether the process is still running or stopped
             seconds = 10
             msg = div()[ p('Output: %s' % ns.output),
                         p('Processing...') 

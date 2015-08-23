@@ -1,0 +1,49 @@
+
+body {
+    font-size: 13px;
+}
+
+.form-horizontal .form-group {
+    margin-bottom: 5px;
+}
+
+.progressbar-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-left: -200px; /* half width of the spinner gif */
+    margin-top: -72px; /* half height of the spinner gif */
+    text-align:center;
+    z-index:1234;
+    overflow: auto;
+    width: 400px; /* width of the spinner gif */
+    height: 10px; /*hight of the spinner gif +2px to fix IE8 issue */
+}
+
+.spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-left: -32px; /* half width of the spinner gif */
+    margin-top: -32px; /* half height of the spinner gif */
+    text-align:center;
+    z-index:1234;
+    overflow: auto;
+    width: 64px; /* width of the spinner gif */
+    height: 66px; /*hight of the spinner gif +2px to fix IE8 issue */
+}
+
+footer {
+    border-top: 2px solid grey;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
+#screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: #000;
+}
+
+

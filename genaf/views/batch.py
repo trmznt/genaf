@@ -10,6 +10,7 @@ from genaf.views import uploadmgr
 
 import os, json, yaml
 from io import StringIO
+import sqlalchemy.exc
 
 
 @roles( PUBLIC )
@@ -98,29 +99,44 @@ def save(request):
     # check permission
     batch_group = dbh.get_group_by_id( batch_d['group_id'] )
     if not request.user.in_group( batch_group ):
-        return error_page("Users can only assign their groups to batch primary group!")
+        return error_page(request, 
+                "Users can only assign their groups to batch primary group!")
 
-    if batch_id == 0:
-        batch = dbh.new_batch()
-        dbh.session().add( batch )
-        batch.update( batch_d )
-        dbh.session().flush()
-        request.session.flash(
-            (   'success',
-                'Batch [%s] has been created' % batch.code )
-        )
+    try:
+        if batch_id == 0:
+            batch = dbh.new_batch()
+            dbh.session().add( batch )
+            batch.update( batch_d )
+            dbh.session().flush()
+            request.session.flash(
+                (   'success',
+                    'Batch [%s] has been created' % batch.code )
+            )
 
-    else:
-        batch = dbh.get_batch_by_id( batch_id )
-        # check security
-        if not request.user.in_group( batch.group ):
-            return error_page('User is not a member of batch primary group!')
-        batch.update( batch_d )
-        dbh.session().flush()
-        request.session.flash(
-            (   'success',
-                'Batch [%s] has been updated' % batch.code )
-        )
+        else:
+            batch = dbh.get_batch_by_id( batch_id )
+            # check security
+            if not request.user.in_group( batch.group ):
+                return error_page(request,
+                    'User is not a member of batch primary group!')
+            batch.update( batch_d )
+            dbh.session().flush()
+            request.session.flash(
+                (   'success',
+                    'Batch [%s] has been updated' % batch.code )
+            )
+    except RuntimeError as err:
+        return error_page(request, str(err))
+    except sqlalchemy.exc.IntegrityError as err:
+        detail = err.args[0]
+        if 'UNIQUE' in detail:
+            field = detail.split()[-1]
+            print(field)
+            if field == 'batches.code':
+                return error_page(request,
+                    'The batch code: %s is already being used. Please use other batch code!'
+                    % batch.code)
+        return error_page(request, str(dir(err)))
 
     return HTTPFound(location = request.route_url('genaf.batch-view', id = batch.id))
 

@@ -2,15 +2,16 @@ import logging
 
 log = logging.getLogger(__name__)
 
-from rhombus.lib.utils import cerr, cout
-from rhombus.views.generics import error_page
-
 from genaf.views import *
 
 
 @roles( PUBLIC )
 def index(request):
-    pass
+    
+    batch_id = request.params.get('batch_id',None)
+    if not batch_id:
+        return error_page('ERR - required batch id')
+
 
 @roles( PUBLIC )
 def view(request):
@@ -18,11 +19,21 @@ def view(request):
 
 @roles( PUBLIC )
 def edit(request):
-    pass
+    
+    if request.GET:
+
+        # show form
+
+    elif request.POST:
+
+        # save to database
+
+    else:
+        return error_page('ERR - invalid command')
 
 @roles( PUBLIC )
 def save(request):
-    pass
+    raise NotImplementedError('PROG/ERR - not a valid function')
 
 @roles( PUBLIC )
 def action(request):

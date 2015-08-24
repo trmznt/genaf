@@ -23,10 +23,12 @@ def edit(request):
     if request.GET:
 
         # show form
+        pass
 
     elif request.POST:
 
         # save to database
+        pass
 
     else:
         return error_page('ERR - invalid command')

@@ -4,6 +4,10 @@ log = logging.getLogger(__name__)
 
 from genaf.views import *
 
+from fatools.lib.fautil.wavelen2rgb import wavelen2rgb
+
+import json
+
 
 @roles( PUBLIC )
 def index(request):
@@ -15,7 +19,26 @@ def index(request):
 
 @roles( PUBLIC )
 def view(request):
-    pass
+
+    assay_id = int(request.matchdict.get('id', -1))
+
+    if not assay_id > 0:
+        return error_page(request, 'ERR 101: invalid command!')
+
+    dbh = get_dbhandler()
+    assay = dbh.get_assay_by_id( assay_id )
+
+    if not assay:
+        return error_page(request, "Invalid command!")
+
+    #if not assay.is_authorized( request.userinstance().groups ):
+    #    return not_authorized()
+
+
+    return render_to_response( 'genaf:templates/assay/view.mako',
+            {   'assay': assay,
+            }, request = request )
+
 
 @roles( PUBLIC )
 def edit(request):
@@ -40,3 +63,26 @@ def save(request):
 @roles( PUBLIC )
 def action(request):
     pass
+
+
+@roles( PUBLIC )
+def drawchannels(request):
+
+    assay_id = request.matchdict.get('id')
+
+    dbh = get_dbhandler()
+    assay = dbh.get_assay_by_id( assay_id )
+    if not assay:
+        return error_page()
+
+    datasets = {}
+    for c in assay.channels:
+        #downsample = decimate( c.raw_data, 3 )
+        downsample = c.data
+        rgb = wavelen2rgb( c.wavelen, 255 )
+        datasets[c.dye] = { "data": [ [x,int(downsample[x])] for x in range(len(downsample)) ],
+                            "label": "%s / %s" % (c.dye, c.marker.code),
+                            "color": "rgb(%d,%d,%d)" % tuple(rgb) }
+
+    return render_to_response( 'genaf:templates/assay/drawchannels.mako',
+                { 'datasets': json.dumps( datasets ) }, request = request )

@@ -62,10 +62,16 @@ def includeme( config ):
     add_route_view( config, 'genaf.views.assay', 'genaf.assay', 
         '/assay',
         '/assay/@@action',
+        '/assay/{id}@@drawchannels',
         '/assay/{id}@@edit',
         '/assay/{id}@@save',
         ('/assay/{id}', 'view')
 
+    )
+
+    add_route_view( config, 'genaf.views.channel', 'genaf.channel',
+        '/channel/@@action',
+        ('/channel/{id}', 'view'),
     )
 
 

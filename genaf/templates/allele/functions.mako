@@ -14,8 +14,8 @@
   kwargs = { 'data-toggle':'modal', 'data-target':'#allele-modal-view' }
 %>
 % for a in alleles:
-  <tr><td>${a.value}</td><td>${'%03.2f' % a.size}</td><td>${'%05d' % a.rtime}</td>
-      <td>${'%05d' % a.height}</td><td>${a.area}</td>
+  <tr><td>${a.bin}</td><td>${'%03.2f' % a.size}</td><td>${'%05d' % a.rtime}</td>
+      <td>${'%05d' % a.height}</td><td>${'%06.1f' % a.area}</td>
       <td>${'%05d - %05d' % (a.brtime, a.ertime)}</td><td>${'%02.3f' % a.beta}</td>
       <td>${a.type}</td>
       <td>${h.link_to( 'Edit', request.route_url('genaf.assay-action', _query=dict(_method='edit_allele', id=a.id)), **kwargs )}</td>

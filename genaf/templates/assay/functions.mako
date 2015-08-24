@@ -66,7 +66,7 @@ ${selection_bar('assay', others='<button id="add-assay" type="button" class="btn
     ${input_show('Z params:', str(assay.z))}
     ${input_show('RSS:', assay.rss)}
     ${input_show('Score:', assay.score)}
-    ${input_show('QC report:', assay.strings.get('qcreport', ''))}
+##    ${input_show('QC report:', assay.strings.get('qcreport', ''))}
   % endif
     ${button_edit('Edit', request.route_url('genaf.assay-edit', id=assay.id))}
   </fieldset>

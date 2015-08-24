@@ -372,7 +372,7 @@ def process_assays(batch_id, login, comm = None, stage = 'all'):
 
     # binning peaks
     if stage in ['all', 'bin']:
-        stats['binned'] = bin_assays(assay_list, dbh, log, comm)
+        stats['binned'] = bin_assays(assay_list, dbh, log, scanning_parameter, comm)
 
 
     return stats, log

@@ -15,13 +15,13 @@ def index(request):
 
     panel_table = table(class_='table table-condensed table-striped')
     panel_table[ thead()[ tr()[
-                    th(''), th('Panel code'), th('Markers')
+                    th(''), th('Panel code'), th('Ladder'), th('Markers')
                     ] ] ]
     body_table = tbody()
 
     for panel in panels:
         body_table[ tr() [
-                    td(''), td( panel.code ),
+                    td(''), td( panel.code ), td(panel.get_ladder_code()),
                     td( * list(
                         a(href=request.route_url('genaf.marker', id=m.id))[
                             span(class_='badge')[ m.code ] ] for m in panel.get_markers() )

@@ -70,12 +70,4 @@ ek_initlist = [
     (   '@REGION', 'Region name',
         [   ( '', 'Undefined' ),
         ]),
-    (   '@BLOOD-WITHDRAWAL', 'Blood withdrawal method',
-        [   'venous', 'capillary',
-        ]),
-    (   '@BLOOD-STORAGE', 'Blood storage method',
-        [   'blood tube', 'EDTA',
-        ]),
-    (   '@PCR-METHOD', 'PCR detection method',
-        []),
 ]

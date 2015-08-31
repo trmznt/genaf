@@ -15,7 +15,8 @@
 
 <!-- spinner -->
 <div id='spinner' class='spinner' style='display:none;'>
-  <img id='img-spinner' src="${request.static_url('genaf:static/spinner.gif')}" alt='Loading...' />
+  <!-- <img id='img-spinner' src="${request.static_url('genaf:static/spinner.gif')}" alt='Loading...' /> -->
+  <div class="loading"></div>
 </div>
 
 <div id='screen'>
@@ -25,6 +26,7 @@
 ##
 <%def name="stylelink()">
     <link href="${request.static_url('genaf:static/jquery.fileupload/css/jquery.fileupload.css')}" rel="stylesheet" />
+    <link href="${request.static_url('genaf:static/spinner.css')}" rel="stylesheet" />
 </%def>
 ##
 ##
@@ -51,11 +53,12 @@ $(function () {
     });
 
     get_main_panel();
+    show_spinner();
 
 });
 
 function show_spinner() {
-    $('#screen').css({  "display": "block", opacity: 0.05, "width":$(document).width(),"height":$(document).height()});
+    $('#screen').css({  "display": "block", opacity: 0.8, "width":$(document).width(),"height":$(document).height()});
     $('#spinner').show();
 }
 
@@ -64,6 +67,9 @@ function hide_spinner() {
     $('#screen').hide();
 }
     
+function hide_spinne() {
+    
+}
 
 function get_main_panel() {
     $.getJSON( "${request.route_url('genaf.uploadmgr-mainpanel', id=sesskey)}",

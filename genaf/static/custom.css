@@ -7,16 +7,20 @@ body {
     margin-bottom: 5px;
 }
 
+.navbar-static-top {
+    z-index: 9000;
+}
+
 .progressbar-container {
     position: fixed;
     top: 50%;
     left: 50%;
-    margin-left: -200px; /* half width of the spinner gif */
-    margin-top: -72px; /* half height of the spinner gif */
+    margin-left: -150px; /* half width of the spinner gif */
+    margin-top: -128px; /* half height of the spinner gif */
     text-align:center;
-    z-index:1234;
+    z-index:9999;
     overflow: auto;
-    width: 400px; /* width of the spinner gif */
+    width: 300px; /* width of the spinner gif */
     height: 10px; /*hight of the spinner gif +2px to fix IE8 issue */
 }
 
@@ -24,13 +28,13 @@ body {
     position: fixed;
     top: 50%;
     left: 50%;
-    margin-left: -32px; /* half width of the spinner gif */
-    margin-top: -32px; /* half height of the spinner gif */
+    margin-left: -150px; /* half width of the spinner gif */
+    margin-top: -150px; /* half height of the spinner gif */
     text-align:center;
-    z-index:1234;
+    z-index:9999;
     overflow: auto;
-    width: 64px; /* width of the spinner gif */
-    height: 66px; /*hight of the spinner gif +2px to fix IE8 issue */
+    width: 300px; /* 64px; /* width of the spinner gif */
+    height: 300px; /* 66px; /*hight of the spinner gif +2px to fix IE8 issue */
 }
 
 footer {
@@ -44,6 +48,7 @@ footer {
     left: 0;
     top: 0;
     background: #000;
+    z-index: 9998;
 }
 
 

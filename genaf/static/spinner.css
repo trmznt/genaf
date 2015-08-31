@@ -5,8 +5,8 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-left-color: rgba(255, 255, 255, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.005);
+  border-left-color: rgba(255, 255, 255, 0.005);
   -webkit-border-radius: 999px;
   -moz-border-radius: 999px;
   border-radius: 999px;
@@ -26,7 +26,7 @@
 .loading::before {
   border-left-color: rgba(255, 255, 128, 0.8);
   content: "";
-  margin: -46px 0 0 -46px;
+  margin: -44px 0 0 -44px;
   height: 88px;
   width: 88px;
   -webkit-animation: animation-rotate 1000ms linear infinite;
@@ -38,7 +38,7 @@
 .loading::after {
   border-left-color: rgba(128, 128, 255, 0.8);
   content: "";
-  margin: -58px 0 0 -58px;
+  margin: -56px 0 0 -56px;
   height: 112px;
   width: 112px;
   -webkit-animation: animation-rotate 2000ms linear infinite;

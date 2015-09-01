@@ -3,6 +3,7 @@ from rhombus.lib.utils import cout, cerr
 from rhombus.models.ek import EK
 from rhombus.models.user import Group
 from genaf.models.ms import Marker, Panel
+from genaf.models.sample import Batch
 
 def setup(session):
     """ populate database with essential GenAF data, mostly taken from FATools constants """
@@ -32,6 +33,13 @@ def setup(session):
     panel = Panel( code = 'undefined', group_id = adm_group.id )
     cerr("INFO - panel 'undefined' created.")
     session.add(panel)
+
+    # create default batch
+    batch = Batch( code = 'default', group_id = adm_group.id, assay_provider_id = adm_group.id,
+                species='X')
+    cerr("INFO - default batch created.")
+    session.add(batch)
+
 
 
 from fatools.lib.const import *

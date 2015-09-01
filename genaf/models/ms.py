@@ -23,7 +23,7 @@ from rhombus.models.user import User, Group
 from rhombus.models.mixin import *
 
 from fatools.lib.fautil.mixin import ( PanelMixIn, AssayMixIn, ChannelMixIn, MarkerMixIn,
-                AlleleSetMixIn, AlleleMixIn, NoteMixIn, AssayNoteMixIn,
+                AlleleSetMixIn, AlleleMixIn, NoteMixIn, AssayNoteMixIn, BinMixIn,
                 ChannelNoteMixIn, AlleleSetNoteMixIn, PanelNoteMixIn, MarkerNoteMixIn )
 
 
@@ -138,8 +138,8 @@ class Marker(BaseMixIn, Base, MarkerMixIn):
     max_size = Column(types.Integer, nullable=False, default=0)
     """ range of allele size for this marker """
 
-    bins = deferred(Column(YAMLCol(2048), nullable=False, default=''))
-    """ sorted known bins for this markers """
+    #bins = deferred(Column(YAMLCol(2048), nullable=False, default=''))
+    #""" sorted known bins for this markers """
     
     related_to_id = Column(types.Integer, ForeignKey('markers.id'),
                           nullable=True)
@@ -191,6 +191,23 @@ class MarkerNote(Base, MarkerNoteMixIn):
     note_id = Column(types.Integer, ForeignKey('notes.id', ondelete='CASCADE'),
                 nullable=False)
 
+
+class Bin(BaseMixIn, Base, BinMixIn):
+
+    __tablename__ = 'bins'
+    batch_id = Column(types.Integer, ForeignKey('batches.id'), nullable=False)
+    marker_id = Column(types.Integer, ForeignKey('markers.id'), nullable=False)
+    z = deferred(Column(NPArray))
+
+    related_to_id = Column(types.Integer, ForeignKey('bins.id'), nullable=True)
+
+    bins = deferred(Column(YAMLCol(2048), nullable=False, default=''))
+    """ sorted known bins for this markers """
+
+    meta = deferred(Column(YAMLCol(4096), nullable=False, default=''))
+    """ metadata for this bin """
+
+    remark = deferred(Column(types.String(512)))
 
 
 class Assay(BaseMixIn, Base, AssayMixIn):

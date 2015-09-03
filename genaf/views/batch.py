@@ -49,32 +49,91 @@ def view(request):
 def edit(request):
     """ edit batch information """
     
-    objid = int(request.matchdict.get('id'))
-    if objid < 0:
+    batch_id = int(request.matchdict.get('id'))
+    if batch_id < 0:
         return error_page('Please provide batch ID')
 
     dbh = get_dbhandler()
 
-    if objid == 0:
-        batch = dbh.new_batch()
-        batch.id = 0
+    if request.method == 'GET':
+        # return a form
 
-    else:
-        batch = dbh.get_batch_by_id(objid)
-        if not batch:
-            return error_page('Batch with ID: %d does not exist!' % objid)
+        if batch_id == 0:
+            batch = dbh.new_batch()
+            batch.id = 0
 
-        # check permission
-        if not request.user.in_group( batch.group ):
-            return error_page('Current user is not part of Batch group')
+        else:
+            batch = dbh.get_batch_by_id(objid)
+            if not batch:
+                return error_page('Batch with ID: %d does not exist!' % objid)
 
-    editform = edit_form(batch, dbh, request)
+            # check permission
+            if not request.user.in_group( batch.group ):
+                return error_page('Current user is not part of Batch group')
 
-    return render_to_response( "genaf:templates/batch/edit.mako",
-        {   'batch': batch,
-            'editform': editform,
-        },
-        request = request )
+        editform = edit_form(batch, dbh, request)
+
+        return render_to_response( "genaf:templates/batch/edit.mako",
+            {   'batch': batch,
+                'editform': editform,
+            },
+            request = request )
+
+    elif request.POST:
+
+        batch_d = parse_form( request.POST )
+        if batch_d['id'] != batch_id:
+            return error_page("Inconsistent data")
+
+        try:
+            if batch_id == 0:
+                batch = dbh.new_batch()
+                dbh.session().add( batch )
+                batch.update( batch_d )
+                dbh.session().flush()
+                request.session.flash(
+                    (   'success',
+                        'Batch [%s] has been created' % batch.code )
+                )
+
+            else:
+                batch = dbh.get_batch_by_id( batch_id )
+                # check security
+                if not request.user.in_group( batch.group ):
+                    return error_page(request,
+                        'User is not a member of batch primary group!')
+                batch.update( batch_d )
+                dbh.session().flush()
+                request.session.flash(
+                    (   'success',
+                        'Batch [%s] has been updated' % batch.code )
+                )
+        except RuntimeError as err:
+            return error_page(request, str(err))
+        except sqlalchemy.exc.IntegrityError as err:
+            dbh.session().rollback()
+            detail = err.args[0]
+            if not batch.id: batch.id = batch_id
+            editform = edit_form(batch, dbh, request)
+            if 'UNIQUE' in detail:
+                field = detail.split()[-1]
+                print(field)
+                if field == 'batches.code':
+                    editform.get('genaf-batch_code').add_error('The batch code: %s is '
+                        'already being used. Please use other batch code!'
+                        % batch.code)
+                return render_to_response( "genaf:templates/batch/edit.mako",
+                    {   'batch': batch,
+                        'editform': editform,
+                    },
+                    request = request )
+            return error_page(request, str(dir(err)))
+
+        return HTTPFound(location = request.route_url('genaf.batch-view', id = batch.id))
+
+    raise RuntimeError
+    return error_page(request, "Unknown HTTP method!")
+
 
 
 @roles( PUBLIC )
@@ -144,7 +203,7 @@ def save(request):
 def edit_form(batch, dbh, request):
 
     eform = form( name='genaf/batch', method=POST,
-                action=request.route_url('genaf.batch-save', id=batch.id))
+                action=request.route_url('genaf.batch-edit', id=batch.id))
     eform.add(
         fieldset(
             input_hidden(name='genaf-batch_id', value=batch.id),
@@ -171,9 +230,9 @@ def parse_form( f ):
     d = dict()
     d['id'] = int(f['genaf-batch_id'])
     d['code'] = f['genaf-batch_code']
-    d['group_id'] = f['genaf-batch_group_id']
-    d['assay_provider_id'] = f['genaf-batch_assay_provider_id']
-    d['species_id'] = f['genaf-batch_species_id']
+    d['group_id'] = int(f['genaf-batch_group_id'])
+    d['assay_provider_id'] = int(f['genaf-batch_assay_provider_id'])
+    d['species_id'] = int(f['genaf-batch_species_id'])
     d['description'] = f['genaf-batch_desc']
     d['remark'] = f['genaf-batch_remark']
 

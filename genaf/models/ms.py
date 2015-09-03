@@ -182,6 +182,12 @@ class Marker(BaseMixIn, Base, MarkerMixIn):
         return q.one()
 
 
+    def get_bin(self, batch):
+        return Bin.search(batch_id = batch.id, marker_id = self.id,
+                    session = object_session(self)) 
+
+
+
 class MarkerNote(Base, MarkerNoteMixIn):
 
     __tablename__ = 'markernotes'
@@ -190,6 +196,7 @@ class MarkerNote(Base, MarkerNoteMixIn):
                 nullable=False)
     note_id = Column(types.Integer, ForeignKey('notes.id', ondelete='CASCADE'),
                 nullable=False)
+
 
 
 class Bin(BaseMixIn, Base, BinMixIn):
@@ -208,6 +215,12 @@ class Bin(BaseMixIn, Base, BinMixIn):
     """ metadata for this bin """
 
     remark = deferred(Column(types.String(512)))
+
+
+    def search(self, batch_id, marker_id, session):
+        q = Bin.query(session).filter(Bin.batch_id == batch_id, Bin.marker_id == marker_id)
+        return q.one()
+
 
 
 class Assay(BaseMixIn, Base, AssayMixIn):

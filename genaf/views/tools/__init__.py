@@ -2,20 +2,25 @@
 from genaf.views import *
 
 
-def basic_query_form():
+def basic_query_form(request):
+
+    dbh = get_dbhandler()
 
     qform = form(name='queryform', action='#')
 
     # samples
+    batches = list( dbh.get_batches(groups = request.user.groups) )
     qform.add(
         fieldset()[
-            input_text(name='batches', label='Batch code(s)'),
+            input_select(name='batches', label='Batch code(s)', multiple = True,
+                    options = [ (b.id, b.code) for b in batches ]),
             input_text(name='queryset', label='Query set'),
         ]
     )
 
+    qform.get('queryset').add_error('Optional, can be left blank')
+
     # markers
-    dbh = get_dbhandler()
     markers = list( dbh.get_markers() )
     markers.sort( key = lambda x: x.label )
     qform.add(
@@ -41,6 +46,10 @@ def basic_query_form():
         ]
     )
 
+    qform.add(
+        fieldset()[ submit_bar('Execute', '_exec') ]
+    )
+
     return qform
 
 
@@ -50,7 +59,7 @@ def process_request( request, header_text, button_text, callback ):
 
         return render_to_response('genaf:templates/tools/index.mako',
             {   'header_text': header_text,
-                'queryform': basic_query_form(),
+                'queryform': basic_query_form(request),
             }, request = request)
 
 

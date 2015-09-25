@@ -562,6 +562,11 @@ def save(request):
     if not uploader_session.is_authorized( request.user.login ):
         raise error_page('You are not authorized to view this session')
 
+    if False:
+        # set the above condition to True for non-multiprocess flow
+        result = uploader_session.upload_payload()
+        assay_no, err_log = result
+
     if sesskey in commit_procs:
 
         # check whether we have done or not
@@ -795,7 +800,7 @@ def checkinfofile(request):
 
 
 @roles( PUBLIC )
-def commitpayload_XXX(request):
+def commitpayload(request):
 
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
@@ -827,7 +832,7 @@ def commitpayload_XXX(request):
 
 
 @roles( PUBLIC )
-def commitpayload(request):
+def commitpayload_XXX(request):
 
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )

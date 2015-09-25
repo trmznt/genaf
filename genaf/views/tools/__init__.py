@@ -51,6 +51,34 @@ def basic_query_form(request):
     )
 
     qform.add(
+        fieldset()[
+
+            input_select(name='sample_option', label='Sample option', value='AP',
+                    options = [ ('AA', 'All available samples'),
+                                ('AP', 'All population (day-0) samples'),
+                                ('AS', 'Strict population samples'),
+                                ('PS', 'Strict population samples for each differentiation '),
+                                ('AU', 'Unique population samples'),
+                                ('PU', 'Unique population samples for each differentiation'),
+                                ('NP', 'All non-population (e.g. recurrent) samples') ]
+                    ),
+            input_select(name='spatial_differentiation', label='Spatial differentiation', value=-1,
+                    options = [ (-1, 'No spatial differentiation'),
+                                (0, 'Country level'),
+                                (1, '1st Administration level'),
+                                (2, '2nd Administration level'),
+                                (3, '3rd Administration level'),
+                                (4, '4th Administration level') ]
+                    ),
+            input_select(name='temporal_differentiation', label='Temporal differentiation', value=0,
+                    options = [ (0, 'No temporal differentiation'),
+                                (1, 'Yearly'),
+                                (2, 'Quaterly')]
+                    ),
+        ]
+    )
+
+    qform.add(
         fieldset()[ submit_bar('Execute', '_exec') ]
     )
 

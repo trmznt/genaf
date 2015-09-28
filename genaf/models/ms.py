@@ -216,6 +216,9 @@ class Bin(BaseMixIn, Base, BinMixIn):
 
     remark = deferred(Column(types.String(512)))
 
+    __table_args__ = (  UniqueConstraint( 'batch_id', 'marker_id' ), )
+
+
 
     def search(self, batch_id, marker_id, session):
         q = Bin.query(session).filter(Bin.batch_id == batch_id, Bin.marker_id == marker_id)

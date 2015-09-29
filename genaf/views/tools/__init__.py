@@ -35,7 +35,7 @@ def basic_query_form(request):
 
     # allele & marker filtering
     qform.add(
-        fieldset()[
+        fieldset(name='filter_fields')[
             input_text(name='allele_abs_treshhold', label='Allele absolute threshold',
                         value=100, size=2,
                         info = "The minimum absolute rfu value for each peak to be considered as a real peak"),
@@ -51,16 +51,14 @@ def basic_query_form(request):
     )
 
     qform.add(
-        fieldset()[
+        fieldset(name='differentiation_fields')[
 
             input_select(name='sample_option', label='Sample option', value='AP',
                     options = [ ('AA', 'All available samples'),
-                                ('AP', 'All population (day-0) samples'),
-                                ('AS', 'Strict population samples'),
-                                ('PS', 'Strict population samples for each differentiation '),
-                                ('AU', 'Unique population samples'),
-                                ('PU', 'Unique population samples for each differentiation'),
-                                ('NP', 'All non-population (e.g. recurrent) samples') ]
+                                ('AS', 'Strict samples'),
+                                ('PS', 'Strict samples for each differentiation '),
+                                ('AU', 'Unique samples'),
+                                ('PU', 'Unique samples for each differentiation'), ]
                     ),
             input_select(name='spatial_differentiation', label='Spatial differentiation', value=-1,
                     options = [ (-1, 'No spatial differentiation'),
@@ -85,7 +83,7 @@ def basic_query_form(request):
     return qform
 
 
-def jscode():
+def jscode(request):
 
     return '\n'.join([
             "$('#batches').select2();",
@@ -99,6 +97,7 @@ def jscode():
                 "$('#simple_query').show(); });",
 
         ])
+
 
 def yaml_query_form(request):
 
@@ -121,12 +120,28 @@ def process_request( request, header_text, button_text, callback ):
 
     if not request.GET.get('_method', None) in ['_exec', '_yamlexec']:
 
+        queryform, javacode = create_form( request )
+
         return render_to_response('genaf:templates/tools/index.mako',
             {   'header_text': header_text,
-                'queryform': basic_query_form(request),
-                'code': jscode(),
+                'queryform': queryform,
+                'code': javacode,
                 'yamlform': yaml_query_form(request),
             }, request = request)
 
 
-        
+def create_form( request ):
+    """ return the form and javascript code """
+    return _FORM_FACTORY_(request)
+
+
+def set_form_factory( factory_func ):
+    """ factory_func needs to return a tuple of (form, jscode) """
+    global _FORM_FACTORY_
+    _FORM_FACTORY_ = factory_func
+
+def genaf_form_factory( request ):
+    return ( basic_query_form(request), jscode(request) )
+
+_FORM_FACTORY_ = genaf_form_factory
+

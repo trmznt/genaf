@@ -1,5 +1,6 @@
 
 from genaf.views import *
+from genaf.lib.query import Query, load_params, load_yaml
 
 
 def basic_query_form(request):
@@ -12,7 +13,7 @@ def basic_query_form(request):
     batches = list( dbh.get_batches(groups = request.user.groups) )
     qform.add(
         fieldset(name='simple_query')[
-            input_select(name='batches', label='Batch code(s)', multiple = True,
+            input_select(name='batch_ids', label='Batch code(s)', multiple = True,
                     options = [ (b.id, b.code) for b in batches ],
                     extra_control = '<a id="show_syntax_query">Use query set</a>'),
         ],
@@ -27,7 +28,7 @@ def basic_query_form(request):
     markers.sort( key = lambda x: x.label )
     qform.add(
         fieldset()[
-            input_select(name='markers', label='Marker(s)', multiple = True,
+            input_select(name='marker_ids', label='Marker(s)', multiple = True,
                     options = [ (m.id, m.label) for m in markers ],
                     extra_control = '<a id="markers_clear">Clear</a>'),
         ]
@@ -86,9 +87,9 @@ def basic_query_form(request):
 def jscode(request):
 
     return '\n'.join([
-            "$('#batches').select2();",
-            "$('#markers').select2();",
-            "$('#markers_clear').on('click', function() { $('#markers').val(null).trigger('change'); });",
+            "$('#batch_ids').select2();",
+            "$('#marker_ids').select2();",
+            "$('#markers_clear').on('click', function() { $('#marker_ids').val(null).trigger('change'); });",
             "$('#show_syntax_query').on('click', function() {"
                 "$('#syntax_query').show(); $('#queryset').prop('disabled', false); "
                 "$('#simple_query').hide(); });",
@@ -129,6 +130,18 @@ def process_request( request, header_text, button_text, callback ):
                 'yamlform': yaml_query_form(request),
             }, request = request)
 
+    # process request
+    if request.GET.get('_method', None) == '_exec':
+        params = load_params(form2dict( request ))
+
+    elif request.GET.get('_method', None) == '_yamlexec':
+        params = load_yaml( request.params.get('yamlquery') )
+
+    q = Query( params, get_dbhandler() )
+
+    return callback(q)
+
+
 
 def create_form( request ):
     """ return the form and javascript code """
@@ -144,4 +157,42 @@ def genaf_form_factory( request ):
     return ( basic_query_form(request), jscode(request) )
 
 _FORM_FACTORY_ = genaf_form_factory
+
+
+def form2dict( request ):
+    d = {}
+    p = request.params
+
+    if p.get('queryset', None):
+        query_text = p.get('queryset')
+        if '$' in query_text:
+            raise RuntimeError('ERR - sample differentiation is not supported yet')
+        else:
+            selector_d = { 'all': [ {'query': p.get('queryset') } ] }
+
+    elif p.getall('batch_ids'):
+        selector_d = { 'all': [] }
+        batch_ids = p.getall('batch_ids')
+        for batch_id in batch_ids:
+            selector_d['all'].append( { 'batch_id': int(batch_id) })
+    else:
+        raise RuntimeError('WHOA, need to have either batch code(s) or queryset')
+
+    filter_d = {}
+    filter_d['marker_ids'] = [ int(x) for x in p.getall('marker_ids') ]
+    filter_d['abs_threshold'] = int(p.get('allele_abs_treshhold'))
+    filter_d['rel_threshold'] = float( p.get('allele_rel_threshold'))
+    filter_d['rel_cutoff'] = float( p.get('allele_rel_cutoff'))
+    filter_d['sample_qual_threshold'] = float( p.get('sample_qual_threshold'))
+    filter_d['marker_qual_threshold'] = float( p.get('marker_qual_threshold'))
+    filter_d['sample_option'] = p.get('sample_option')
+
+    d['selector'] = selector_d
+    d['filter'] = filter_d
+
+    d['differentiator'] = {}
+
+    return d
+        
+
 

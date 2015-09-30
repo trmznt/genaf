@@ -63,7 +63,7 @@ def edit(request):
             batch.id = 0
 
         else:
-            batch = dbh.get_batch_by_id(objid)
+            batch = dbh.get_batch_by_id(batch_id)
             if not batch:
                 return error_page('Batch with ID: %d does not exist!' % objid)
 

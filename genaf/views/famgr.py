@@ -7,13 +7,14 @@ log = logging.getLogger(__name__)
 from rhombus.lib.utils import get_dbhandler, get_dbhandler_notsafe, silent_rmdir
 
 from genaf.views import *
-from genaf.lib.procmgmt import subproc, getproc, getmanager
+from genaf.lib.procmgmt import subproc, getproc, getmanager, estimate_time
 
 from fatools.lib import params
 from fatools.lib.const import assaystatus
 
 from collections import defaultdict
 import threading, transaction
+from time import time
 
 TEMP_ROOTDIR = 'famgr'
 
@@ -185,6 +186,10 @@ def process(request):
         if not request.user.in_group( batch.group ):
             error_page('You are not authorized to view this batch!')
 
+        if False:
+            # set the above to True for single-process debugging purpose
+            process_assays(batch_id, request.user.login, None)
+
         with glock:
 
             ns = getmanager().Namespace()
@@ -193,7 +198,7 @@ def process(request):
                     mp_process_assays, request.registry.settings,
                     batch_id, request.user.login, ns )
             local_procs[batch_id] = (procid, request.user.login, batch_code, ns)
-
+ 
         msg = div()[ p('Starting assay processing task') ]
         seconds = 10
                 
@@ -207,7 +212,9 @@ def process(request):
 
 def scan_assays(assay_list, dbh, log, scanning_parameter, comm):
 
-    success = failed = skipped = 0
+    success = failed = skipped = subtotal = 0
+    total = len(assay_list)
+    start_time = time()
     for (assay_id, sample_code) in assay_list:
         with transaction.manager:
             assay = dbh.get_assay_by_id(assay_id)
@@ -221,11 +228,60 @@ def scan_assays(assay_list, dbh, log, scanning_parameter, comm):
                 log.append('ERR scan -- assay %s | %s - error: %s' %
                     ( assay.filename, sample_code, str(err) )
                 )
+                failed += 1
+        subtotal += 1
         if comm:
-            comm.output = 'scanned: %s | failed: %s | skipped: %s' % (success, failed, skipped)
+            comm.output = (
+                'scanned: %d | failed: %d | skipped: %d | remaining: %d | estimated: %s'
+                % ( success, failed, skipped, total-subtotal,
+                    estimate_time(start_time, time(), success, total-subtotal)) )
+
+    if comm:
+        comm.output = 'scanned: %d | failed: %d | skipped: %d' % (
+                    success, failed, skipped)
 
     return (success, failed, skipped)
 
+
+def align_assays(assay_list, dbh, log, scanning_parameter, comm):
+
+    success = failed = skipped = subtotal = 0
+    total = len(assay_list)
+    start_time = time()
+    for (assay_id, sample_code) in assay_list:
+        with transaction.manager:
+            assay = dbh.get_assay_by_id(assay_id)
+            try:
+                if assay.status == assaystatus.preannotated:
+                    retval = assay.alignladder(excluded_peaks = None)
+                    (dpscore, rss, peaks_no, ladders_no, qcscore, remarks, method) = retval
+                    if qcscore < 0.9:
+                        log.append('WARN alignladder - '
+                            'low qcscore %3.2f %4.2f %5.2f %d/%d %s for %s | %s'
+                                % ( qcscore, dpscore, rss, peaks_no, ladders_no,
+                                    method, sample_code, assay.filename) )
+
+                    success += 1
+                else:
+                    skipped += 1
+
+            except RuntimeError as err:
+                log.append('ERR alignladder - assay %s | %s - error: %s' %
+                    ( assay.filename, sample_code, str(err) ) )
+                failed += 1
+        subtotal += 1
+
+        if comm and subtotal % 5 == 0:
+            comm.output = (
+                'aligned: %d | failed: %d | skipped: %d | remaining: %d | estimated: %s'
+                % ( success, failed, skipped, total-subtotal,
+                    estimate_time(start_time, time(), success, total-subtotal)) )
+
+    if comm:
+        comm.output = 'aligned: %d | failed: %d | skipped: %d' % (
+                    success, failed, skipped)
+
+    return (success, failed, skipped)
 
 
 def bin_assays(assay_list, dbh, log, scanning_parameter, comm):
@@ -265,8 +321,11 @@ def process_assays(batch_id, login, comm = None, stage = 'all'):
     scanning_parameter = params.Params()
 
     # scan peaks
-    success = failed = 0
     if stage in ['all', 'scan']:
+        stats['scan'] = scan_assays( assay_list, dbh, log, scanning_parameter, comm )
+
+    #success = failed = 0
+    if False: #stage in ['all', 'scan']:
         for (assay_id, sample_code) in assay_list:
             with transaction.manager:
                 assay = dbh.get_assay_by_id(assay_id)
@@ -288,7 +347,7 @@ def process_assays(batch_id, login, comm = None, stage = 'all'):
         if comm:
             comm.output = 'Scanned %d successful assay(s), %d failed assay(s)' % (
                 success, failed )
-        stats['scan'] = (success, failed)
+        stats['scanned'] = (success, failed)
 
     # preannotated
     success = failed = 0
@@ -314,6 +373,9 @@ def process_assays(batch_id, login, comm = None, stage = 'all'):
         comm.output = 'Preannotated %d successful assay(s), %d failed assay(s)' % (
             success, failed )
     stats['preannotate'] = (success, failed)
+
+    if stage in [ 'all', 'align' ]:
+        stats['aligned'] = align_assays( assay_list, dbh, log, scanning_parameter, comm )
 
     # ladder alignment
     success = failed = 0

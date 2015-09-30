@@ -4,7 +4,7 @@ log = logging.getLogger(__name__)
 
 from concurrent import futures
 from threading import Lock
-import multiprocessing
+import multiprocessing, functools, traceback
 
 from rhombus.lib.utils import random_string, cerr
 
@@ -31,6 +31,21 @@ class ProcUnit(object):
         self.status = 'Q'
         self.output = None
         self.error = None
+        self.result = None
+
+
+def reraise_with_stack(func):
+
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            traceback_str = traceback.format_exc(e)
+            raise StandardError("Error occurred. Original traceback "
+                                "is\n%s\n" % traceback_str)
+
+    return wrapped
 
 
 class ProcQueue(object):
@@ -128,3 +143,23 @@ def getproc( procid ):
 def getmanager():
     return get_queue().manager()
 
+def estimate_time(start_time, current_time, processed, unprocessed):
+    """ return string of '2d 3h 23m' """
+    used_time = current_time - start_time   # in seconds
+    if processed == 0:
+        return 'undetermined'
+    average_time = used_time / processed
+    estimated = average_time * unprocessed
+    print('AVERAGTE_TIME', average_time)
+    print('ESTIMATED_TIME', estimated )
+
+    text = ''
+    if estimated > 86400:
+        text += '%dd ' % int( estimated / 86400 )
+        estimated = estimated % 86400
+    if estimated > 3600:
+        text += '%dh ' % int( estimated / 3600 )
+        estimated = estimated  % 3600
+    text += '%dm' % (int( estimated / 60) + 1)
+
+    return text

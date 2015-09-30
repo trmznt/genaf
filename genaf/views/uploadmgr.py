@@ -8,7 +8,7 @@ from rhombus.views.fso import save_file
 from rhombus.lib.utils import get_dbhandler, get_dbhandler_notsafe, silent_rmdir
 
 from genaf.views import *
-from genaf.lib.procmgmt import subproc, getproc, getmanager
+from genaf.lib.procmgmt import subproc, getproc, getmanager, reraise_with_stack
 
 from fatools.lib.utils import tokenize
 
@@ -580,6 +580,8 @@ def save(request):
                     ]
 
                 result = procunit.result
+                if result is None:
+                    raise procunit.exc
                 if result[1]:
                     msg.add( div()[ p( *result[1] ) ] )
 
@@ -908,7 +910,6 @@ def rpc(request):
     
 
 ## prototype multiprocessing stuff
-
 
 def mp_commit_payload(settings, sesskey, login, ns):
     """ this function will be started in different process, so it must initialize

@@ -174,6 +174,8 @@ class Marker(BaseMixIn, Base, MarkerMixIn):
         """ provide case-insensitive search for marker code """
         if '/' in code:
             species, code = code.split('/')
+            if callable(session):
+                session = session()
             species_id = EK._id(species, dbsession=session)
             q = Marker.query(session).filter( func.lower(Marker.code) == func.lower(code),
                                             Marker.species_id == species_id)

@@ -22,6 +22,7 @@ from rhombus.models.ek import EK
 from rhombus.models.user import User, Group
 from rhombus.models.mixin import *
 
+from fatools.lib.utils import cerr, cout
 from fatools.lib.fautil.mixin import ( PanelMixIn, AssayMixIn, ChannelMixIn, MarkerMixIn,
                 AlleleSetMixIn, AlleleMixIn, NoteMixIn, AssayNoteMixIn, BinMixIn,
                 ChannelNoteMixIn, AlleleSetNoteMixIn, PanelNoteMixIn, MarkerNoteMixIn )
@@ -184,9 +185,32 @@ class Marker(BaseMixIn, Base, MarkerMixIn):
         return q.one()
 
 
+    def new_bin(self, batch):
+
+        bin = Bin()
+        bin.marker_id = self.id
+        bin.batch_id = batch.id
+        object_session(self).add(bin)
+        return bin
+
+
     def get_bin(self, batch):
-        return Bin.search(batch_id = batch.id, marker_id = self.id,
-                    session = object_session(self)) 
+
+        # bins can be in any of these 3:
+        # - hold by respective batch
+        # - hold by bin_batch in the respective batch
+        # - hold by batch 'default'
+
+        session = object_session(self)
+        while True:
+
+            bin = Bin.search(marker_id = self.id, batch_id = batch.id, session = session)
+            if bin is not None:
+                return bin
+
+            batch = batch.bin_batch
+            if batch is None:
+                raise RuntimeError('Could not found bins for marker %s' % self.label)
 
 
 
@@ -221,10 +245,14 @@ class Bin(BaseMixIn, Base, BinMixIn):
     __table_args__ = (  UniqueConstraint( 'batch_id', 'marker_id' ), )
 
 
-
-    def search(self, batch_id, marker_id, session):
-        q = Bin.query(session).filter(Bin.batch_id == batch_id, Bin.marker_id == marker_id)
-        return q.one()
+    @staticmethod
+    def search(batch_id, marker_id, session):
+        try:
+            q = Bin.query(session).filter(Bin.batch_id == batch_id,
+                    Bin.marker_id == marker_id)
+            return q.one()
+        except NoResultFound:
+            return None
 
 
 

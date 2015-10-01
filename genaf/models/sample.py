@@ -150,6 +150,7 @@ class Batch(BaseMixIn, Base, BatchMixIn):
 
     ## relationship
     group = relationship(Group, uselist=False, foreign_keys = group_id)
+    bin_batch = relationship('Batch', uselist=False)
 
     ## other class variable ##
     sample_class = None

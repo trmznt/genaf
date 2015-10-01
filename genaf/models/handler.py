@@ -64,7 +64,7 @@ class DBHandler(rho_handler.DBHandler, base_sqlhandler):
 
         session = self.session()    # GenAF session is a scoped session!
         if type(params.peaktype) in [ list, tuple ]:
-            peaktype_ids = [ EK._id(x, session for x in params.peaktype]
+            peaktype_ids = [ EK._id(x, session) for x in params.peaktype]
             q = q.filter( self.Allele.type_id.in_( peaktype_ids  ) )
         else:
             peaktype_id = EK._id(params.peaktype, session)

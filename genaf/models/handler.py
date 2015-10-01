@@ -15,6 +15,9 @@ class DBHandler(rho_handler.DBHandler, base_sqlhandler):
     Panel = Panel
     Assay = Assay
     Sample = None
+    Channel = Channel
+    AlleleSet = AlleleSet
+    Allele = Allele
 
     def initdb(self, create_table=True, init_data=True):
         super().initdb(create_table, init_data)
@@ -50,10 +53,24 @@ class DBHandler(rho_handler.DBHandler, base_sqlhandler):
         cls.Sample = sample_class
         cls.Batch.set_sample_class( sample_class )
 
+
     @classmethod
     def set_assay_class(cls, assay_class):
         cls.Assay = assay_class
         cls.Sample.set_assay_class( assay_class )
+
+
+    def customize_filter(self, q, params):
+
+        session = self.session()    # GenAF session is a scoped session!
+        if type(params.peaktype) in [ list, tuple ]:
+            peaktype_ids = [ EK._id(x, session for x in params.peaktype]
+            q = q.filter( self.Allele.type_id.in_( peaktype_ids  ) )
+        else:
+            peaktype_id = EK._id(params.peaktype, session)
+            q = q.filter( self.Allele.type_id == peaktype_id )
+
+        return q
 
 
 DBHandler.set_sample_class( Sample )

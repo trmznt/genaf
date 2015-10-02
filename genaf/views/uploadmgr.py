@@ -374,7 +374,9 @@ def get_payload_bar(up_session, request):
     elif not up_session.payload_verified():
         html = row()[
             p()[
-                button(id='verifypayload')[ 'Verify assay file' ],
+                span(id='verifypayload', class_='btn btn-info')[
+                    'Verify assay file'
+                ],
                 ' or ', 
                 span(class_="btn btn-info fileinput-button")[
                     span('Change file'),

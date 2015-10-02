@@ -208,15 +208,18 @@ def edit_form(batch, dbh, request):
         fieldset(
             input_hidden(name='genaf-batch_id', value=batch.id),
             input_text('genaf-batch_code', 'Batch code', value=batch.code),
+            input_text('genaf-batch_desc', 'Description', value=batch.description),
             input_select('genaf-batch_group_id', 'Primary group', value=batch.group_id,
                 options = [ (x[1], x[0]) for x in request.user.groups
                             if not x[0].startswith('_') ]),
             input_select('genaf-batch_assay_provider_id', 'Assay provider group',
                 value = batch.assay_provider_id,
                 options = [ (g.id, g.name) for g in dbh.get_groups() ]),
+            input_select('genaf-batch_bin_batch_id', 'Batch for bins setting',
+                value = batch.bin_batch_id,
+                options = [ (b.id, b.code) for b in dbh.get_batches(None) ]),
             input_select_ek('genaf-batch_species_id', 'Species', batch.species_id,
                     dbh.get_ekey('@SPECIES')),
-            input_textarea('genaf-batch_desc', 'Description', value=batch.description),
             input_textarea('genaf-batch_remark', 'Remarks', value=batch.remark),
             submit_bar(),
         )
@@ -232,6 +235,7 @@ def parse_form( f ):
     d['code'] = f['genaf-batch_code']
     d['group_id'] = int(f['genaf-batch_group_id'])
     d['assay_provider_id'] = int(f['genaf-batch_assay_provider_id'])
+    d['bin_batch_id'] = int(f['genaf-batch_bin_batch_id'])
     d['species_id'] = int(f['genaf-batch_species_id'])
     d['description'] = f['genaf-batch_desc']
     d['remark'] = f['genaf-batch_remark']

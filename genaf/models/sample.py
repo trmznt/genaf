@@ -138,8 +138,8 @@ class Batch(BaseMixIn, Base, BatchMixIn):
     code = Column(types.String(16), nullable=False, unique=True)
     #assay_provider = Column(types.String(32), nullable=False, default='')
     assay_provider_id = Column(types.Integer, ForeignKey('groups.id'), nullable=False)
-    description = Column(types.String(1024), nullable=False, default='')
-    remark = deferred(Column(types.String(1024), nullable=True))
+    description = Column(types.String(256), nullable=False, default='')
+    remark = deferred(Column(types.String(2048), nullable=False, default=''))
     data = deferred(Column(YAMLCol(4096), nullable=False, default=''))
     species_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
     species = EK.proxy('species_id', '@SPECIES')
@@ -169,6 +169,8 @@ class Batch(BaseMixIn, Base, BatchMixIn):
                 self.species_id = obj['species_id']
             if 'data' in obj:
                 self.data = obj['data']
+            if 'bin_batch_id' in obj:
+                self.bin_batch_id = obj['bin_batch_id']
 
 
     def add_sample(self, sample_code):
@@ -266,11 +268,13 @@ class Sample(BaseMixIn, Base, SampleMixIn):
                 nullable=False)
     batch = relationship(Batch, uselist=False,
                 backref=backref('samples', lazy='dynamic', passive_deletes=True))
-    int1 = Column(types.Integer, nullable=False, default=0)        # custom usage
-    int2 = Column(types.Integer, nullable=False, default=0)        # custom usage
+    int1 = Column(types.Integer, nullable=False, default=0)         # custom usage
+    int2 = Column(types.Integer, nullable=False, default=0)         # custom usage
+    #int3 = Column(types.Integer, nullable=False, default=0)         # custom usage
     string1 = Column(types.String(16), nullable=False, default='')  # custom usage
     string2 = Column(types.String(16), nullable=False, default='')  # custom usage
-    remark = deferred(Column(types.String(1024), nullable=True))
+    #string3 = Column(types.String(16), nullable=False, default='')  # custom usage
+    remark = deferred(Column(types.String(1024), nullable=False, default=''))
 
     ## GenAF custom scheme
 
@@ -307,7 +311,7 @@ class Sample(BaseMixIn, Base, SampleMixIn):
     altitude = Column(types.Float, nullable=False, default=0)
     """ exact altitute of the sample """
 
-    comments = deferred( Column(types.Text(), nullable=False, default='') )
+    comments = deferred( Column(types.String(256), nullable=False, default='') )
 
     trashed = Column(types.Boolean, nullable=False, default=False)
     """ whether this sample has been marked as deleted """
@@ -361,10 +365,14 @@ class Sample(BaseMixIn, Base, SampleMixIn):
                 self.int1 = obj['int1']
             if 'int2' in obj:
                 self.int2 = obj['int2']
+            if 'int3' in obj:
+                self.int3 = obj['int3']
             if 'string1' in obj:
                 self.string1 = obj['string1']
             if 'string2' in obj:
                 self.string2 = obj['string2']
+            if 'string3' in obj:
+                self.string3 = obj['string3']
 
         else:
 

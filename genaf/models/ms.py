@@ -138,9 +138,6 @@ class Marker(BaseMixIn, Base, MarkerMixIn):
     min_size = Column(types.Integer, nullable=False, default=0)
     max_size = Column(types.Integer, nullable=False, default=0)
     """ range of allele size for this marker """
-
-    #bins = deferred(Column(YAMLCol(2048), nullable=False, default=''))
-    #""" sorted known bins for this markers """
     
     related_to_id = Column(types.Integer, ForeignKey('markers.id'),
                           nullable=True)

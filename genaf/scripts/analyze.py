@@ -3,7 +3,7 @@
 import transaction
 
 from rhombus.lib.utils import cout, cerr, cexit
-from rhombus.scripts.dbmgr import get_dbhandler
+from rhombus.scripts.rbmgr import get_dbhandler
 from rhombus.scripts import setup_settings
 
 from fatools.scripts.analyze import ( init_argparser as fatools_init_argparser,

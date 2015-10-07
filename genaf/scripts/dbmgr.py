@@ -3,11 +3,9 @@
 
 import sys, transaction
 
-from rhombus.lib.utils import cout, cerr, cexit
-from rhombus.scripts.dbmgr import ( init_argparser as rhombus_init_argparser,
-                                    do_dbmgr as rhombus_do_dbmgr,
-                                    get_dbhandler)
+from rhombus.lib.utils import cout, cerr, cexit, get_dbhandler
 from rhombus.scripts import setup_settings
+from rhombus.scripts.rbmgr import db_argparser
 from fatools.scripts.dbmgr import ( init_argparser as fatools_init_argparser,
                                     do_dbmgr as fatools_do_dbmgr )
 
@@ -17,14 +15,12 @@ def init_argparser( parser = None ):
 
     if parser is None:
         import argparse
-        p = argparse.ArgumentParser('dbmgr - fatools', conflict_handler='resolve')
+        p = argparse.ArgumentParser('dbmgr [genaf]', conflict_handler='resolve')
     else:
         p = parser
 
     # update our argparser
-    cerr('combining argparser')
-    p = fatools_init_argparser( p )
-    p = rhombus_init_argparser( p )
+    p = fatools_init_argparser( db_argparser(p) )
 
     # provide our entry here
     return p
@@ -36,10 +32,7 @@ def main(args):
 
     settings = setup_settings( args )
 
-    if any( (args.exportuserclass, args.exportgroup, args.exportenumkey) ):
-        do_dbmgr( args, settings )
-
-    elif not args.rollback and not args.test and (args.commit or args.initdb):
+    if not args.rollback and not args.test and args.commit:
         with transaction.manager:
             do_dbmgr( args, settings )
             cerr('** COMMIT database **')
@@ -59,7 +52,6 @@ def do_dbmgr(args, settings, dbh=None):
         dbh = get_dbhandler(settings, initial = args.initdb)
     print(dbh)
 
-    if not rhombus_do_dbmgr(args, settings, dbh):
-        fatools_do_dbmgr(args, dbh, warning=False)
+    fatools_do_dbmgr(args, dbh, warning=False)
 
 

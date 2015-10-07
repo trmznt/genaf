@@ -43,7 +43,7 @@ def row2sample(r):
         location = (    r.get('COUNTRY', '').strip(),
                         r.get('ADMINL1','').strip(), r.get('ADMINL2','').strip(),
                         r.get('ADMINL3','').strip(), r.get('ADMINL4','').strip() ),
-        remark = r.get('REMARK', None),
+        remark = r.get('REMARK', ''),
         int1 = int(r.get('INT1','') or 0),
         int2 = int(r.get('INT2','') or 0),
         string1 = r.get('STRING1', '').strip(),

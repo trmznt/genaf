@@ -270,10 +270,10 @@ class Sample(BaseMixIn, Base, SampleMixIn):
                 backref=backref('samples', lazy='dynamic', passive_deletes=True))
     int1 = Column(types.Integer, nullable=False, default=0)         # custom usage
     int2 = Column(types.Integer, nullable=False, default=0)         # custom usage
-    #int3 = Column(types.Integer, nullable=False, default=0)         # custom usage
+    int3 = Column(types.Integer, nullable=False, default=0)         # custom usage
     string1 = Column(types.String(16), nullable=False, default='')  # custom usage
     string2 = Column(types.String(16), nullable=False, default='')  # custom usage
-    #string3 = Column(types.String(16), nullable=False, default='')  # custom usage
+    string3 = Column(types.String(16), nullable=False, default='')  # custom usage
     remark = deferred(Column(types.String(1024), nullable=False, default=''))
 
     ## GenAF custom scheme
@@ -403,7 +403,47 @@ class SampleNote(Base, SampleNoteMixIn):
     note_id = Column(types.Integer, ForeignKey('notes.id', ondelete='CASCADE'),
                 nullable=False)
 
+class SampleIntData(Base):
 
+    __tablename__ = 'sampleints'
+    id = Column(types.Integer, primary_key=True)
+    sample_id = Column(types.Integer, ForeignKey('samples.id', ondelete='CASCADE'),
+                nullable=False)
+    key_id = Column(types.Integer, ForeignKey('eks.id', ondelete='CASCADE'),
+                nullable=False)
+    key = EK.proxy('key_id', '@EXTFIELD')
+    value = Column(types.Integer, nullable=False)
+
+    __table_args__ = ( UniqueConstraint('sample_id', 'key_id'), {} )
+
+
+class SampleStringData(Base):
+
+    __tablename__ = 'samplestrings'
+    id = Column(types.Integer, primary_key=True)
+    sample_id = Column(types.Integer, ForeignKey('samples.id', ondelete='CASCADE'),
+                nullable=False)
+    key_id = Column(types.Integer, ForeignKey('eks.id', ondelete='CASCADE'),
+                nullable=False)
+    key = EK.proxy('key_id', '@EXTFIELD')
+    value = Column(types.String(64), nullable=False)
+
+    __table_args__ = ( UniqueConstraint('sample_id', 'key_id'), {} )
+
+
+class SampleEnumData(Base):
+
+    __tablename__ = 'sampleenums'
+    id = Column(types.Integer, primary_key=True)
+    sample_id = Column(types.Integer, ForeignKey('samples.id', ondelete='CASCADE'),
+                nullable=False)
+    key_id = Column(types.Integer, ForeignKey('eks.id', ondelete='CASCADE'),
+                nullable=False)
+    key = EK.proxy('key_id', '@EXTFIELD')
+    value_id = Column(types.Integer, ForeignKey('eks.id', ondelete='CASCADE'),
+                nullable=False)
+
+    __table_args__ = ( UniqueConstraint('sample_id', 'key_id'), {} )
 
 
 

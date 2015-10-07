@@ -505,6 +505,7 @@ class Allele(BaseMixIn, Base, AlleleMixIn):
 
     abin = Column(types.Integer, nullable=False, default=-1)    # adjusted bin
     asize = Column(types.Float, nullable=False, default=-1)     # adjusted size
+    adelta = Column(types.Float, nullable=False, default=-1)    # adjusted delta, abs(abin - asize)
     aheight = Column(types.Float, nullable=False, default=-1)   # adjusted height
 
     bin = Column(types.Integer, nullable=False, default=-1)
@@ -518,7 +519,7 @@ class Allele(BaseMixIn, Base, AlleleMixIn):
     height = Column(types.Float, nullable=False, default=-1)
     area = Column(types.Float, nullable=False, default=-1)
     rtime = Column(types.Integer, nullable=False, default=-1)
-    delta = Column(types.Float, nullable=False, default=-1)     # bin - actual size 
+    delta = Column(types.Float, nullable=False, default=-1)     # abs(bin - actual size)
     beta = Column(types.Float, nullable=False, default=-1)      # area / height
     theta = Column(types.Float, nullable=False, default=-1)     # height / width
 
@@ -534,6 +535,11 @@ class Allele(BaseMixIn, Base, AlleleMixIn):
     ertime = Column(types.Integer, nullable=False, default=-1)
     wrtime = Column(types.Integer, nullable=False, default=-1)
     srtime = Column(types.Float, nullable=False, default=-1)    # log2( right_area/left_area )
+    w25rtime = Column(types.Float, nullable=False, default=-1)
+    w50rtime = Column(types.Integer, nullable=False, default=-1)
+    w75rtime = Column(types.Integer, nullable=False, default=-1)
+    lshared = Column(types.Boolean, nullable=False, default=False)
+    rshared = Column(types.Boolean, nullable=False, default=False)
     """ begin, end, width, symmetrical retention time of this peak and peak quality"""
 
     qscore = Column(types.Float, nullable=False, default=-1)    # calculated in preannotate()
@@ -544,3 +550,90 @@ class Allele(BaseMixIn, Base, AlleleMixIn):
     def channel(self):
         return self.alleleset.channel
 
+
+# dataset_table manages relationship between dataset and alleleset
+dataset_table = Table('datasets_allelesets', metadata,
+    Column('id', types.Integer, Sequence('datasets_alleleset_seqid', optional=True),
+        primary_key=True),
+    Column('dataset_id', types.Integer, ForeignKey('datasets.id'), nullable=False),
+    Column('alleleset_id', types.Integer, ForeignKey('allelesets.id'), nullable=False),
+    UniqueConstraint( 'dataset_id', 'alleleset_id' ))
+
+dataset_batch_table = Table('datasets_batches', metadata,
+    Column('id', types.Integer, Sequence('datasets_batches_seqid', optional=True),
+        primary_key=True),
+    Column('dataset_id', types.Integer, ForeignKey('datasets.id'), nullable=False),
+    Column('batch_id', types.Integer, ForeignKey('batches.id'), nullable=False),
+    UniqueConstraint( 'dataset_id', 'batch_id' ))
+
+
+@registered
+class DataSet( BaseMixIn, Base ):
+    """ DataSet
+
+        DataSet basically performs versioning (snapshot-ing) on a set of allelesets
+        by capturing the allele values on spesific samples at a specific time. Although
+        optional, it is recommended that a snapshot be associated with a batch to ease
+        the data management and versioning.
+
+    """
+    __tablename__ = 'datasets'
+
+    uid = Column(types.String(8), nullable=False, unique=True)
+    """ universal, stable 8-bytes string-based ID for this dataset """
+
+    group_id = Column(types.Integer, ForeignKey('groups.id'), nullable=False)
+    group = relationship(Group, uselist=False)
+    """ primary group where this dataset belongs """
+
+    acl = Column(types.Integer, nullable=False, default=0)
+    """ access control list for this dataset """
+
+    previous_id = Column(types.Integer, ForeignKey('datasets.id'), nullable=True)
+    """ previous dataset """
+
+    number = Column(types.Integer, nullable=False, default=1)
+    """ order no of this dataset """
+
+    latest = Column(types.Boolean, nullable=False, default=False)
+    """ is this the latest dataset for this chain of set? """
+
+    public = Column(types.Boolean, nullable=False, default=False)
+    """ whether this dataset is publicly available """
+
+    count = Column( types.Integer, nullable=False )
+    """ how many allelesets within this dataset """
+
+    desc = deferred( Column(types.Text(), nullable=False, default='') )
+    """ any description for this dataset """
+
+    remark = deferred( Column(types.Text(), nullable=False, default='') )
+    """ any notes or remark for this dataset """
+
+# dbversion_snapshot_table manages relationship between dbversion and snapshot
+dbversion_dataset_table = Table('dbversions_datasets', metadata,
+    Column('id', types.Integer, Sequence('dbversions_datasets_seqid', optional=True),
+        primary_key=True),
+    Column('dbversion_id', types.Integer, ForeignKey('dbversions.id'), nullable=False),
+    Column('dataset_id', types.Integer, ForeignKey('datasets.id'), nullable=False),
+    UniqueConstraint( 'dbversion_id', 'dataset_id' ))
+
+
+@registered
+class DBVersion( BaseMixIn, Base ):
+    """ DBVersion
+
+        DBVersion performs database versioning on a set of snapshots. Only the DBA
+        or MasterData can create and manage a database version
+    """
+
+    __tablename__ = 'dbversions'
+
+    uid = Column( types.String(8), nullable=False, unique=True )
+    """ universal, stable 8-bytes string-bbased ID for this database version """
+
+    label = Column( types.String(64), nullable=False, unique=True )
+    """ version label """
+
+    desc = Column( types.String(256), nullable=False, default='' )
+    """ simple description of this label """

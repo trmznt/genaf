@@ -78,4 +78,6 @@ ek_initlist = [
     (   '@REGION', 'Region name',
         [   ( '', 'Undefined' ),
         ]),
+    (   '@EXTFIELD', 'Extended fields',
+        []),
 ]

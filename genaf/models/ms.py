@@ -56,7 +56,7 @@ class Panel(BaseMixIn, Base, PanelMixIn):
 
     __tablename__ = 'panels'
 
-    code = Column(types.String(8), nullable=False, unique=True)
+    code = Column(types.String(16), nullable=False, unique=True)
     data = Column(YAMLCol(1024), nullable=False)
     remark = deferred(Column(types.String(1024), nullable=True))
 
@@ -231,7 +231,7 @@ class Bin(BaseMixIn, Base, BinMixIn):
 
     related_to_id = Column(types.Integer, ForeignKey('bins.id'), nullable=True)
 
-    bins = deferred(Column(YAMLCol(2048), nullable=False, default=''))
+    bins = deferred(Column(YAMLCol(8192), nullable=False, default=''))
     """ sorted known bins for this markers """
 
     meta = deferred(Column(YAMLCol(4096), nullable=False, default=''))
@@ -266,6 +266,8 @@ class Assay(BaseMixIn, Base, AssayMixIn):
     ladder_peaks = Column(types.Integer, nullable=False, default=-1)
 
     size_standard = Column(types.String(32), nullable=False, default='')
+    process_time = Column(types.Integer, nullable=False, default=-1)
+    """ processing time for this assay in microseconds """
 
     sample_id = Column(types.Integer, ForeignKey('samples.id', ondelete='CASCADE'),
                         nullable=False)

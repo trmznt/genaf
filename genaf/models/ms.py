@@ -365,7 +365,9 @@ class Channel(BaseMixIn, Base, ChannelMixIn):
     """ raw data from channel as numpy array, can have empty array to accomodate
         allele data from CSV uploading """
 
-    status = Column(types.String(32), nullable=False)
+    #status = Column(types.String(32), nullable=False)
+    status_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
+    status = EK.proxy('status_id', '@CHANNEL-STATUS')
 
     wavelen = Column(types.Integer, nullable=False, default=0)
     median = Column(types.Integer, nullable=False, default=0)

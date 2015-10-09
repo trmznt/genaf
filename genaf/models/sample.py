@@ -150,7 +150,7 @@ class Batch(BaseMixIn, Base, BatchMixIn):
 
     ## relationship
     group = relationship(Group, uselist=False, foreign_keys = group_id)
-    bin_batch = relationship('Batch', uselist=False)
+    #bin_batch = relationship('Batch', uselist=False, foreign_keys = bin_batch_id)
 
     ## other class variable ##
     sample_class = None
@@ -217,6 +217,11 @@ class Batch(BaseMixIn, Base, BatchMixIn):
         session = object_session(self)
         _Sample = self.get_sample_class()
         return [ x[0] for x in session.query(_Sample.id).filter(_Sample.batch_id == self.id) ]
+
+    @property
+    def bin_batch(self):
+        session = object_session(self)
+        return Batch.query(session).filter(Batch.id == self.bin_batch_id).one()
 
 
     @classmethod

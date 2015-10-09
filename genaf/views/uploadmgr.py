@@ -52,8 +52,9 @@ class UploaderSession(object):
         os.makedirs(self.rootpath)
         os.makedirs(self.rootpath + '/tmp')
         os.makedirs(self.rootpath + '/payload')
+        curtime = time.time()
         self.meta = dict(   user = user, batch = batch.code, batch_id = batch.id,
-                            payload = '',
+                            payload = '', ctime = curtime, mtime = curtime,
                             state = 'N' )
         self.save_metadata()
 
@@ -293,6 +294,10 @@ def view(request):
     if not uploader_session.is_authorized( request.user.login ):
         raise error_page('You are not authorized to view this session')
 
+    # if sesskey in commit_procs, just redirect to the running uploading process page
+    if sesskey in commit_procs:
+        return HTTPFound(location = request.route_url('genaf.uploadmgr-save', id=sesskey))
+
     batch = get_dbhandler().get_batch_by_id( uploader_session.meta['batch_id'] )
 
     return render_to_response('genaf:templates/uploadmgr/view2.mako',
@@ -374,12 +379,15 @@ def get_payload_bar(up_session, request):
     elif not up_session.payload_verified():
         html = row()[
             p()[
-                span(id='verifypayload', class_='btn btn-info')[
-                    'Verify assay file'
-                ],
-                ' or ', 
-                span(class_="btn btn-info fileinput-button")[
-                    span('Change file'),
+                #span(id='verifypayload', class_='btn btn-info')[
+                #    'Verify assay file'
+                #],
+                #'to continue', br(),
+                span(id='verifypayload', class_='btn btn-primary')[
+                    'Continue to verify the uploaded archive file'
+                ], br(), 
+                span(class_="btn btn-default fileinput-button")[
+                    span('Change/replace the uploaded archive file'),
                     input(id='dataupload', type='file', name='files[]')
                 ],
             ]
@@ -836,25 +844,6 @@ def commitpayload(request):
 
 
 @roles( PUBLIC )
-def commitpayload_XXX(request):
-
-    sesskey = request.matchdict.get('id')
-    uploader_session = UploaderSession( sesskey = sesskey )
-
-    if not uploader_session.is_authorized( request.user.login ):
-        raise error_page('You are not authorized to view this session')
-
-    if sesskey in commit_procs:
-        return dict(html = str( p('Processing') ), status=True)
-
-    procid = submit( request.user.login, uploader_session.rootpath, mp_commit_payload,
-                        request.registry.settings, sesskey, request.user.login )
-    commit_procs[sesskey] = procid
-
-    return dict(html = str( p('Submitting...') ), status=True)
-
-
-@roles( PUBLIC )
 def verifyassay(request):
 
     sesskey = request.matchdict.get('id')
@@ -903,11 +892,7 @@ def rpc(request):
         uploader_session.save_metadata()
         return dict( html = str(html), code = code )
 
-
-
-
     return dict( html='', code='' )
-
 
     
 

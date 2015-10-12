@@ -321,7 +321,7 @@ class Sample(BaseMixIn, Base, SampleMixIn):
     trashed = Column(types.Boolean, nullable=False, default=False)
     """ whether this sample has been marked as deleted """
 
-    markers = []    ## <- what this is for??
+    markers = []    ## XXX: this is just a placeholder for list of markers for this sample
 
     ## other class variables ##
     assay_class = None
@@ -449,6 +449,4 @@ class SampleEnumData(Base):
                 nullable=False)
 
     __table_args__ = ( UniqueConstraint('sample_id', 'key_id'), {} )
-
-
 

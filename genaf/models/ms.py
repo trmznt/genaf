@@ -326,7 +326,9 @@ class Assay(BaseMixIn, Base, AssayMixIn):
 
     def _get_markers(self):
         session = object_session(self)
-        return AlleleSet.query(session).join(Channel).join(Assay, Channel.assay_id == Assay.id).filter( Assay.id == self.id )
+        #return AlleleSet.query(session).join(Channel).join(Assay, Channel.assay_id == Assay.id).filter( Assay.id == self.id )
+        return Marker.query(session).join(Channel).join(Assay,
+                    Channel.assay_id == Assay.id).filter( Assay.id == self.id )
     markers = property(_get_markers)
 
 
@@ -498,8 +500,10 @@ class Allele(BaseMixIn, Base, AlleleMixIn):
     alleleset_id = Column(types.Integer, ForeignKey('allelesets.id', ondelete='CASCADE'),
                 nullable=False)
     alleleset = relationship(AlleleSet, uselist=False,
-                backref=backref('alleles', cascade='all, delete-orphan',
-                passive_deletes=True))
+                    backref=backref('alleles', cascade='all, delete-orphan',
+                        order_by='Allele.rtime',
+                        passive_deletes=True)
+                )
 
     marker_id = Column(types.Integer, ForeignKey('markers.id', ondelete='CASCADE'),
                 nullable=False)

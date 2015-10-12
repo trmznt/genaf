@@ -21,7 +21,7 @@ ${selection_bar('assay', others='<button id="add-assay" type="button" class="btn
       <td><a href="${request.route_url('genaf.assay-view', id=a.id)}">${a.filename}</a></td>
       <td>${'%1.2f' % a.score}</td>
       <td>${'%4.2f' % a.rss}</td>
-      <td>${' | '.join( sorted( m.marker.code for m in a.markers if m.marker.code != 'undefined' ) )}</td>
+      <td>${' | '.join( sorted( m.code for m in a.markers if m.code not in ['undefined', 'ladder'] ) )}</td>
   </tr>
 % endfor
 </tbody></table>

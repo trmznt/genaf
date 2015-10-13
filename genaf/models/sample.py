@@ -398,6 +398,11 @@ class Sample(BaseMixIn, Base, SampleMixIn):
             raise RuntimeError('PROG/ERR - sample class need to be set first')
         return cls.assay_class
 
+    def remove_assays(self):
+        sess = object_session(self)
+        for assay in self.assays:
+            sess.delete(assay)
+
 
 class SampleNote(Base, SampleNoteMixIn):
 

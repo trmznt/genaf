@@ -271,7 +271,9 @@ class Assay(BaseMixIn, Base, AssayMixIn):
 
     sample_id = Column(types.Integer, ForeignKey('samples.id', ondelete='CASCADE'),
                         nullable=False)
-    sample = relationship(Sample, uselist=False, backref=backref('assays', lazy='dynamic'))
+    sample = relationship(Sample, uselist=False,
+                backref=backref('assays', lazy='dynamic',
+                    passive_deletes=True))
 
     panel_id = Column(types.Integer, ForeignKey('panels.id'), nullable=False)
     panel = relationship(Panel, uselist=False)
@@ -331,7 +333,10 @@ class Assay(BaseMixIn, Base, AssayMixIn):
                     Channel.assay_id == Assay.id).filter( Assay.id == self.id )
     markers = property(_get_markers)
 
-
+    def remove_channels(self):
+        sess = object_session(self)
+        for channel in self.channels:
+            sess.delete(channel)
 
 
 class AssayNote(Base, AssayNoteMixIn):
@@ -352,7 +357,8 @@ class Channel(BaseMixIn, Base, ChannelMixIn):
     assay_id = Column(types.Integer, ForeignKey('assays.id', ondelete='CASCADE'),
                         nullable=False)
     assay = relationship(Assay, uselist=False, primaryjoin = assay_id == Assay.id, 
-                    backref=backref('channels', lazy='dynamic'))
+                    backref=backref('channels', lazy='dynamic',
+                            passive_deletes=True))
 
     marker_id = Column(types.Integer, ForeignKey('markers.id'), nullable=False)
     marker = relationship(Marker, uselist=False, backref=backref('channels', lazy='dynamic'))

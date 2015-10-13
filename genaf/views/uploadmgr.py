@@ -8,7 +8,7 @@ from rhombus.views.fso import save_file
 from rhombus.lib.utils import get_dbhandler, get_dbhandler_notsafe, silent_rmdir
 
 from genaf.views import *
-from genaf.lib.procmgmt import subproc, getproc, getmanager, reraise_with_stack
+from genaf.lib.procmgmt import subproc, getproc, getmanager, estimate_time
 
 from fatools.lib.utils import tokenize
 
@@ -146,6 +146,7 @@ class UploaderSession(object):
 
 
     def upload_payload(self, dry_run=False, comm = None):
+        """ if dry_run = False, this method can be used to verify FSA info file """
 
         print('running upload_payload')
 
@@ -161,6 +162,8 @@ class UploaderSession(object):
         total_assay = 0
         failed_assay = 0
         line_counter = 1
+        counted_assay = self.meta.get('infofile_count', 0)
+        start_time = time.time()
         err_log = []
 
         for r in inrows:
@@ -209,12 +212,14 @@ class UploaderSession(object):
                 raise
 
             if (total_assay + failed_assay) % 20 == 0 and comm is not None:
-                comm.output = 'Processed %d successful assay(s), %d failed assay(s)' % (
-                                total_assay, failed_assay )
 
+                remaining_assay = counted_assay - total_assay - failed_assay
+                comm.output = ('uploaded: %d | failed: %d | remaining: %d | estimated remaining time: %s'
+                        % (total_assay, failed_assay, remaining_assay,
+                            estimate_time(start_time, time.time(), total_assay, remaining_assay)))
 
         if comm is not None:
-            comm.output = 'Processed %d successful assay(s), %d failed assay(s)' % (
+            comm.output = 'uploaded %d FSA file(s), failed %d FSA file(s)' % (
                                 total_assay, failed_assay )
 
         if not err_log:
@@ -222,7 +227,7 @@ class UploaderSession(object):
 
         return total_assay, err_log
 
-    def verify_infofile(self):
+    def verify_infofile_XXX(self):
 
         with open('%s/assay_list.yaml' % self.rootpath) as f:
             assay_files = yaml.load( f )
@@ -260,6 +265,7 @@ def list_sessions(batch):
 
 @roles( PUBLIC )
 def index(request):
+    """ provide listing of available upload sessions """
     
     batch_id = request.params.get('batch_id', 0)
     if batch_id == 0:
@@ -300,6 +306,10 @@ def view(request):
 
     batch = get_dbhandler().get_batch_by_id( uploader_session.meta['batch_id'] )
 
+    # convert time
+    uploader_session.meta['ctime'] = time.ctime(uploader_session.meta['ctime'])
+    uploader_session.meta['mtime'] = time.ctime(uploader_session.meta['mtime'])
+
     return render_to_response('genaf:templates/uploadmgr/view2.mako',
             {   'meta': uploader_session.meta,
                 'batch': batch,
@@ -323,13 +333,14 @@ def mainpanel(request):
 
     return dict( html = str(html), code = code)
 
+
 def compose_mainpanel(uploader_session, request):
 
     payload_panel = get_payload_info(uploader_session, request)
     payload_buttons, payload_code = get_payload_bar(uploader_session, request)
     metaassay_panel = get_metaassay_info(uploader_session, request)
     metaassay_buttons, metaassay_code = get_metaassay_bar(uploader_session, request)
-    html = div( payload_panel, payload_buttons, metaassay_panel, metaassay_buttons )
+    html = div( payload_panel, metaassay_panel, metaassay_buttons, payload_buttons )
 
     code = payload_code + metaassay_code
 
@@ -356,7 +367,7 @@ def get_payload_info(up_session, request):
     if up_session.payload_verified():
         info_panel.add(
             row()[
-                div(class_='col-md-3')[ span(class_='pull-right')['Assay count :'] ],
+                div(class_='col-md-3')[ span(class_='pull-right')['FSA file count :'] ],
                 div(class_='col-md-5')[ up_session.meta['payload_count'] ],
             ]
         )
@@ -370,8 +381,8 @@ def get_payload_bar(up_session, request):
     if not up_session.has_payload():
         html = row()[
             p('Please upload archived file (zip, tgz, tar.gz) containing FSA files'),
-            span(class_="btn btn-info fileinput-button")[
-                span('Select file'),
+            span(class_="btn btn-primary fileinput-button")[
+                span('Select and upload FSA archived file'),
                 input(id='dataupload', type='file', name='files[]'),
             ]
         ]
@@ -396,13 +407,14 @@ def get_payload_bar(up_session, request):
     else:
         html = row()[
             p()[
-                button(id='gettemplatefile')[ 'Get assay metadata template file' ],
-                ' or ',
-                span(class_="btn btn-info fileinput-button")[
-                    span('Change file...'),
+                span(id='gettemplatefile', class_='btn btn-default')[
+                     'Get CSV template for FSA info file'
+                     ],
+                br(),
+                span(class_="btn btn-default fileinput-button")[
+                    span('Change/replace the uploaded archive file'),
                     input(id='dataupload', type='file', name='files[]')
                 ],
-                ' or proceed by uploading assay metadata file below.'
             ]
         ]
 
@@ -455,7 +467,7 @@ def get_metaassay_info(up_session, request):
     if up_session.has_metaassay():
         info_panel.add(
             row()[
-                div(class_='col-md-3')[ span(class_='pull-right')['Assay info file :'] ],
+                div(class_='col-md-3')[ span(class_='pull-right')['FSA info file :'] ],
                 div(class_='col-md-5')[ up_session.meta['infofile'] ],
             ],
             row()[
@@ -467,7 +479,7 @@ def get_metaassay_info(up_session, request):
         if up_session.metaassay_verified():
             info_panel.add(
                 row()[
-                    div(class_='col-md-3')[ span(class_='pull-right')['Assay info count :'] ],
+                    div(class_='col-md-3')[ span(class_='pull-right')['FSA info count :'] ],
                     div(class_='col-md-5')[ up_session.meta['infofile_count'] ],
                 ]
             )
@@ -484,24 +496,26 @@ def get_metaassay_bar(up_session, request):
     if up_session.metaassay_verified():
         html = row()[
             p()[
-                span(class_="btn btn-info fileinput-button")[
-                    span('Change file'),
+                a(href=request.route_url('genaf.uploadmgr-save', id=up_session.sesskey))[
+                        span(class_='btn btn-primary')[ 'Continue to process FSA files' ]
+                ],
+                br(),
+                span(class_="btn btn-default fileinput-button")[
+                    span('Change/replace the uploaded FSA info file'),
                     input(id='infoupload', type='file', name='files[]')
                 ],
-                ' or ',
-                a(href=request.route_url('genaf.uploadmgr-save', id=up_session.sesskey))[
-                        button()[ 'Proceed to save assays' ]
-                ]
             ]
         ]
 
     elif up_session.has_metaassay():
         html = row()[
             p()[
-                button(id='verifymetaassay')[ 'Verify info file' ],
-                ' or ', 
-                span(class_="btn btn-info fileinput-button")[
-                    span('Change file'),
+                span(id='verifymetaassay', class_='btn btn-primary')[
+                    'Continue to verify FSA info file'
+                ],
+                br(),
+                span(class_="btn btn-default fileinput-button")[
+                    span('Change/replace the uploaded FSA info file'),
                     input(id='infoupload', type='file', name='files[]')
                 ],
             ]
@@ -510,11 +524,11 @@ def get_metaassay_bar(up_session, request):
     elif up_session.payload_verified():
 
         html = row()[
-            p('Please upload assay information file in CSV or tab-delimited format'),
-            span(class_="btn btn-info fileinput-button")[
-                span('Select file'),
+            span(class_="btn btn-primary fileinput-button")[
+                span('Continue to upload FSA info file (CSV or tab-delimited)'),
                 input(id='infoupload', type='file', name='files[]'),
-            ]
+            ],
+            br(), br(),
         ]
 
     code = '''
@@ -561,7 +575,8 @@ def get_metaassay_bar(up_session, request):
 
 @roles( PUBLIC )
 def edit(request):
-    pass
+    raise NotImplementedError('PROG/ERR - Not implemented!')
+
 
 @roles( PUBLIC )
 def save(request):
@@ -677,6 +692,8 @@ def uploaddata(request):
 def verifydatafile(request):
     """ this function returns JSON data """
 
+    raise NotImplementedError
+
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
 
@@ -709,6 +726,8 @@ def verifydatafile(request):
 @roles( PUBLIC )
 def checkdatafile(request):
     """ this function returns JSON data """
+
+    raise NotImplementedError
 
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
@@ -757,6 +776,8 @@ def uploadinfo(request):
 def verifyinfofile(request):
     """ this function returns JSON data """
 
+    raise NotImplementedError
+
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
 
@@ -790,6 +811,8 @@ def verifyinfofile(request):
 def checkinfofile(request):
     """ this function returns JSON data """
 
+    raise NotImplementedError
+
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
 
@@ -813,6 +836,8 @@ def checkinfofile(request):
 
 @roles( PUBLIC )
 def commitpayload(request):
+
+    raise NotImplementedError
 
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
@@ -845,6 +870,8 @@ def commitpayload(request):
 
 @roles( PUBLIC )
 def verifyassay(request):
+
+    raise NotImplementedError
 
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )

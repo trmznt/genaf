@@ -2,7 +2,7 @@
 
 <h3>FSA Bulk Upload Manager</h3>
 
-<p>Batch: <a href="${request.route_url('genaf.batch-view', id=batch.id)}">${batch.code}</a></p>
+<p>Batch: <a href="${request.route_url('genaf.batch-view', id=batch.id)}">${batch.code}</a> | Started by: ${meta['user']} | Started at: ${meta['ctime']} | Last modified at: ${meta['mtime']}</p>
 
 
 <div id='mainpanel' class='col-md-12'>

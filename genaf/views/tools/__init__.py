@@ -139,7 +139,7 @@ def process_request( request, header_text, button_text, callback ):
 
     q = Query( params, get_dbhandler() )
 
-    return callback(q)
+    return callback(q, request)
 
 
 

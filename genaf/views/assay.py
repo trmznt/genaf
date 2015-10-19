@@ -16,6 +16,19 @@ def index(request):
     if not batch_id:
         return error_page('ERR - required batch id')
 
+    dbh = get_dbhandler()
+    batch = dbh.get_batch_by_id(batch_id)
+
+    assays = dbh.Assay.query().join(dbh.Sample).filter(dbh.Sample.batch_id == batch.id)
+
+    data = [ [a.filename, a.sample.code, a.panel.code, a.score, a.rss, a.process_time]
+            for a in assays ]
+
+    return render_to_response( 'genaf:templates/assay/index.mako',
+            { 'data': json.dumps(data),
+            }, request = request )
+
+
 
 @roles( PUBLIC )
 def view(request):

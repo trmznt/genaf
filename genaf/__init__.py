@@ -2,9 +2,10 @@ from pyramid.config import Configurator
 
 from rhombus import includeme as rho_includeme, init_app as rhombus_init_app, add_route_view
 from rhombus.lib.utils import cout, cerr, cexit
+from rhombus.lib.fsoverlay import fsomount
 
 from genaf.lib.procmgmt import init_queue
-from genaf.lib.configs import set_temp_path
+from genaf.lib.configs import set_temp_path, get_temp_path, TEMP_TOOLS
 
 import os
 
@@ -114,6 +115,9 @@ def init_app( global_config, settings, prefix = '/mgr' ):
     temp_path = settings['genaf.temp_directory']
     set_temp_path( temp_path )
 
+    fsomount(TEMP_TOOLS, get_temp_path('', TEMP_TOOLS))
+
+    # preparing for multiprocessing
     init_queue(settings)
 
     config = rhombus_init_app( global_config, settings, prefix=prefix )

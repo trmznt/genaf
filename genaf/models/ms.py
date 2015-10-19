@@ -191,7 +191,7 @@ class Marker(BaseMixIn, Base, MarkerMixIn):
         return bin
 
 
-    def get_bin(self, batch):
+    def get_bin(self, batch, recursive=True):
 
         # bins can be in any of these 3:
         # - hold by respective batch
@@ -202,6 +202,8 @@ class Marker(BaseMixIn, Base, MarkerMixIn):
         while True:
 
             bin = Bin.search(marker_id = self.id, batch_id = batch.id, session = session)
+            if not recursive:
+                return bin
             if bin is not None:
                 return bin
 

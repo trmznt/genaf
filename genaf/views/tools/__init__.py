@@ -2,6 +2,17 @@
 from genaf.views import *
 from genaf.lib.query import Query, load_params, load_yaml
 
+from rhombus.lib import fsoverlay
+
+TEMP_ROOTDIR = 'analyses'
+
+def get_fso_temp_dir(userid, rootdir = TEMP_ROOTDIR):
+    """ return a fileoverlay object on temporary directory
+    """
+
+    fso_dir = fsoverlay.mkranddir(rootdir, userid)
+    return fso_dir
+
 
 def basic_query_form(request):
 

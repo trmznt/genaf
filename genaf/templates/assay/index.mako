@@ -2,7 +2,13 @@
 
 <h2>Assays</h2>
 
-<table id="assay_table"></table>
+<table id="assay_table" class='table table-condensed table-striped'></table>
+
+##
+##
+<%def name="stylelink()">
+  <link href="${request.static_url('genaf:static/datatables/datatables.min.css')}" rel="stylesheet" />  
+</%def>
 ##
 ##
 <%def name="jslink()">
@@ -10,18 +16,20 @@
 </%def>
 ##
 <%def name="jscode()">
-var data = ${data | n};
+var dataset = ${dataset | n};
 
 $(document).ready(function() {
     $('#assay_table').DataTable( {
-        data: dataSet,
+        data: dataset,
+        paging: false,
+        fixedHeader: true,
         columns: [
-            { title: "Name" },
-            { title: "Position" },
-            { title: "Office" },
-            { title: "Extn." },
-            { title: "Start date" },
-            { title: "Salary" }
+            { title: "FSA Filename" },
+            { title: "Sample Code" },
+            { title: "Panel" },
+            { title: "Score" },
+            { title: "RSS" },
+            { title: "Proctime (ms)" }
         ]
     } );
 } );

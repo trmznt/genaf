@@ -14,20 +14,26 @@ def index(request):
     
     batch_id = request.params.get('batch_id',None)
     if not batch_id:
-        return error_page('ERR - required batch id')
+        return error_page(request, 'ERR - required batch id')
 
     dbh = get_dbhandler()
     batch = dbh.get_batch_by_id(batch_id)
 
     assays = dbh.Assay.query().join(dbh.Sample).filter(dbh.Sample.batch_id == batch.id)
 
-    data = [ [a.filename, a.sample.code, a.panel.code, a.score, a.rss, a.process_time]
+    data = [ [  '<a href="%s">%s</a>' % (request.route_url('genaf.assay-view',
+                                                id = a.id),
+                                        a.filename),
+                '<a href="%s">%s</a>' % (request.route_url('genaf.sample-view',
+                                                id = a.sample.id),
+                                        a.sample.code),
+                a.panel.code,
+                '%3.2f' % a.score, '%5.2f' % a.rss, a.process_time]
             for a in assays ]
 
     return render_to_response( 'genaf:templates/assay/index.mako',
-            { 'data': json.dumps(data),
+            { 'dataset': json.dumps(data),
             }, request = request )
-
 
 
 @roles( PUBLIC )
@@ -69,9 +75,11 @@ def edit(request):
     else:
         return error_page('ERR - invalid command')
 
+
 @roles( PUBLIC )
 def save(request):
     raise NotImplementedError('PROG/ERR - not a valid function')
+
 
 @roles( PUBLIC )
 def action(request):

@@ -101,6 +101,15 @@ def includeme( config ):
         ('/famgr/{id}', 'view')
     )
 
+    add_route_view( config, 'rhombus.views.fso', 'rhombus.fso',
+        '/fso{path:.*}@@view',
+        '/fso{path:.*}@@edit',
+        '/fso{path:.*}@@save',
+        '/fso{path:.*}@@action',
+        ('/fso{path:.*}', 'index'),
+    )
+
+
     # tools and analysis
 
     config.add_route('tools-allele', '/tools/allele')

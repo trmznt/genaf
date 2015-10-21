@@ -196,9 +196,13 @@ class UploaderSession(object):
                     with open( assay_files[ r['ASSAY'] ], 'rb') as f:
                         trace = f.read()
             
-                    a = sample.add_assay( trace, filename=r['ASSAY'], panel_code = r['PANEL'],
-                            options = options, species = batch.species, dbhandler = dbh,
-                            dry_run = dry_run )
+                    a = sample.add_fsa_assay( trace,
+                                filename=r['ASSAY'],
+                                panel_code = r['PANEL'],
+                                options = options,
+                                species = batch.species,
+                                dbhandler = dbh,
+                                dry_run = dry_run )
 
                     total_assay += 1
 

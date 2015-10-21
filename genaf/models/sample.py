@@ -327,7 +327,7 @@ class Sample(BaseMixIn, Base, SampleMixIn):
     assay_class = None
 
 
-    def new_assay(self, raw_data, filename, status, panel=None):
+    def new_fsa_assay(self, raw_data, filename, status, panel=None):
         Assay = self.get_assay_class()
         assay = Assay( raw_data = raw_data, filename = filename )
         if panel is None:

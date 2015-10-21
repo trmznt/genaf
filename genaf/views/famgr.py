@@ -286,26 +286,36 @@ def align_assays(assay_list, dbh, log, scanning_parameter, comm):
 
 def bin_assays(assay_list, dbh, log, scanning_parameter, comm):
 
-    success = failed = skipped = 0
+    success = failed = skipped = subtotal = 0
+    total = len(assay_list)
+    start_time = time()
     for (assay_id, sample_code) in assay_list:
         with transaction.manager:
             assay = dbh.get_assay_by_id(assay_id)
             try:
-                if assay.status == assaystatus.assigned:
+                if assay.status == assaystatus.called:
                     assay.bin( scanning_parameter )
                     success += 1
                 else:
                     skipped += 1
             except RuntimeError as err:
-                log.append('ERR scan -- assay %s | %s - error: %s' %
+                log.append('ERR binning -- assay %s | %s - error: %s' %
                     ( assay.filename, sample_code, str(err) )
                 )
-        if comm:
-            comm.output = 'scanned: %s | failed: %s | skipped: %s' % (success, failed, skipped)
+                failed += 1
+        subtotal += 1
+
+        if comm and subtotal % 5 == 0:
+            comm.output = (
+                'binned: %d | failed: %d | skipped: %d | remaining: %d | estimated: %s'
+                % (success, failed, skipped, total-subtotal,
+                    estimate_time(start_time, time(), success, total-subtotal )) )
+
+    if comm:
+        comm.output = 'binned: %d | failed: %d | skipped: %d' % (
+                    success, failed, skipped)
 
     return (success, failed, skipped)
-
-
 
 
 def process_assays(batch_id, login, comm = None, stage = 'all'):

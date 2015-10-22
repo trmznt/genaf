@@ -1,3 +1,11 @@
+import logging
+
+log = logging.getLogger(__name__)
+
+import matplotlib
+matplotlib.use('Agg')
+log.info('Setting up matplotlib to use Agg')
+
 from pyramid.config import Configurator
 
 from rhombus import includeme as rho_includeme, init_app as rhombus_init_app, add_route_view

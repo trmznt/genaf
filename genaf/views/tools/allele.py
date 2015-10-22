@@ -1,7 +1,9 @@
-# allele summary 
+# allele summary
 
 
 from genaf.views.tools import *
+
+from rhombus.lib import fsoverlay as fso
 
 
 PLOTFILE = 'alleles.pdf'
@@ -9,7 +11,7 @@ TABFILE = 'alleles.tab'
 
 @roles(PUBLIC)
 def index(request):
-    
+
     return process_request( request, 'Allele Summary', 'Summarize Alleles',
             callback = func_callback )
 
@@ -23,23 +25,22 @@ def func_callback( query, request ):
 
     options={}
     fso_dir = None
+
+    if True:
+        # create plot file
+        if fso_dir is None:
+            fso_dir = get_fso_temp_dir(request.user.login)
+        plotfile = fso_dir.abspath + '/' + PLOTFILE
+        plot_alleles(report, plotfile)
+        options['plotfile'] = fso.get_urlpath(plotfile)
+
     if False:
-    	# create plot file
-    	if fso_dir is None:
-    		fso_dir = get_fso_temp_dir(request.user.login)
+        # create tab-delimited text file
+        if fso_dir is None:
+            fso_dir = get_fso_temp_dir(request.user.login)
 
-    	plotfile = fso_dir.abspath + '/' + PLOTFILE
-    	plot_alleles(report, plotfile)
-    	options['plotfile'] = fso.get_virtpath(plotfile)
-
-
-    if False:
-    	# create tab-delimited text file
-    	if fso_dir is None:
-    		fso_dir = get_fso_temp_dir(request.user.login)
-
-    	tabfile = fso_dir.abspath + '/' + TABFILE
-    	options['tabfile'] = fso.get_virpath(tabfile)
+        tabfile = fso_dir.abspath + '/' + TABFILE
+        options['tabfile'] = fso.get_urlpath(tabfile)
 
     html, code = format_output(report, options)
 
@@ -50,12 +51,15 @@ def func_callback( query, request ):
     		}, request = request )
 
 
-def format_output(summaries, plotfile=None):
+def format_output(summaries, options=None):
 
 
     dbh = get_dbhandler()
 
     html = div()
+
+    if options and 'plotfile' in options:
+        html.add( p(a('Alleles plot in PDF', href=options['plotfile'])) )
 
     for label in summaries:
         summary = summaries[label]['summary']
@@ -95,9 +99,3 @@ def format_output(summaries, plotfile=None):
         html.add( marker_div )
 
     return (html, '')
-#            %3d  %5.3f  %3d  %5.2f - %5.2f  %5.2f  %4.2f' %
-#                        (data[0], data[1], data[2], data[4], data[5], data[8], data[6]))
-#    
-#    retu
-#
-#	return ("", "")

@@ -9,9 +9,9 @@ TEMP_ROOT_DIR = {}
 
 SAMPLE_PARSER_MODULE = None
 
-TEMP_GENERAL = 'general'
-TEMP_UPLOADMGR = 'uploadmgr'
-TEMP_TOOLS = 'tools'
+TEMP_GENERAL = '/general'
+TEMP_UPLOADMGR = '/uploadmgr'
+TEMP_TOOLS = '/tools'
 
 
 def set_temp_path( fullpath ):
@@ -22,12 +22,12 @@ def set_temp_path( fullpath ):
 
 
 def get_temp_path( path = '', root=TEMP_GENERAL ):
-    root_dir = "%s/%s" % (TEMP_DIR, root)
+    root_dir = os.path.normpath("%s/%s" % (TEMP_DIR, root))
     if not root_dir in TEMP_ROOT_DIR:
         if not os.path.exists( root_dir ):
             os.makedirs( root_dir )
         TEMP_ROOT_DIR[root_dir] = True
-    return "%s/%s" % (root_dir, path)
+    return os.path.normpath("%s/%s" % (root_dir, path))
 
 
 def set_proc_path( fullpath ):

@@ -31,7 +31,7 @@ def func_callback( query, request ):
         if fso_dir is None:
             fso_dir = get_fso_temp_dir(request.user.login)
         plotfile = fso_dir.abspath + '/' + PLOTFILE
-        plot_alleles(report, plotfile)
+        plot_alleles(report, plotfile, dbh=get_dbhandler())
         options['plotfile'] = fso.get_urlpath(plotfile)
 
     if False:

@@ -25,7 +25,7 @@ def includeme( config ):
     config.add_static_view(name='genaf_static', path="genaf:static/")
 
 
-    add_route_view( config, 'genaf.views.marker', 'genaf.marker', 
+    add_route_view( config, 'genaf.views.marker', 'genaf.marker',
         '/marker',
         '/marker/@@action',
         '/marker/{id}@@edit',
@@ -33,7 +33,7 @@ def includeme( config ):
         ('/marker/{id}', 'view')
     )
 
-    add_route_view( config, 'genaf.views.panel', 'genaf.panel', 
+    add_route_view( config, 'genaf.views.panel', 'genaf.panel',
         '/panel',
         '/panel/@@action',
         '/panel/{id}@@edit',
@@ -41,7 +41,7 @@ def includeme( config ):
         ('/panel/{id}', 'view')
     )
 
-    add_route_view( config, 'genaf.views.batch', 'genaf.batch', 
+    add_route_view( config, 'genaf.views.batch', 'genaf.batch',
         '/batch',
         '/batch/@@action',
         '/batch/{id}@@edit',
@@ -50,7 +50,7 @@ def includeme( config ):
 
     )
 
-    add_route_view( config, 'genaf.views.sample', 'genaf.sample', 
+    add_route_view( config, 'genaf.views.sample', 'genaf.sample',
         '/sample',
         '/sample/@@action',
         '/sample/{id}@@edit',
@@ -59,7 +59,7 @@ def includeme( config ):
 
     )
 
-    add_route_view( config, 'genaf.views.location', 'genaf.location', 
+    add_route_view( config, 'genaf.views.location', 'genaf.location',
         '/location',
         '/location/@@action',
         '/location/{id}@@edit',
@@ -68,7 +68,7 @@ def includeme( config ):
     )
 
 
-    add_route_view( config, 'genaf.views.assay', 'genaf.assay', 
+    add_route_view( config, 'genaf.views.assay', 'genaf.assay',
         '/assay',
         '/assay/@@action',
         '/assay/{id}@@drawchannels',
@@ -84,7 +84,7 @@ def includeme( config ):
     )
 
 
-    add_route_view( config, 'genaf.views.uploadmgr', 'genaf.uploadmgr', 
+    add_route_view( config, 'genaf.views.uploadmgr', 'genaf.uploadmgr',
         '/uploadmgr',
         '/uploadmgr/@@action',
         '/uploadmgr/{id}@@edit',
@@ -123,6 +123,9 @@ def includeme( config ):
     config.add_route('tools-allele', '/tools/allele')
     config.add_view('genaf.views.tools.allele.index', route_name='tools-allele')
 
+    config.add_route('tools-he', '/tools/he')
+    config.add_view('genaf.views.tools.he.index', route_name='tools-he')
+
 
 
 def init_app( global_config, settings, prefix = '/mgr' ):
@@ -141,7 +144,7 @@ def init_app( global_config, settings, prefix = '/mgr' ):
 
     return config
 
-    
+
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.

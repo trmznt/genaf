@@ -202,9 +202,12 @@ def form2dict( request ):
     d['selector'] = selector_d
     d['filter'] = filter_d
 
-    d['differentiator'] = {}
+    d['differentiator'] = {
+                'spatial': int(p.get('spatial_differentiation', -1)),
+                'temporal': int(p.get('temporal_differentiation', 0))
+    }
 
     return d
-        
+
 
 

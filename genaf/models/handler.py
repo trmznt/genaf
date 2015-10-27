@@ -30,7 +30,7 @@ class DBHandler(rho_handler.DBHandler, base_sqlhandler):
     # overriding methods
 
     def get_batches(self, groups):
-        
+
         q = self.Batch.query(self.session)
         if groups is not None:
             # enforce security
@@ -48,6 +48,10 @@ class DBHandler(rho_handler.DBHandler, base_sqlhandler):
 
     def get_locations(self):
         return self.Location.query( self.session() ).all()
+
+
+    def get_location_by_id(self, location_id):
+        return self.Location.get(location_id)
 
 
     @classmethod

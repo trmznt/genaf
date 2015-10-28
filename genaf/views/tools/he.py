@@ -15,87 +15,55 @@ def index(request):
 
 def func_callback( query, request ):
 
+    from fatools.lib.analytics.he import summarize_he
+
     analytical_sets = query.get_filtered_analytical_sets()
 
-    raise RuntimeError('Break-point')
+    results = summarize_he(analytical_sets)
+    options = {}
 
-    return None
-
-    report = summarize_alleles( analytical_sets )
-
-    options={}
-    fso_dir = None
-
-    if True:
-        # create plot file
-        if fso_dir is None:
-            fso_dir = get_fso_temp_dir(request.user.login)
-        plotfile = fso_dir.abspath + '/' + PLOTFILE
-        plot_alleles(report, plotfile, dbh=get_dbhandler())
-        options['plotfile'] = fso.get_urlpath(plotfile)
-
-    if False:
-        # create tab-delimited text file
-        if fso_dir is None:
-            fso_dir = get_fso_temp_dir(request.user.login)
-
-        tabfile = fso_dir.abspath + '/' + TABFILE
-        options['tabfile'] = fso.get_urlpath(tabfile)
-
-    html, code = format_output(report, options)
+    html, code = format_output(results, options)
 
     return render_to_response("genaf:templates/tools/report.mako",
-    		{	'header_text': 'Allele Summary Result',
+    		{	'header_text': 'Heterozygosity (He) Summary Result',
     			'html': html,
     			'code': code,
     		}, request = request )
 
 
-def format_output(summaries, options=None):
-
+def format_output(results, options=None):
 
     dbh = get_dbhandler()
 
     html = div()
 
-    if options and 'plotfile' in options:
-        html.add( p(a('Alleles plot in PDF', href=options['plotfile'])) )
+    df = results['data']
+    labels = list(df.columns)
 
-    for label in summaries:
-        summary = summaries[label]['summary']
-        html.add( h3()[ 'Sample set: %s' % label ] )
+    # construct table header
+    table_header = tr( th('Markers'))
+    for label in labels:
+        table_header.add( th(label) )
 
-        marker_div = div()
-        for marker_id in summary:
-            marker_div.add(
-            	h4(dbh.get_marker_by_id(marker_id).label),
-            	p('Unique alleles: %d' % summary[marker_id]['unique_allele']),
-            	p('Total alleles: %d' % summary[marker_id]['total_allele'])
-            )
+    # construct table body
+    table_body = tbody()
+    for marker_id in df.index:
+        table_row = tr( td(dbh.get_marker_by_id(marker_id).label ))
+        table_row.add( * tuple( td('%4.3f' % x) for x in df.loc[marker_id]))
+        table_body.add(table_row)
 
-            tbl = table(class_='table table-condensed table-striped')
-            tbl.add(
-            	thead(
-            		tr(
-            			th('Allele'), th('Freq'), th('Count'), th('Boundaries'),
-            			th('Mean'), th('Delta')
-            		)
-            	)
-            )
-            tbl_body = tbody()
-            tbl.add( tbl_body )
-            for data in summary[marker_id]['alleles']:
-                tbl_body.add(
-                	tr()[
-                		td('%3d' % data[0]),
-                		td('%5.3f' % data[1]),
-                		td('%3d' % data[2]),
-                		td('%5.2f - %5.2f' % (data[4], data[5])),
-                		td('%5.2f' % data[8]),
-                		td('%4.2f' % data[6]),
-                	]
-                )
-            marker_div.add( tbl )
-        html.add( marker_div )
+    # add average and stddev
+    for label, row in zip( ['Mean', 'Std Dev'], [results['mean'], results['stddev']]):
+        table_row = tr( td(label) )
+        table_row.add( * tuple( td('%4.3f' % x) for x in row ) )
+        table_body.add(table_row)
+
+    # consruct table
+    he_table = table(class_='table table-condense table-striped')[
+        table_header, table_body
+    ]
+    html.add( he_table )
+    html.add( p('Statistics: ' + results['test'] +
+            ' (p-value = %5.4f)' % results['stats'].pvalue) )
 
     return (html, '')

@@ -129,6 +129,9 @@ def includeme( config ):
     config.add_route('tools-genotype', '/tools/genotype')
     config.add_view('genaf.views.tools.genotype.index', route_name='tools-genotype')
 
+    config.add_route('tools-moi', '/tools/moi')
+    config.add_view('genaf.views.tools.moi.index', route_name='tools-moi')
+
 
 
 def init_app( global_config, settings, prefix = '/mgr' ):

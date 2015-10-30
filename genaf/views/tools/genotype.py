@@ -8,7 +8,7 @@ from math import isnan
 @roles(PUBLIC)
 def index(request):
 
-    return process_request( request, 'Heterozygosity (He)', 'Calculate He',
+    return process_request( request, 'Genotype Summary', 'Summarize genotypes',
             callback = func_callback )
 
 

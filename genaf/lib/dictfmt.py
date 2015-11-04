@@ -8,7 +8,7 @@ from io import StringIO
 
 csv_headers = { 'SAMPLE', 'PANEL', 'ASSAY', 'MARKER', 'DYE', 'NEST', 'STANDARD', 'TYPE',
                 'COUNTRY', 'ADMINL1', 'ADMINL2', 'ADMINL3', 'ADMINL4', 'COLLECTION_DATE',
-                'REMARK', 'INT1', 'INT2', 'STRING1', 'STRING2' }
+                'REMARK', 'CATEGORY', 'INT1', 'INT2', 'STRING1', 'STRING2' }
 
 csv_alleles = { 'ALLELE', 'HEIGHT', 'AREA', 'SIZE' }
 
@@ -37,13 +37,14 @@ def row2sample(r):
                 default=default_date )
 
     sample = dict(
-        
+
         collection_date = collection_date.strftime('%Y/%m/%d'),
         type = r.get('TYPE',''),
         location = (    r.get('COUNTRY', '').strip(),
                         r.get('ADMINL1','').strip(), r.get('ADMINL2','').strip(),
                         r.get('ADMINL3','').strip(), r.get('ADMINL4','').strip() ),
         remark = r.get('REMARK', ''),
+        category = int(r.get('CATEGORY','') or 0),
         int1 = int(r.get('INT1','') or 0),
         int2 = int(r.get('INT2','') or 0),
         string1 = r.get('STRING1', '').strip(),
@@ -149,5 +150,5 @@ def read_dictfile(pathname):
         return json.load( open(pathname, 'rt') )
     elif ext == '.yaml':
         return yaml.load( open(pathname, 'rt') )
-        
+
 

@@ -129,30 +129,30 @@ class Marker(BaseMixIn, Base, MarkerMixIn):
     __tablename__ = 'markers'
 
     code = Column(types.String(64), nullable=False, unique=True)
-    #species = Column(types.String(32), nullable=False, default='X')
+    #species = Column(types.String(32), nullable=False, server_default='X')
     species_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
     species = EK.proxy('species_id', '@SPECIES')
-    locus = Column(types.String(16), nullable=False, default='')
-    repeats = Column(types.Integer, nullable=False, default=-1)
+    locus = Column(types.String(16), nullable=False, server_default='')
+    repeats = Column(types.Integer, nullable=False, server_default='-1')
 
-    min_size = Column(types.Integer, nullable=False, default=0)
-    max_size = Column(types.Integer, nullable=False, default=0)
+    min_size = Column(types.Integer, nullable=False, server_default='0')
+    max_size = Column(types.Integer, nullable=False, server_default='0')
     """ range of allele size for this marker """
-    
+
     related_to_id = Column(types.Integer, ForeignKey('markers.id'),
                           nullable=True)
     related_to = relationship("Marker", uselist=False)
     """ points to related marker """
-    
-    z_params = Column(types.String(64), nullable=False, default='')
+
+    z_params = Column(types.String(64), nullable=False, server_default='')
     """ mathematical expression correlating with the related_to marker """
 
-    remark = deferred(Column(types.String(1024), nullable=True))
+    remark = deferred(Column(types.String(1024), nullable=False, server_default=''))
 
     __table_args__ = ( UniqueConstraint( 'code', 'species_id' ), )
 
     def update(self, obj):
-        
+
         self._update( obj )
         if type(obj) == dict and 'related_to' in obj:
             related_marker = Marker.search( d['related_to'],
@@ -196,7 +196,7 @@ class Marker(BaseMixIn, Base, MarkerMixIn):
         # bins can be in any of these 3:
         # - hold by respective batch
         # - hold by bin_batch in the respective batch
-        # - hold by batch 'default'
+        # - hold by batch 'server_default'
 
         session = object_session(self)
         while True:
@@ -233,10 +233,10 @@ class Bin(BaseMixIn, Base, BinMixIn):
 
     related_to_id = Column(types.Integer, ForeignKey('bins.id'), nullable=True)
 
-    bins = deferred(Column(YAMLCol(8192), nullable=False, default=''))
+    bins = deferred(Column(YAMLCol(8192), nullable=False, server_default=''))
     """ sorted known bins for this markers """
 
-    meta = deferred(Column(YAMLCol(4096), nullable=False, default=''))
+    meta = deferred(Column(YAMLCol(4096), nullable=False, server_default=''))
     """ metadata for this bin """
 
     remark = deferred(Column(types.String(512)))
@@ -261,14 +261,14 @@ class Assay(BaseMixIn, Base, AssayMixIn):
 
     filename = Column(types.String(128), nullable=False, index=True)
     runtime = Column(types.DateTime, nullable=False)
-    rss = Column(types.Float, nullable=False, default=-1)
-    dp = Column(types.Float, nullable=False, default=-1)
-    score = Column(types.Float, nullable=False, default=-1)
+    rss = Column(types.Float, nullable=False, server_default='-1')
+    dp = Column(types.Float, nullable=False, server_default='-1')
+    score = Column(types.Float, nullable=False, server_default='-1')
     z = deferred(Column(NPArray))
-    ladder_peaks = Column(types.Integer, nullable=False, default=-1)
+    ladder_peaks = Column(types.Integer, nullable=False, server_default='-1')
 
-    size_standard = Column(types.String(32), nullable=False, default='')
-    process_time = Column(types.Integer, nullable=False, default=-1)
+    size_standard = Column(types.String(32), nullable=False, server_default='')
+    process_time = Column(types.Integer, nullable=False, server_default='-1')
     """ processing time for this assay in microseconds """
 
     sample_id = Column(types.Integer, ForeignKey('samples.id', ondelete='CASCADE'),
@@ -288,18 +288,18 @@ class Assay(BaseMixIn, Base, AssayMixIn):
     ladder = relationship('Channel', uselist=False,
                 primaryjoin = "Assay.ladder_id == Channel.id")
 
-    #status = Column(types.String(32), nullable=False, default='')
+    #status = Column(types.String(32), nullable=False, server_default='')
     status_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
     status = EK.proxy('status_id', '@ASSAY-STATUS')
 
-    #method = deferred(Column(types.String(16), nullable=False, default=''))
+    #method = deferred(Column(types.String(16), nullable=False, server_default=''))
     method_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
     method = EK.proxy('method_id', '@ALIGN-METHOD')
 
-    report = deferred(Column(types.String(512), nullable=False, default=''))
-    remark = deferred(Column(types.String(1024), nullable=False, default=''))
+    report = deferred(Column(types.String(512), nullable=False, server_default=''))
+    remark = deferred(Column(types.String(1024), nullable=False, server_default=''))
 
-    exclude = deferred(Column(types.String(128), nullable=False, default=''))
+    exclude = deferred(Column(types.String(128), nullable=False, server_default=''))
 
     raw_data = deferred(Column(types.Binary(), nullable=False))
     """ raw data for this assay (FSA file content) """
@@ -361,7 +361,7 @@ class Channel(BaseMixIn, Base, ChannelMixIn):
 
     assay_id = Column(types.Integer, ForeignKey('assays.id', ondelete='CASCADE'),
                         nullable=False)
-    assay = relationship(Assay, uselist=False, primaryjoin = assay_id == Assay.id, 
+    assay = relationship(Assay, uselist=False, primaryjoin = assay_id == Assay.id,
                     backref=backref('channels', lazy='dynamic',
                             passive_deletes=True))
 
@@ -382,20 +382,20 @@ class Channel(BaseMixIn, Base, ChannelMixIn):
     status_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
     status = EK.proxy('status_id', '@CHANNEL-STATUS')
 
-    wavelen = Column(types.Integer, nullable=False, default=0)
-    median = Column(types.Integer, nullable=False, default=0)
-    mean = Column(types.Float, nullable=False, default=0.0)
-    std_dev = Column(types.Float, nullable=False, default=0.0)
-    max_height = Column(types.Integer, nullable=False, default=-1)
-    min_height = Column(types.Integer, nullable=False, default=-1)
+    wavelen = Column(types.Integer, nullable=False, server_default='0')
+    median = Column(types.Integer, nullable=False, server_default='0')
+    mean = Column(types.Float, nullable=False, server_default='0.0')
+    std_dev = Column(types.Float, nullable=False, server_default='0.0')
+    max_height = Column(types.Integer, nullable=False, server_default='-1')
+    min_height = Column(types.Integer, nullable=False, server_default='-1')
     """ basic descriptive statistics for data"""
-        
+
     data = deferred(Column(NPArray, nullable=False))
     """ data after smoothed using savitzky-golay algorithm and baseline correction
         using top hat morphologic transform
     """
 
-    remark = deferred(Column(types.String(1024), nullable=True))
+    remark = deferred(Column(types.String(1024), nullable=False, server_default=''))
 
 
     def new_alleleset(self, revision=-1):
@@ -446,7 +446,7 @@ class AlleleSet(BaseMixIn, Base, AlleleSetMixIn):
                 backref=backref('allelesets', lazy='dynamic', passive_deletes=True))
     # a channel can have several allele set for different revision numbers
 
-    revision = Column(types.Integer, nullable=False, default=0)
+    revision = Column(types.Integer, nullable=False, server_default='0')
     """ revision number """
 
     shared = Column(types.Boolean, default=False)
@@ -464,17 +464,17 @@ class AlleleSet(BaseMixIn, Base, AlleleSetMixIn):
                     backref=backref('allelesets', lazy='dynamic'))
     """ link to marker """
 
-    #scanning_method = deferred(Column(types.String(32), nullable=False, default=''))
+    #scanning_method = deferred(Column(types.String(32), nullable=False, server_default=''))
     scanning_method_id = deferred(Column(types.Integer, ForeignKey('eks.id'), nullable=False))
     scanning_method = EK.proxy('scanning_method_id', '@SCANNING-METHOD')
     """ method used for scanning and generating this alleleset """
 
-    #calling_method = deferred(Column(types.String(32), nullable=False, default=''))
+    #calling_method = deferred(Column(types.String(32), nullable=False, server_default=''))
     calling_method_id = deferred(Column(types.Integer, ForeignKey('eks.id'), nullable=False))
     calling_method = EK.proxy('calling_method_id', '@ALLELE-METHOD')
     """ method used for calling this alleleset """
 
-    #binning_method = deferred(Column(types.String(32), nullable=False, default=''))
+    #binning_method = deferred(Column(types.String(32), nullable=False, server_default=''))
     binning_method_id = deferred(Column(types.Integer, ForeignKey('eks.id'), nullable=False))
     binning_method = EK.proxy('binning_method_id', '@BINNING-METHOD')
     """ method used for binning this alleleset """
@@ -522,47 +522,47 @@ class Allele(BaseMixIn, Base, AlleleMixIn):
                 backref=backref('alleles', cascade='all, delete-orphan',
                     passive_deletes=True))
 
-    abin = Column(types.Integer, nullable=False, default=-1)    # adjusted bin
-    asize = Column(types.Float, nullable=False, default=-1)     # adjusted size
-    adelta = Column(types.Float, nullable=False, default=-1)    # adjusted delta, abs(abin - asize)
-    aheight = Column(types.Float, nullable=False, default=-1)   # adjusted height
+    abin = Column(types.Integer, nullable=False, server_default='-1')    # adjusted bin
+    asize = Column(types.Float, nullable=False, server_default='-1')     # adjusted size
+    adelta = Column(types.Float, nullable=False, server_default='-1')    # adjusted delta, abs(abin - asize)
+    aheight = Column(types.Float, nullable=False, server_default='-1')   # adjusted height
 
-    bin = Column(types.Integer, nullable=False, default=-1)
-    size = Column(types.Float, nullable=False, default=-1)
-    deviation = Column(types.Float, nullable=False, default=-1)
+    bin = Column(types.Integer, nullable=False, server_default='-1')
+    size = Column(types.Float, nullable=False, server_default='-1')
+    deviation = Column(types.Float, nullable=False, server_default='-1')
     # deviation -> for ladder channel, this is ( z(rtime) - size )**2 or square of residual
     # for marker channel, this depends on the method
     # method cubic-spline, this is avg of deviation of the nearest peaks
     # for local southern, this is (size1 - size2) ** 2
 
-    height = Column(types.Float, nullable=False, default=-1)
-    area = Column(types.Float, nullable=False, default=-1)
-    rtime = Column(types.Integer, nullable=False, default=-1)
-    delta = Column(types.Float, nullable=False, default=-1)     # abs(bin - actual size)
-    beta = Column(types.Float, nullable=False, default=-1)      # area / height
-    theta = Column(types.Float, nullable=False, default=-1)     # height / width
+    height = Column(types.Float, nullable=False, server_default='-1')
+    area = Column(types.Float, nullable=False, server_default='-1')
+    rtime = Column(types.Integer, nullable=False, server_default='-1')
+    delta = Column(types.Float, nullable=False, server_default='-1')     # abs(bin - actual size)
+    beta = Column(types.Float, nullable=False, server_default='-1')      # area / height
+    theta = Column(types.Float, nullable=False, server_default='-1')     # height / width
 
-    #type = Column(types.String(32), nullable=False, default='')
+    #type = Column(types.String(32), nullable=False, server_default='')
     type_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
     type = EK.proxy('type_id', '@PEAK-TYPE')
 
-    #method = Column(types.String(32), nullable=False, default='')   # binning method
+    #method = Column(types.String(32), nullable=False, server_default='')   # binning method
     method_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
     method = EK.proxy('method_id', '@BINNING-METHOD')
 
-    brtime = Column(types.Integer, nullable=False, default=-1)
-    ertime = Column(types.Integer, nullable=False, default=-1)
-    wrtime = Column(types.Integer, nullable=False, default=-1)
-    srtime = Column(types.Float, nullable=False, default=-1)    # log2( right_area/left_area )
-    w25rtime = Column(types.Float, nullable=False, default=-1)
-    w50rtime = Column(types.Integer, nullable=False, default=-1)
-    w75rtime = Column(types.Integer, nullable=False, default=-1)
+    brtime = Column(types.Integer, nullable=False, server_default='-1')
+    ertime = Column(types.Integer, nullable=False, server_default='-1')
+    wrtime = Column(types.Integer, nullable=False, server_default='-1')
+    srtime = Column(types.Float, nullable=False, server_default='-1')   # log2( right_area/left_area )
+    w25rtime = Column(types.Float, nullable=False, server_default='-1')
+    w50rtime = Column(types.Integer, nullable=False, server_default='-1')
+    w75rtime = Column(types.Integer, nullable=False, server_default='-1')
     lshared = Column(types.Boolean, nullable=False, default=False)
     rshared = Column(types.Boolean, nullable=False, default=False)
     """ begin, end, width, symmetrical retention time of this peak and peak quality"""
 
-    qscore = Column(types.Float, nullable=False, default=-1)    # calculated in preannotate()
-    qcall = Column(types.Float, nullable=False, default=-1)     # calculated in call()
+    qscore = Column(types.Float, nullable=False, server_default='-1')    # calculated in preannotate()
+    qcall = Column(types.Float, nullable=False, server_default='-1')     # calculated in call()
 
 
     @property
@@ -605,13 +605,13 @@ class DataSet( BaseMixIn, Base ):
     group = relationship(Group, uselist=False)
     """ primary group where this dataset belongs """
 
-    acl = Column(types.Integer, nullable=False, default=0)
+    acl = Column(types.Integer, nullable=False, server_default='0')
     """ access control list for this dataset """
 
     previous_id = Column(types.Integer, ForeignKey('datasets.id'), nullable=True)
     """ previous dataset """
 
-    number = Column(types.Integer, nullable=False, default=1)
+    number = Column(types.Integer, nullable=False, server_default='1')
     """ order no of this dataset """
 
     latest = Column(types.Boolean, nullable=False, default=False)
@@ -623,10 +623,10 @@ class DataSet( BaseMixIn, Base ):
     count = Column( types.Integer, nullable=False )
     """ how many allelesets within this dataset """
 
-    desc = deferred( Column(types.Text(), nullable=False, default='') )
+    desc = deferred( Column(types.Text(), nullable=False, server_default='') )
     """ any description for this dataset """
 
-    remark = deferred( Column(types.Text(), nullable=False, default='') )
+    remark = deferred( Column(types.Text(), nullable=False, server_default='') )
     """ any notes or remark for this dataset """
 
 # dbversion_snapshot_table manages relationship between dbversion and snapshot
@@ -654,5 +654,5 @@ class DBVersion( BaseMixIn, Base ):
     label = Column( types.String(64), nullable=False, unique=True )
     """ version label """
 
-    desc = Column( types.String(256), nullable=False, default='' )
+    desc = Column( types.String(256), nullable=False, server_default='' )
     """ simple description of this label """

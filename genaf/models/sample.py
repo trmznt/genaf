@@ -34,19 +34,19 @@ class Location(BaseMixIn, Base):
     level3 = EK.proxy('level3_id', '@REGION')
     level4 = EK.proxy('level4_id', '@REGION')
 
-    latitude = Column(types.Float, nullable=False, default=0)
+    latitude = Column(types.Float, nullable=False, server_default='0')
     """ latitude of location/site """
 
-    longitude = Column(types.Float, nullable=False, default=0)
+    longitude = Column(types.Float, nullable=False, server_default='0')
     """ longitude of location/site """
 
-    altitude = Column(types.Float, nullable=False, default=0)
+    altitude = Column(types.Float, nullable=False, server_default='0')
     """ altitute of location/site """
 
-    notes =  Column(types.String(128), nullable=False, default='')
+    notes =  Column(types.String(128), nullable=False, server_default='')
     """ some notes about the location """
 
-    __table_args__ = ( 
+    __table_args__ = (
         UniqueConstraint('country_id', 'level1_id', 'level2_id', 'level3_id', 'level4_id'),
         {} )
 
@@ -125,8 +125,8 @@ class Note(BaseMixIn, Base, NoteMixIn):
 
     __tablename__ = 'notes'
 
-    text = Column(types.String(1024), nullable=False, default='')
-    cat = Column(types.String(32), nullable=False, default='')
+    text = Column(types.String(1024), nullable=False, server_default='')
+    cat = Column(types.String(32), nullable=False, server_default='')
     stamp = Column(types.DateTime, nullable=False)
 
 
@@ -136,11 +136,11 @@ class Batch(BaseMixIn, Base, BatchMixIn):
     __tablename__ = 'batches'
 
     code = Column(types.String(16), nullable=False, unique=True)
-    #assay_provider = Column(types.String(32), nullable=False, default='')
+    #assay_provider = Column(types.String(32), nullable=False, server_default='')
     assay_provider_id = Column(types.Integer, ForeignKey('groups.id'), nullable=False)
-    description = Column(types.String(256), nullable=False, default='')
-    remark = deferred(Column(types.String(2048), nullable=False, default=''))
-    data = deferred(Column(YAMLCol(4096), nullable=False, default=''))
+    description = Column(types.String(256), nullable=False, server_default='')
+    remark = deferred(Column(types.String(2048), nullable=False, server_default=''))
+    data = deferred(Column(YAMLCol(4096), nullable=False, server_default=''))
     species_id = Column(types.Integer, ForeignKey('eks.id'), nullable=False)
     species = EK.proxy('species_id', '@SPECIES')
     bin_batch_id = Column(types.Integer, ForeignKey('batches.id'), nullable=True)
@@ -266,24 +266,24 @@ class Sample(BaseMixIn, Base, SampleMixIn):
     __tablename__ = 'samples'
 
     code = Column(types.String(64), nullable=False)
-    type = Column(types.String(1), default='S')
+    type = Column(types.String(1), server_default='S')
     altcode = Column(types.String(16), nullable=True)               # custom usage
-    category = Column(types.Integer, nullable=False, default=0)     # custom usage
+    category = Column(types.Integer, nullable=False, server_default='0')     # custom usage
     batch_id = Column(types.Integer, ForeignKey('batches.id', ondelete='CASCADE'),
                 nullable=False)
     batch = relationship(Batch, uselist=False,
                 backref=backref('samples', lazy='dynamic', passive_deletes=True))
-    int1 = Column(types.Integer, nullable=False, default=0)         # custom usage
-    int2 = Column(types.Integer, nullable=False, default=0)         # custom usage
-    int3 = Column(types.Integer, nullable=False, default=0)         # custom usage
-    string1 = Column(types.String(16), nullable=False, default='')  # custom usage
-    string2 = Column(types.String(16), nullable=False, default='')  # custom usage
-    string3 = Column(types.String(16), nullable=False, default='')  # custom usage
-    remark = deferred(Column(types.String(1024), nullable=False, default=''))
+    int1 = Column(types.Integer, nullable=False, server_default='0')         # custom usage
+    int2 = Column(types.Integer, nullable=False, server_default='0')         # custom usage
+    int3 = Column(types.Integer, nullable=False, server_default='0')         # custom usage
+    string1 = Column(types.String(16), nullable=False, server_default='')  # custom usage
+    string2 = Column(types.String(16), nullable=False, server_default='')  # custom usage
+    string3 = Column(types.String(16), nullable=False, server_default='')  # custom usage
+    remark = deferred(Column(types.String(1024), nullable=False, server_default=''))
 
     ## GenAF custom scheme
 
-    polymorphic_type = Column(types.Integer, nullable=False, default=0)
+    polymorphic_type = Column(types.Integer, nullable=False, server_default='0')
 
     __mapper_args__ = { 'polymorphic_on': polymorphic_type }
 
@@ -292,7 +292,7 @@ class Sample(BaseMixIn, Base, SampleMixIn):
                     )
 
     ## GenAF custom schema
- 
+
     shared = Column(types.Boolean, nullable=False, default=False)
     """ whether this particular sample has been shared (viewable/searchable by other
         users), necessary so that individual sample can be shared without all samples
@@ -307,16 +307,16 @@ class Sample(BaseMixIn, Base, SampleMixIn):
             backref=backref("samples", lazy='dynamic', passive_deletes=True))
     """ relation to location, with cascading delete """
 
-    latitude = Column(types.Float, nullable=False, default=0)
+    latitude = Column(types.Float, nullable=False, server_default='0')
     """ exact latitude of the sample """
 
-    longitude = Column(types.Float, nullable=False, default=0)
+    longitude = Column(types.Float, nullable=False, server_default='0')
     """ exact longitude of the sample """
 
-    altitude = Column(types.Float, nullable=False, default=0)
+    altitude = Column(types.Float, nullable=False, server_default='0')
     """ exact altitute of the sample """
 
-    comments = deferred( Column(types.String(256), nullable=False, default='') )
+    comments = deferred( Column(types.String(256), nullable=False, server_default='') )
 
     trashed = Column(types.Boolean, nullable=False, default=False)
     """ whether this sample has been marked as deleted """
@@ -345,6 +345,8 @@ class Sample(BaseMixIn, Base, SampleMixIn):
         if type(obj) == dict:
             if 'type' in obj:
                 self.type = obj['type']
+            if 'category' in obj:
+                self.category = obj['category']
             if 'collection_date' in obj:
                 collection_date = obj['collection_date']
                 if type(collection_date) is str:
@@ -354,7 +356,7 @@ class Sample(BaseMixIn, Base, SampleMixIn):
                 location_code = obj['location']
                 location = Location.search(
                                 location_code[0], location_code[1],
-                                location_code[2], location_code[3], 
+                                location_code[2], location_code[3],
                                 location_code[4], auto=True, dbsession = object_session(self) )
                 cerr('LOCATION: %s' % location)
                 self.location = location

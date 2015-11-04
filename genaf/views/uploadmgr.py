@@ -138,7 +138,7 @@ class UploaderSession(object):
 
         with open('%s/assay_list.yaml' % self.rootpath, 'w') as f:
             yaml.dump( assay_files, f)
-        
+
         if not err_log:
             self.meta['payload_count'] = len(assay_files)
 
@@ -170,7 +170,7 @@ class UploaderSession(object):
 
             line_counter += 1
 
-            if not (r['ASSAY'] and r['SAMPLE']) or '#' in [ r['ASSAY'][0], r['SAMPLE'][0] ]:
+            if not (r['FILENAME'] and r['SAMPLE']) or '#' in [ r['FILENAME'][0], r['SAMPLE'][0] ]:
                 continue
 
             options = None
@@ -187,17 +187,17 @@ class UploaderSession(object):
                     continue
 
                 # get & check assay file
-                if r['ASSAY'] not in assay_files:
+                if r['FILENAME'] not in assay_files:
                     err_log.append('Line %03d - assay file: %s is not in the payload file' %
-                                        ( line_counter, r['ASSAY'] ))
+                                        ( line_counter, r['FILENAME'] ))
                     continue
 
                 try:
-                    with open( assay_files[ r['ASSAY'] ], 'rb') as f:
+                    with open( assay_files[ r['FILENAME'] ], 'rb') as f:
                         trace = f.read()
-            
+
                     a = sample.add_fsa_assay( trace,
-                                filename=r['ASSAY'],
+                                filename=r['FILENAME'],
                                 panel_code = r['PANEL'],
                                 options = options,
                                 species = batch.species,
@@ -256,7 +256,7 @@ def list_sessions(batch):
 
     prefix = '%03d-' % batch.id
     session_paths = [ x for x in paths if x.startswith(prefix) ]
-    
+
     uploader_sessions = []
     for sesspath in session_paths:
         uploader_session = UploaderSession( sesskey = sesspath )
@@ -270,7 +270,7 @@ def list_sessions(batch):
 @roles( PUBLIC )
 def index(request):
     """ provide listing of available upload sessions """
-    
+
     batch_id = request.params.get('batch_id', 0)
     if batch_id == 0:
         error_page('Please provide batch id!')
@@ -287,11 +287,11 @@ def index(request):
                 {   'sessions': uploader_sessions,
                     'batch': batch,
                 }, request = request )
-        
+
 
 @roles( PUBLIC )
 def view(request):
-    
+
     sesskey = request.matchdict.get('id')
 
     # if sesskey does not exists, this will throw exception
@@ -356,7 +356,7 @@ def get_payload_info(up_session, request):
     info_panel = div()
     if up_session.has_payload():
         # doesn't have payload yet, show upload pan
-        
+
         info_panel.add(
             row()[
                 div(class_='col-md-3')[ span(class_='pull-right')['FSA archived file :'] ],
@@ -378,7 +378,7 @@ def get_payload_info(up_session, request):
 
         info_panel.add( div(id="payload_error_report") )
     return info_panel
-    
+
 
 def get_payload_bar(up_session, request):
 
@@ -400,7 +400,7 @@ def get_payload_bar(up_session, request):
                 #'to continue', br(),
                 span(id='verifypayload', class_='btn btn-primary')[
                     'Continue to verify the uploaded archive file'
-                ], br(), 
+                ], br(),
                 span(class_="btn btn-default fileinput-button")[
                     span('Change/replace the uploaded archive file'),
                     input(id='dataupload', type='file', name='files[]')
@@ -631,7 +631,7 @@ def save(request):
             # XXX: need to check whether the process is still running or stopped
             seconds = 10
             msg = div()[ p('Output: %s' % ns.output),
-                        p('Processing...') 
+                        p('Processing...')
                 ]
 
         #return dict(html = str( p('Processing') ), status=True)
@@ -925,7 +925,7 @@ def rpc(request):
 
     return dict( html='', code='' )
 
-    
+
 
 ## prototype multiprocessing stuff
 
@@ -949,4 +949,4 @@ def mp_commit_payload(settings, sesskey, login, ns):
     return result
 
 
-    
+

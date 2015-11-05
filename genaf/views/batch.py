@@ -48,10 +48,10 @@ def view(request):
 @roles( PUBLIC )
 def edit(request):
     """ edit batch information """
-    
+
     batch_id = int(request.matchdict.get('id'))
     if batch_id < 0:
-        return error_page('Please provide batch ID')
+        return error_page(request, 'Please provide batch ID')
 
     dbh = get_dbhandler()
 
@@ -65,11 +65,11 @@ def edit(request):
         else:
             batch = dbh.get_batch_by_id(batch_id)
             if not batch:
-                return error_page('Batch with ID: %d does not exist!' % objid)
+                return error_page(request, 'Batch with ID: %d does not exist!' % objid)
 
             # check permission
             if not request.user.in_group( batch.group ):
-                return error_page('Current user is not part of Batch group')
+                return error_page(request, 'Current user is not part of Batch group')
 
         editform = edit_form(batch, dbh, request)
 
@@ -83,7 +83,7 @@ def edit(request):
 
         batch_d = parse_form( request.POST )
         if batch_d['id'] != batch_id:
-            return error_page("Inconsistent data")
+            return error_page(request, "Inconsistent data")
 
         try:
             if batch_id == 0:
@@ -131,7 +131,6 @@ def edit(request):
 
         return HTTPFound(location = request.route_url('genaf.batch-view', id = batch.id))
 
-    raise RuntimeError
     return error_page(request, "Unknown HTTP method!")
 
 
@@ -150,15 +149,15 @@ def save(request):
     batch_id = int(request.matchdict.get('id'))
     batch_d = parse_form( request.POST )
     if batch_d['id'] != batch_id:
-        return error_page("Inconsistent data")
+        return error_page(request, "Inconsistent data")
 
     if batch_id < 0:
-        return error_page("Need a reasonable batch ID")
+        return error_page(request, "Need a reasonable batch ID")
 
     # check permission
     batch_group = dbh.get_group_by_id( batch_d['group_id'] )
     if not request.user.in_group( batch_group ):
-        return error_page(request, 
+        return error_page(request,
                 "Users can only assign their groups to batch primary group!")
 
     try:
@@ -224,7 +223,7 @@ def edit_form(batch, dbh, request):
             submit_bar(),
         )
     )
-                
+
     return eform
 
 
@@ -278,7 +277,7 @@ def action(request):
                     'Error parsing input file. Please verify the input file manually.<br/>'
                     + '<br/>\n'.join( errlog ) )
 
-            
+
         return render_to_response('genaf:templates/batch/verify-sampleinfo.mako',
                     {   'batch': batch,
                         'path': path,
@@ -358,7 +357,7 @@ def action(request):
                         'batch': batch,
                     },
                     request = request )
-        
+
     elif method == 'add-assay-info':
 
         if not request.POST:
@@ -525,7 +524,7 @@ def process_sample_info( batch, path, option ):
             if not db_sample:
                 continue
             updates += 1
-        
+
         elif option == 'N':
             if db_sample: continue
             db_sample = batch.add_sample( sample_code )
@@ -541,7 +540,7 @@ def process_sample_info( batch, path, option ):
 
     # remove the yaml/json file
     silent_remove( temppath )
-        
+
     return (True, "Updating %d samples, inserting %d samples" % (inserts, updates))
 
 

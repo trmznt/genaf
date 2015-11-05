@@ -1,4 +1,4 @@
-# allele summary
+# heterozygosity summary
 
 
 from genaf.views.tools import *

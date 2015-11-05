@@ -43,7 +43,7 @@ ${selection_bar('marker', ('Add Marker', request.route_url("genaf.marker-edit", 
       ${input_show('Species', marker.species)}
       ${input_show('Minimum Size', marker.min_size)}
       ${input_show('Maximum Size', marker.max_size)}
-      ${input_show('Bins', marker.bins)}
+      ##${input_show('Bins', marker.bins)}
       ${button_edit('Edit', request.route_url('genaf.marker-edit', id=marker.id))}
     </fieldset>
   </form>
@@ -63,7 +63,7 @@ ${selection_bar('marker', ('Add Marker', request.route_url("genaf.marker-edit", 
     ${input_text('genaf/marker.repeats', 'Repeats', value=marker.repeats)}
     ${input_text('genaf/marker.min_size', 'Minimum Size', value=marker.min_size)}
     ${input_text('genaf/marker.max_size', 'Maximum Size', value=marker.max_size)}
-    ${input_text('genaf/marker.bins', 'Bins', value=marker.bins)}
+    ##${input_text('genaf/marker.bins', 'Bins', value=marker.bins)}
     ${submit_bar()}
   </fieldset>
 </form>

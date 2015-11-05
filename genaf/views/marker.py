@@ -39,32 +39,76 @@ def view(request):
 @roles( PUBLIC )
 def edit(request):
 
+    #check permisson
+    if not request.user.in_group(('_SysAdm_', None)):
+        return error_page(request, 'Current user is not part of Administrator')
+
     marker_id = int(request.matchdict.get('id'))
     if marker_id < 0:
-        return error_page('Please provide marker ID')
+        return error_page(request, 'Please provide marker ID')
 
     dbh = get_dbhandler()
 
-    if marker_id == 0:
-        marker = dbh.new_marker()
-        marker.id = 0
-        marker.species = 'X'
+    if request.method == 'GET':
+        # return a form
 
-    else:
-        marker = dbh.get_marker_by_id(marker_id)
-        if not marker:
-            return error_page('Marker with ID: %s does not exist!' % marker_id)
+        if marker_id == 0:
+            marker = dbh.new_marker()
+            marker.id = 0
+            marker.species = 'X'
 
-    form = edit_form(marker)
+        else:
+            marker = dbh.get_marker_by_id(marker_id)
+            if not marker:
+                return error_page(request,
+                    'Marker with ID: %s does not exist!' % marker_id)
 
-    return render_to_response( "genaf:templates/marker/edit.mako",
+        form = edit_form(marker, dbh, request)
+
+        return render_to_response( "genaf:templates/marker/edit.mako",
             {   'marker': marker,
                 'form': form,
             }, request = request )
 
 
+    elif request.method == 'POST':
 
-    return form
+        marker = parse_form(request.POST, dbh.new_marker())
+        if marker.id != marker_id:
+            return error_page(request, "Inconsistent data!")
+
+        try:
+
+            if marker_id == 0:
+                # create new marker
+                dbh.session().add( marker )
+                dbh.session().flush()
+                db_marker = marker
+                request.session.flash(
+                    (   'success',
+                        'Marker [%s] has been added' % db_marker.label )
+                )
+
+            else:
+
+                db_marker = dbh.get_marker_by_id( marker.id )
+                db_marker.update( marker )
+                dbh.session().flush()
+                request.session.flash(
+                    (   'success',
+                        'Marker [%s] has been updated' % db_marker.label )
+                )
+        except RuntimeError as err:
+            return error_page(request, str(err))
+        except:
+            raise
+
+        return HTTPFound(location = request.route_url('genaf.marker-view',
+                                        id = db_marker.id))
+
+    return error_page(request, "Unknown HTTP method!")
+
+
 @roles( PUBLIC )
 def save(request):
 
@@ -79,7 +123,7 @@ def save(request):
     marker_id = int(request.matchdict.get('id'))
     marker = parse_form(request.POST, dbh.new_marker())
 
-    
+
     if marker_id != marker.id:
         return error_page()
 
@@ -99,27 +143,39 @@ def save(request):
         db_marker = dbh.get_marker_by_id( marker_id )
         db_marker.update( marker )
         request.session.flash(
-            (   'sucess',
+            (   'success',
                 'Marker [%s] has been updated' % db_marker.label ))
 
     return HTTPFound(location = request.route_url('genaf.marker-view', id = db_marker.id))
 
 
 
-def edit_form(marker=None):
+def edit_form(marker=None, dbh=None, request=None):
 
-    from rhombus.lib import tags
 
-    form = tags.form( name="genaf/marker", action="/", method=tags.POST )
-    form.add( tags.input_hidden(name="genaf/marker.id", value = marker.id if marker else 0) )
-    form.add( tags.input_text( name="genaf/marker.code", label="Marker code",
-                                    value = marker.code if marker else '' ) )
-    form.add( tags.input_text( name="genaf/marker.species", label="Species",
-                                    value = marker.species if marker else '') )
-    form.add( tags.input_textarea( name="genaf/marker.bins", label="Bins",
-                                    value = marker.bins if marker else '') )
+    eform = form( name="genaf/marker", method=POST,
+                action = request.route_url('genaf.marker-edit',
+                    id=marker.id if marker else 0) )
+    eform.add(
+        fieldset(
+            input_hidden(name="genaf/marker.id", value = marker.id if marker else 0),
+            input_text( name="genaf/marker.code", label="Marker code",
+                                    value = marker.code if marker else '' ),
+            input_text( name="genaf/marker.locus", label="Locus",
+                                    value = marker.locus if marker else ''),
+            input_text( name="genaf/marker.species", label="Species",
+                                    value = marker.species if marker else ''),
+            input_text( name='genaf/marker.repeats', label='Repeats',
+                                    value = marker.repeats if marker else ''),
+            input_text( name='genaf/marker.min_size', label='Min size',
+                                    value = marker.min_size if marker else ''),
+            input_text( name="genaf/marker.max_size", label='Max size',
+                                    value = marker.max_size if marker else ''),
+            submit_bar(),
+        )
+    )
 
-    return form
+    return eform
 
 def parse_form( d, m ):
 
@@ -130,7 +186,6 @@ def parse_form( d, m ):
     m.repeats = int(d.get('genaf/marker.repeats') or 0)
     m.min_size = int(d.get('genaf/marker.min_size') or 0)
     m.max_size = int(d.get('genaf/marker.max_size') or 0)
-    m.bins = json.loads(d.get('genaf/marker.bins') or '[]')
 
     return m
 

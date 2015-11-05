@@ -10,6 +10,7 @@ from pandas import DataFrame, pivot_table
 
 from collections import OrderedDict
 from itertools import cycle
+import yaml
 
 
 def load_yaml(yaml_text):
@@ -37,9 +38,10 @@ class Query(query.Query):
 
     def get_sample_sets(self, sample_ids = None):
         if self._sample_sets is None or sample_ids:
-            sample_sets = super().get_sample_sets(sample_ids)
-            differentiator = self._params['differentiator']
-            self._sample_sets = differentiator.get_sample_sets( sample_sets )
+            self._sample_sets = super().get_sample_sets(sample_ids)
+            differentiator = self._params.get('differentiator', None)
+            if differentiator:
+                self._sample_sets = differentiator.get_sample_sets( self._sample_sets )
         return self._sample_sets
 
 

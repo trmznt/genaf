@@ -13,7 +13,6 @@ def index(request):
 
     dbh = get_dbhandler()
 
-
     q = dbh.Sample.query(dbh.session()).join(dbh.Batch)
 
     batch_id = request.params.get('batch_id', False)
@@ -31,17 +30,24 @@ def index(request):
     q = q.order_by( dbh.Sample.code )
 
     samples = q.all()
-        
-    
+
+    mode = request.params.get('mode','meta')
+
+    if mode == 'meta':
+        outtable = format_sampleinfo(samples)
+    elif mode == 'fsa':
+        outtable = format_samplefsa(samples)
+
     return render_to_response("genaf:templates/sample/index.mako",
                     {   'samples': samples,
                         'batch': batch,
+                        'table': outtable
                     },
                     request = request)
 
 @roles( PUBLIC )
 def view(request):
-    
+
     sample_id = int(request.matchdict.get('id'))
     sample = get_dbhandler().get_sample_by_id( sample_id )
     #if sample.batch.group_id not in request.user.groups:
@@ -55,7 +61,7 @@ def view(request):
 
 
 def edit(request):
-    
+
     return render_to_response("genaf:templates/sample/edit.mako",
                     {   'sample': sample,
                     },
@@ -63,12 +69,12 @@ def edit(request):
 
 
 def save(request):
-    
+
     pass
 
 @roles( PUBLIC )
 def action(request):
-    
+
     method = request.params.get('_method', None)
 
     if method == 'add-assay-files':
@@ -91,3 +97,29 @@ def action(request):
 
 def lookup(request):
     pass
+
+
+def format_samplefsa_table(samples):
+    pass
+
+def format_sampleinfo(samples):
+
+    T = table(class_='table table-condensed table-striped', id='sample_table')
+
+    data = [
+        [   '<a href="%s">%s</a>' % (request.route_url('genaf.sample-view',
+                                                id = s.id),
+                                    s.code),
+            s.altcode,
+            s.category,
+            s.location.country,
+            s.location.adminl1,
+            s.location.adminl2,
+            s.location.adminl3,
+            s.location.adminl4,
+            s.collection_date
+        ] for s in samples
+    ]
+
+    jscode = ''
+

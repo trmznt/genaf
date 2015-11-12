@@ -132,6 +132,11 @@ def includeme( config ):
     config.add_route('tools-moi', '/tools/moi')
     config.add_view('genaf.views.tools.moi.index', route_name='tools-moi')
 
+    config.add_route('tools-pcoa', '/tools/pcoa')
+    config.add_view('genaf.views.tools.pcoa.index', route_name='tools-pcoa')
+
+    config.add_route('tools-mca', '/tools/mca')
+    config.add_view('genaf.views.tools.mca.index', route_name='tools-mca')
 
 
 def init_app( global_config, settings, prefix = '/mgr' ):
@@ -149,7 +154,6 @@ def init_app( global_config, settings, prefix = '/mgr' ):
     config = rhombus_init_app( global_config, settings, prefix=prefix )
 
     return config
-
 
 
 def main(global_config, **settings):

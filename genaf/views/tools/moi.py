@@ -27,4 +27,37 @@ def func_callback( query, request ):
 
 
 def format_output(results, request, options):
-    pass
+
+    dbh = get_dbhandler()
+
+    html = div()
+
+    # construct table header
+    table_header = tr( th('') )
+    labels = results.keys()
+    for label in labels:
+        table_header.add( th(label) )
+
+
+    # construct table body
+    table_body = tbody()
+
+    for row_label, row_key in ( ('Mean', 'mean'), ('Std Dev', 'std')):
+        cerr('formating table')
+        table_row = tr( td(row_label) )
+        table_row.add( * tuple( td('%4.3f' % getattr(results[l], row_key))
+                        for l in labels ))
+        table_body.add( table_row )
+
+    # construct full table
+    cerr('constructing table')
+    moi_table = table(class_='table table-condensed table-striped')[
+        table_header, table_body
+    ]
+
+    html.add( moi_table )
+
+    return (html, '')
+
+
+

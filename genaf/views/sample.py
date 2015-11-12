@@ -7,6 +7,8 @@ from rhombus.views.generics import error_page
 
 from genaf.views import *
 
+import json
+
 
 @roles( PUBLIC )
 def index(request):
@@ -31,17 +33,20 @@ def index(request):
 
     samples = q.all()
 
-    mode = request.params.get('mode','meta')
+    mode = request.params.get('mode','fsa')
 
     if mode == 'meta':
-        outtable = format_sampleinfo(samples)
+        html, jscode = format_sampleinfo(samples, request)
     elif mode == 'fsa':
-        outtable = format_samplefsa(samples)
+        html, jscode = format_samplefsa(samples, request)
+    else:
+        return error_page(request, 'No suitable mode provided!')
 
     return render_to_response("genaf:templates/sample/index.mako",
                     {   'samples': samples,
                         'batch': batch,
-                        'table': outtable
+                        'html': html,
+                        'code': jscode,
                     },
                     request = request)
 
@@ -99,10 +104,40 @@ def lookup(request):
     pass
 
 
-def format_samplefsa_table(samples):
-    pass
+def format_samplefsa(samples, request):
 
-def format_sampleinfo(samples):
+    T = table(class_='table table-condensed table-striped', id='sample_table')
+
+    data = [
+        [   '<a href="%s">%s</a>' % (request.route_url('genaf.sample-view',
+                                                id = s.id),
+                                    s.code),
+            s.batch.code,
+            s.assays.count()
+        ] for s in samples
+    ]
+
+    jscode = '''
+var dataset = %s;
+
+$(document).ready(function() {
+    $('#sample_table').DataTable( {
+        data: dataset,
+        paging: false,
+        fixedHeader: true,
+        columns: [
+            { title: "Sample Code" },
+            { title: "Batch" },
+            { title: "FSA counts" }
+        ]
+    } );
+} );
+''' % json.dumps( data )
+
+    return (str(T), jscode)
+
+
+def format_sampleinfo(samples, request):
 
     T = table(class_='table table-condensed table-striped', id='sample_table')
 
@@ -113,13 +148,35 @@ def format_sampleinfo(samples):
             s.altcode,
             s.category,
             s.location.country,
-            s.location.adminl1,
-            s.location.adminl2,
-            s.location.adminl3,
-            s.location.adminl4,
-            s.collection_date
+            s.location.level1,
+            s.location.level2,
+            s.location.level3,
+            s.location.level4,
+            str(s.collection_date)
         ] for s in samples
     ]
 
-    jscode = ''
+    jscode = '''
+var dataset = %s;
 
+$(document).ready(function() {
+    $('#sample_table').DataTable( {
+        data: dataset,
+        paging: false,
+        fixedHeader: true,
+        columns: [
+            { title: "Sample Code" },
+            { title: "Alt Code" },
+            { title: "Category" },
+            { title: "Country" },
+            { title: "Admin L1" },
+            { title: "Admin L2" },
+            { title: "Admin L3" },
+            { title: "Admin L4" },
+            { title: "Collection Date" }
+        ]
+    } );
+} );
+''' % json.dumps( data )
+
+    return ( str(T), jscode )

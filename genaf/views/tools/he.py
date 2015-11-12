@@ -59,11 +59,13 @@ def format_output(results, options=None):
         table_body.add(table_row)
 
     # consruct table
-    he_table = table(class_='table table-condense table-striped')[
+    he_table = table(class_='table table-condensed table-striped')[
         table_header, table_body
     ]
     html.add( he_table )
-    html.add( p('Statistics: ' + results['test'] +
+
+    if 'test' in results:
+        html.add( p('Statistics: ' + results['test'] +
             ' (p-value = %5.4f)' % results['stats'].pvalue) )
 
     return (html, '')

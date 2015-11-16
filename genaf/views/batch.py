@@ -497,7 +497,6 @@ def process_sample_info( batch, path, option ):
 
     # updating location first
     null_location = get_dbhandler().search_location(auto=True)
-    null_subject = get_dbhandler().search_subject('null', auto=True) ## <- this shouldn't be here !!
 
     session = get_dbhandler().session()
 
@@ -533,7 +532,6 @@ def process_sample_info( batch, path, option ):
 
         else:
             return error_page('Invalid option')
-        db_sample.subject = null_subject # <- this shouldn't be here too !!!
         db_sample.update( dict_sample )
         session.flush([db_sample])
         print('Flushing sample: %s' % db_sample.code)

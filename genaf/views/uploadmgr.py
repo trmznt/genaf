@@ -12,7 +12,7 @@ from genaf.lib.procmgmt import subproc, getproc, getmanager, estimate_time
 
 from fatools.lib.utils import tokenize
 
-import os, yaml, re, shutil, time, csv, threading, transaction
+import os, yaml, re, shutil, time, csv, threading, transaction, sys
 
 from pprint import pprint
 
@@ -913,8 +913,20 @@ def rpc(request):
         return dict( html = str(html), code = code )
 
     if request.params.get('_method','') == 'verifymetaassay':
-        assay_no, err_log = uploader_session.upload_payload(dry_run=True)
+
+        err_log = None
+        try:
+            assay_no, err_log = uploader_session.upload_payload(dry_run=True)
+        except:
+            exc_info = sys.exc_info()
+            if err_log:
+                err_log.append( 'Exception %s : %s' % (str(exc_info[0]), exc_info[1]) )
+            else:
+                err_log = [ 'Exception %s : %s' % (str(exc_info[0]), exc_info[1]) ]
+            get_dbhandler().session().rollback()
+
         html, code = compose_mainpanel(uploader_session, request)
+
         if err_log:
             html.get('infofile_error_report').add(
                     div()[ 'Error message:'],

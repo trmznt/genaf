@@ -35,6 +35,7 @@ class DBHandler(rho_handler.DBHandler, base_sqlhandler):
         if groups is not None:
             # enforce security
             q = q.filter( self.Batch.group_id.in_( [ x[1] for x in groups ] ) )
+            q = q.order_by( self.Batch.code )
 
         return q.all()
 

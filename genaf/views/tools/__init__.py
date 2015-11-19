@@ -53,13 +53,17 @@ def basic_query_form(request):
                         value=100, size=2,
                         info = "The minimum absolute rfu value for each peak to be considered as a real peak"),
             input_text(name='allele_rel_threshold', label='Allele relative threshold',
-                        value=0.33, size=2),
+                        value=0.33, size=2,
+                        info = "The minimum relative rfu against the major peak rfu for each peak to be considered as real peak"),
             input_text(name='allele_rel_cutoff', label='Allele relative cutoff',
-                        value=0.00, size=2),
+                        value=0.00, size=2,
+                        info = "The maximum relative rfu against the major peak rfu for a particular marker to included in analysis"),
             input_text(name='sample_qual_threshold', label='Sample quality threshold',
-                        value=0.50, size=2),
+                        value=0.50, size=2,
+                        info = "A fraction"),
             input_text(name='marker_qual_threshold', label='Marker quality threshold',
-                        value=0.10, size=2)
+                        value=0.10, size=2,
+                        info = "A fraction")
         ]
     )
 

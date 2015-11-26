@@ -554,7 +554,7 @@ class Allele(BaseMixIn, Base, AlleleMixIn):
     ertime = Column(types.Integer, nullable=False, server_default='-1')
     wrtime = Column(types.Integer, nullable=False, server_default='-1')
     srtime = Column(types.Float, nullable=False, server_default='-1')   # log2( right_area/left_area )
-    w25rtime = Column(types.Float, nullable=False, server_default='-1')
+    w25rtime = Column(types.Integer, nullable=False, server_default='-1')
     w50rtime = Column(types.Integer, nullable=False, server_default='-1')
     w75rtime = Column(types.Integer, nullable=False, server_default='-1')
     lshared = Column(types.Boolean, nullable=False, default=False)

@@ -539,7 +539,7 @@ def process_sample_info( batch, path, option ):
     # remove the yaml/json file
     silent_remove( temppath )
 
-    return (True, "Updating %d samples, inserting %d samples" % (inserts, updates))
+    return (True, "Updating %d samples, inserting %d samples" % (updates, inserts))
 
 
 ## assay info processing

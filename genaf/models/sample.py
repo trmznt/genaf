@@ -73,7 +73,7 @@ class Location(BaseMixIn, Base):
                                 level3_id = level3_id,
                                 level4_id = level4_id )
             dbsession.add( location )
-            dbsession.flush()
+            dbsession.flush([location])
 
             return location
 

@@ -120,6 +120,9 @@ def includeme( config ):
 
     # tools and analysis
 
+    config.add_route('tools-help', '/tools/help')
+    config.add_view('genaf.views.tools.help.index', route_name='tools-help')
+
     config.add_route('tools-allele', '/tools/allele')
     config.add_view('genaf.views.tools.allele.index', route_name='tools-allele')
 

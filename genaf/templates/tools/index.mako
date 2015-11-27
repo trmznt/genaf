@@ -39,5 +39,22 @@
 ##
 ##
 <%def name="jscode()">
+
+        $(document).ready(function(){
+            $('.js-newWindow').click(function (event) {
+                event.preventDefault();
+
+                var $this = $(this);
+
+                var url = $this.attr("href");
+                var windowName = "Help";
+                var windowSize = $this.data("popup");
+
+                window.open(url, windowName, windowSize);
+            });
+        });
+
+
 ${code | n}
+
 </%def>

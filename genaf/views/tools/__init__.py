@@ -51,10 +51,10 @@ def basic_query_form(request):
         fieldset(name='filter_fields')[
             input_text(name='allele_abs_treshhold', label='Allele absolute threshold',
                         value=100, size=2,
-                        info = "The minimum absolute rfu value for each peak to be considered as a real peak"),
+                        info = "popup:/tools/help#allele_abs_threshold"),
             input_text(name='allele_rel_threshold', label='Allele relative threshold',
                         value=0.33, size=2,
-                        info = "The minimum relative rfu against the major peak rfu for each peak to be considered as real peak"),
+                        info = "popup:/tools/help#allele_rel_threshold"),
             input_text(name='allele_rel_cutoff', label='Allele relative cutoff',
                         value=0.00, size=2,
                         info = "The maximum relative rfu against the major peak rfu for a particular marker to included in analysis"),

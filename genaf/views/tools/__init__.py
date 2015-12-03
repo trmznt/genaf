@@ -57,13 +57,13 @@ def basic_query_form(request):
                         info = "popup:/tools/help#allele_rel_threshold"),
             input_text(name='allele_rel_cutoff', label='Allele relative cutoff',
                         value=0.00, size=2,
-                        info = "The maximum relative rfu against the major peak rfu for a particular marker to included in analysis"),
+                        info = "popup:/tools/help#allele_rel_cutoff"),
             input_text(name='sample_qual_threshold', label='Sample quality threshold',
                         value=0.50, size=2,
-                        info = "A fraction"),
+                        info = "popup:/tools/help#sample_qual_threshold"),
             input_text(name='marker_qual_threshold', label='Marker quality threshold',
                         value=0.10, size=2,
-                        info = "A fraction")
+                        info = "popup:/tools/help#marker_qual_threshold")
         ]
     )
 

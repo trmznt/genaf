@@ -404,8 +404,9 @@ class Channel(BaseMixIn, Base, ChannelMixIn):
 
 
     def clear(self):
+        sess = object_session(self)
         for alleleset in self.allelesets:
-            del alleleset
+            sess.delete(alleleset)
 
 
     def get_latest_alleleset(self):

@@ -11,7 +11,7 @@ import json
 
 @roles( PUBLIC )
 def index(request):
-    
+
     batch_id = request.params.get('batch_id',None)
     if not batch_id:
         return error_page(request, 'ERR - required batch id')
@@ -61,7 +61,7 @@ def view(request):
 
 @roles( PUBLIC )
 def edit(request):
-    
+
     if request.GET:
 
         # show form
@@ -83,7 +83,26 @@ def save(request):
 
 @roles( PUBLIC )
 def action(request):
-    pass
+    if request.POST:
+        return action_post(request)
+
+    return action_get(request)
+
+
+def action_get(request):
+
+    method = request.GET.get('_method', None)
+
+    if method == 'edit_allele':
+
+        allele_id = request.GET.get('id')
+        dbh = get_dbhandler()
+        allele = dbh.Allele.get(allele_id)
+
+        return render_to_response( 'genaf:templates/allele/edit_form.mako',
+            { 'allele': allele }, request = request )
+
+    raise RuntimeError('Unknown method: %s' % method)
 
 
 @roles( PUBLIC )

@@ -52,12 +52,12 @@
     ${input_show('Dye', allele.alleleset.channel.dye)}
     ${input_show('Marker', allele.alleleset.marker.code)}
     ${input_show('Method', allele.method)}
-    ${input_text('genaf.allele_value', 'Value', value=allele.value)}
+    ${input_text('genaf.allele_bin', 'Bin', value=allele.bin)}
     ${input_text('genaf.allele_size', 'Size', value=allele.size)}
     ${input_text('genaf.allele_rtime', 'Retention time', value=allele.rtime)}
     ${input_text('genaf.allele_height', 'Height', value=allele.height)}
     ${input_text('genaf.allele_area', 'Area', value=allele.area)}
-    ${selection_ek('genaf.allele_type_id', 'Type', '@PEAK-TYPE', value=allele.type_id)}
+##    ${selection_ek('genaf.allele_type_id', 'Type', '@PEAK-TYPE', value=allele.type_id)}
     ${submit_bar('Update allele', 'update_allele')}
   </fieldset>
 </form>

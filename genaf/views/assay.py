@@ -102,10 +102,17 @@ def action_get(request):
         allele = dbh.Allele.get(allele_id)
 
         eform = allele_edit_form(allele, dbh, request)
+        body = div( class_='row')[
+            div(class_='col-md-12')[
+                h3('Edit Allele'),
+                eform
+            ]
+        ]
 
-        return Response(body=str(eform), content_type='text/html')
+        return Response(body=str(body), content_type='text/html')
 
     raise RuntimeError('Unknown GET method: %s' % method)
+
 
 def action_post(request):
 

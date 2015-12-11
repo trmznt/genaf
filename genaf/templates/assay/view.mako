@@ -98,7 +98,7 @@
 <%def name="jscode()">
   ${show_assay_js(assay)}
   $('#allele-modal-view').on('hidden.bs.modal', function() {
-      $(this).removeData('modal');
+      $(this).find('.modal-body').empty();
     }
   );
   $('#allele-modal-view').on("show.bs.modal", function(e) {

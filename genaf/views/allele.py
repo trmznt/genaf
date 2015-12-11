@@ -34,12 +34,19 @@ def edit_form(allele, dbh, request, static=False):
     eform = form( name='genaf/allele', method=POST,
                     action=request.route_url('genaf.assay-action') )
     eform.add(
+        div(class_='row')[
+            div(class_='col-md-3')[ b('Marker'), br(), str(allele.alleleset.marker.label)],
+            div(class_='col-md-3')[ b('Size'), br(), '%5.2f' % allele.size],
+            div(class_='col-md-3')[ b('RTime'), br(), '%d' % allele.rtime],
+            div(class_='col-md-3')[ b('Height'), br(), '%d' % allele.height]
+        ],
+        br(),
         fieldset(
             input_hidden(name='genaf-allele_id', value=allele.id),
-            input_show('genaf-allele_marker', 'Marker', value=allele.alleleset.marker.label),
-            input_show('genaf-allele_size', 'Size', value=allele.size),
-            input_show('genaf-allele_rtime', 'Retention time', value=allele.rtime),
-            input_show('genaf-allele_height', 'Height', value=allele.height),
+            #input_show('genaf-allele_marker', 'Marker', value=allele.alleleset.marker.label),
+            #input_show('genaf-allele_size', 'Size', value=allele.size),
+            #input_show('genaf-allele_rtime', 'Retention time', value=allele.rtime),
+            #input_show('genaf-allele_height', 'Height', value=allele.height),
             input_text('genaf-allele_bin', 'Bin', value=allele.bin),
             input_select_ek('genaf-allele_type_id', 'Type', value=allele.type_id,
                     parent_ek = dbh.get_ekey('@PEAK-TYPE')),

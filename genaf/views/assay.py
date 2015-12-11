@@ -95,12 +95,45 @@ def action_get(request):
 
     if method == 'edit_allele':
 
+        from genaf.views.allele import edit_form as allele_edit_form
+
         allele_id = request.GET.get('id')
         dbh = get_dbhandler()
         allele = dbh.Allele.get(allele_id)
 
-        return render_to_response( 'genaf:templates/allele/edit_form.mako',
-            { 'allele': allele }, request = request )
+        eform = allele_edit_form(allele, dbh, request)
+
+        return Response(body=str(eform), content_type='text/html')
+
+    raise RuntimeError('Unknown GET method: %s' % method)
+
+def action_post(request):
+
+    method = request.POST.get('_method', None)
+    dbh = get_dbhandler()
+
+    if method == 'update_allele':
+
+        from genaf.views.allele import parse_form as allele_parse_form
+
+        allele_d = allele_parse_form(request.POST)
+
+        db_allele = dbh.get_allele_by_id(allele_d['id'])
+
+        # XXX: check authorization here !!
+
+        db_allele.update(allele_d)
+
+        request.session.flash(
+            ('success', 'Successfully updating allele %s for marker %s.'
+                % (str(db_allele.bin), db_allele.alleleset.marker.label))
+        )
+
+        return HTTPFound( location = request.route_url('genaf.assay-view',
+                    id = db_allele.alleleset.channel.assay.id) )
+
+        #return render_to_response( 'genaf:templates/allele/edit_form.mako',
+        #    { 'allele': allele }, request = request )
 
     raise RuntimeError('Unknown method: %s' % method)
 

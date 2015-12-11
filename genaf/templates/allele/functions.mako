@@ -11,7 +11,7 @@
 <tr></thead>
 <tbody>
 <%
-  kwargs = { 'data-toggle':'modal', 'data-target':'#allele-modal-view' }
+  kwargs = { 'data-toggle':'modal', 'data-target':'#allele-modal-view', 'data-remote': 'false' }
 %>
 % for a in alleles:
   <tr><td>${a.bin}</td><td>${'%03.2f' % a.size}</td><td>${'%05d' % a.rtime}</td>
@@ -44,7 +44,7 @@
 #
 #
 <%def name="edit_allele(allele)">
-<form class='form-horizontal form-condensed' method='post'
+<form class='form form-horizontal form-condensed' method='post'
     action='${request.route_url("genaf.assay-action", _query=dict(_method="save_allele",
                     id=allele.id))}'>
   <fieldset>

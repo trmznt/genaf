@@ -61,19 +61,27 @@
 
 
 <div class='row'>
-<div class='col-md-10'>
-<div id="placeholder" style="width:800px;height:400px;"></div>
+  <div class='col-md-10'>
+    <div id="placeholder" style="width:800px;height:400px;"></div>
+  </div>
+  <div class='col-md-2'>
+    <p id="choices">Show:</p>
+  </div>
 </div>
-<div class='col-md-2'>
-<p id="choices">Show:</p>
+
+<div class='row'>
+<div id="allele-modal-view" class="modal" role="dialog" tabindex="-1"  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-body'>
+      </div>
+    </div>
+  </div>
 </div>
 </div>
 
+
 <div class='row' style="height:300px;overflow-y:auto">
-<div id="allele-modal-view" class="modal hide" role="dialog">
-<div class='modal-body'>
-</div>
-</div>
 
 <div class='col-md-12'>
 % for c in assay.channels:
@@ -89,10 +97,14 @@
 ##
 <%def name="jscode()">
   ${show_assay_js(assay)}
-  $('#allele-modal-view').on('hidden', function() {
+  $('#allele-modal-view').on('hidden.bs.modal', function() {
       $(this).removeData('modal');
     }
   );
+  $('#allele-modal-view').on("show.bs.modal", function(e) {
+    var link = $(e.relatedTarget);
+    $(this).find(".modal-body").load(link.attr("href"));
+  });
 </%def>
 ##
 <%def name="jslink()">

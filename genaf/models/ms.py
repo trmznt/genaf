@@ -571,6 +571,11 @@ class Allele(BaseMixIn, Base, AlleleMixIn):
         return self.alleleset.channel
 
 
+    def update(self, obj):
+
+        self._update(obj)
+
+
 # dataset_table manages relationship between dataset and alleleset
 dataset_table = Table('datasets_allelesets', metadata,
     Column('id', types.Integer, Sequence('datasets_alleleset_seqid', optional=True),

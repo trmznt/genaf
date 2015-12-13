@@ -63,7 +63,13 @@ def basic_query_form(request):
                         info = "popup:/tools/help#sample_qual_threshold"),
             input_text(name='marker_qual_threshold', label='Marker quality threshold',
                         value=0.10, size=2,
-                        info = "popup:/tools/help#marker_qual_threshold")
+                        info = "popup:/tools/help#marker_qual_threshold"),
+            input_text(name='stutter_ratio', label='Stutter ratio',
+                        value=0.00, size=2,
+                        info = "popup:/tools/help#stutter_ratio"),
+            input_text(name='stutter_range', label='Stutter range',
+                        value=0.00, size=2,
+                        info = "popup:/tools/help#stutter_range")
         ]
     )
 
@@ -92,6 +98,8 @@ def basic_query_form(request):
                     ),
         ]
     )
+
+    qform.add(fieldset(name='additional_fields'))
 
     qform.add(
         fieldset()[ submit_bar('Execute', '_exec') ]
@@ -133,11 +141,15 @@ def yaml_query_form(request):
 
 
 
-def process_request( request, header_text, button_text, callback ):
+def process_request( request, header_text, button_text, callback,
+        form_modifier = None ):
 
     if not request.GET.get('_method', None) in ['_exec', '_yamlexec']:
 
         queryform, javacode = create_form( request )
+
+        if form_modifier:
+            queryform, javacode = form_modifier(queryform, javacode)
 
         return render_to_response('genaf:templates/tools/index.mako',
             {   'header_text': header_text,
@@ -202,6 +214,8 @@ def form2dict( request ):
     filter_d['sample_qual_threshold'] = float( p.get('sample_qual_threshold'))
     filter_d['marker_qual_threshold'] = float( p.get('marker_qual_threshold'))
     filter_d['sample_option'] = p.get('sample_option')
+    filter_d['stutter_ratio'] = float( p.get('stutter_ratio') )
+    filter_d['stutter_range'] = float( p.get('stutter_range') )
 
     d['selector'] = selector_d
     d['filter'] = filter_d

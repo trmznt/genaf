@@ -141,6 +141,15 @@ def includeme( config ):
     config.add_route('tools-mca', '/tools/mca')
     config.add_view('genaf.views.tools.mca.index', route_name='tools-mca')
 
+    config.add_route('tools-export', '/tools/export')
+    config.add_view('genaf.views.tools.export.index', route_name='tools-export')
+
+    config.add_route('tools-fst', '/tools/fst')
+    config.add_view('genaf.views.tools.fst.index', route_name='tools-fst')
+
+    config.add_route('tools-ld', '/tools/ld')
+    config.add_view('genaf.views.tools.ld.index', route_name='tools-ld')
+
 
 def init_app( global_config, settings, prefix = '/mgr' ):
 

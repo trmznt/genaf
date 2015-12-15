@@ -6,7 +6,7 @@ from genaf.views.tools import *
 @roles(PUBLIC)
 def index(request):
 
-    return process_request( request, 'FST', 'Calculate FST',
+    return process_request( request, 'FST (Arlequin)', 'Calculate FST',
             callback = func_callback )
 
 

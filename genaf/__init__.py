@@ -150,6 +150,9 @@ def includeme( config ):
     config.add_route('tools-ld', '/tools/ld')
     config.add_view('genaf.views.tools.ld.index', route_name='tools-ld')
 
+    config.add_route('tools-nj', '/tools/nj')
+    config.add_view('genaf.views.tools.nj.index', route_name='tools-nj')
+
 
 def init_app( global_config, settings, prefix = '/mgr' ):
 

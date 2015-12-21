@@ -74,7 +74,7 @@ def csv2dict(istream, with_report=False, delimiter='\t'):
 
 def parse_csv( reader, log, sample_func = None, existing_samples = None ):
 
-    counter = 0
+    counter = 1
 
     #prepare allele, height, and area
     allele_field = [ x for x in reader.fieldnames if x.startswith('ALLELE') ]
@@ -89,6 +89,7 @@ def parse_csv( reader, log, sample_func = None, existing_samples = None ):
 
     for row in reader:
 
+        counter += 1
         name = row['SAMPLE']
 
         if name in samples:
@@ -102,8 +103,11 @@ def parse_csv( reader, log, sample_func = None, existing_samples = None ):
                 samples[name] = sample
                 sample_codes.append( name )
             except ValueError as err:
-                raise RuntimeError('ERROR in sample code: %s with err msg: %s' % (
-                        name, str(err)))
+                log.append('Line: %d -- ERROR in sample code: %s with err msg: %s' % (
+                        counter, name, str(err)))
+                continue
+                #raise RuntimeError('ERROR in sample code: %s with err msg: %s' % (
+                #        name, str(err)))
 
         assay_code = row.get('ASSAY', None)
         if assay_code is None:

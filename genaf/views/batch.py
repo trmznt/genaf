@@ -8,7 +8,7 @@ from genaf.views import *
 from genaf.lib.dictfmt import csv2dict
 from genaf.views import uploadmgr
 
-import os, json, yaml
+import os, json, yaml, sys
 from io import StringIO
 import sqlalchemy.exc
 
@@ -248,6 +248,7 @@ def action(request):
 
 
     method = request.params.get('_method', None)
+    dbh = get_dbhandler()
 
     if method == 'add-sample-info':
 
@@ -299,7 +300,7 @@ def action(request):
             return error_page(request, 'Forbidden')
 
 
-        (exists, not_exists) = verify_sample_info(batch, path )
+        (exists, not_exists, error_msgs) = verify_sample_info(batch, path )
 
         return render_to_response('genaf:templates/batch/submit-sampleinfo.mako',
                     {   'existing_samples': len(exists),
@@ -350,7 +351,23 @@ def action(request):
         if not request.user.in_group( batch.group ):
             return error_page(request, 'Forbidden')
 
-        (retcode, msg) = process_sample_info( batch, path, option )
+        try:
+            (retcode, msg) = process_sample_info( batch, path, option )
+        except RuntimeError as err:
+            return error_page(request, str(err))
+        except KeyError as err:
+            return error_page(request,
+                "%s -- Please add the missing key or ask the administrator to add one."
+                % str(err))
+        except sqlalchemy.exc.IntegrityError as err:
+            return error_page(request,
+                'Possibly missing a mandatory value, please check your input file -- %s'
+                % str(err))
+        except:
+            exc = sys.exc_info()
+            return error_page(request,
+                'Unspecific error -- please contact the administrator! '
+                'Error message from system: %s - %s' % (str(exc[0]), str(exc[1])))
 
         return render_to_response('genaf:templates/batch/process-sampleinfo.mako',
                     {   'msg': msg,
@@ -401,7 +418,7 @@ def add_sample_info( batch, ifile, request):
 
     name, ext = os.path.splitext( ifile.filename )
 
-    if ext in [ '.csv', '.tab', '.tsv' ]:
+    if ext in [ '.csv', '.tab', '.tsv', '.txt' ]:
         # convert to JSON first
         # consistency checks
         if ext == '.csv':
@@ -443,8 +460,10 @@ def add_sample_info( batch, ifile, request):
 
 
 def verify_sample_info( batch, path ):
+    """ return tuple of (exists, not_exists, err_msgs) """
 
     temppath = get_temp_path( path )
+    err_msgs = []
 
     # open YAML
 
@@ -463,7 +482,7 @@ def verify_sample_info( batch, path ):
         else:
             not_exists.append(sample_code)
 
-    return (exists, not_exists)
+    return (exists, not_exists, err_msgs)
 
 
     raise RuntimeError(samples)
@@ -533,8 +552,8 @@ def process_sample_info( batch, path, option ):
         else:
             return error_page('Invalid option')
         db_sample.update( dict_sample )
-        session.flush([db_sample])
         print('Flushing sample: %s' % db_sample.code)
+        session.flush([db_sample])
 
     # remove the yaml/json file
     silent_remove( temppath )

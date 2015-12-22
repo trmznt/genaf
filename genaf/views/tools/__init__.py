@@ -1,6 +1,7 @@
 
 from genaf.views import *
 from genaf.lib.query import Query, load_params, load_yaml
+from genaf.lib.query2dict import query2dict
 from genaf.lib.configs import get_temp_path, TEMP_TOOLS
 
 from rhombus.lib import fsoverlay
@@ -193,10 +194,7 @@ def form2dict( request ):
 
     if p.get('queryset', None):
         query_text = p.get('queryset')
-        if '$' in query_text:
-            raise RuntimeError('ERR - sample differentiation is not supported yet')
-        else:
-            selector_d = { 'all': [ {'query': p.get('queryset') } ] }
+        selector_d = query2dict(query_text)
 
     elif p.getall('batch_ids'):
         selector_d = { 'all': [] }

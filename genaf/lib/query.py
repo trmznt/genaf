@@ -24,6 +24,7 @@ def load_params( d ):
     for k in d:
         if k == 'selector':
             instances['selector'] = _SELECTOR_CLASS_.from_dict( d[k] )
+            print(instances['selector'])
         elif k == 'filter':
             instances['filter'] = _FILTER_CLASS_.from_dict( d[k] )
         elif k == 'differentiator':
@@ -46,7 +47,24 @@ class Query(query.Query):
 
 
 class Selector(query.Selector):
-	pass
+
+    def filter_sample(self, spec, dbh, q):
+        print('>>>>> GENAF FILTERING >>>>>>')
+
+        if 'adminl1' in spec:
+            arg = spec['adminl1']
+            q = q.join(dbh.Location).filter(
+                self.eval_ek_arg( arg, dbh.Location.level1_id, dbh))
+
+        return q
+
+
+    def eval_ek_arg(self, arg, identifier, dbh):
+        if arg[0] == '!':
+            return identifier != dbh.EK._id( arg[1:].strip() )
+        else:
+            return identifier == dbh.EK._id( arg.strip() )
+
 
 class Filter(query.Filter):
 	pass

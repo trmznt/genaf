@@ -31,7 +31,7 @@ def index(request):
             for l,d in panel.data['markers'].items():
                 m = panel.get_marker(l)
                 labels.append(
-                    a(href=request.route_url('genaf.marker', id=m.id))[
+                    a(href=request.route_url('genaf.marker-view', id=m.id))[
                             span(class_=dye_colours[d['filter']])[ l ] ]
                 )
         body_table[ tr() [

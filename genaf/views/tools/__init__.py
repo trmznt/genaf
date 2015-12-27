@@ -16,7 +16,12 @@ def get_fso_temp_dir(userid, rootdir = TEMP_TOOLS):
     return fso_dir
 
 
-def basic_query_form(request):
+def basic_query_form(request, mode='mlgt'):
+    """ mode: mlgt or allele """
+
+    if mode not in ['mlgt', 'allele']:
+        return RuntimeError('ERR - basic_query_form mode unknown: %s' % mode)
+    allele_mode = True if mode == 'allele' else False
 
     dbh = get_dbhandler()
 
@@ -55,7 +60,8 @@ def basic_query_form(request):
                         info = "popup:/tools/help#allele_abs_threshold"),
             input_text(name='allele_rel_threshold', label='Allele relative threshold',
                         value=0.33, size=2,
-                        info = "popup:/tools/help#allele_rel_threshold"),
+                        info = "popup:/tools/help#allele_rel_threshold")
+                if allele_mode else '',
             input_text(name='allele_rel_cutoff', label='Allele relative cutoff',
                         value=0.00, size=2,
                         info = "popup:/tools/help#allele_rel_cutoff"),
@@ -67,10 +73,12 @@ def basic_query_form(request):
                         info = "popup:/tools/help#marker_qual_threshold"),
             input_text(name='stutter_ratio', label='Stutter ratio',
                         value=0.00, size=2,
-                        info = "popup:/tools/help#stutter_ratio"),
+                        info = "popup:/tools/help#stutter_ratio")
+                if allele_mode else '',
             input_text(name='stutter_range', label='Stutter range',
                         value=0.00, size=2,
                         info = "popup:/tools/help#stutter_range")
+                if allele_mode else '',
         ]
     )
 
@@ -109,7 +117,7 @@ def basic_query_form(request):
     return qform
 
 
-def jscode(request):
+def jscode(request, mode = 'mlgt'):
 
     return '\n'.join([
             "$('#batch_ids').select2();",
@@ -142,12 +150,12 @@ def yaml_query_form(request):
 
 
 
-def process_request( request, header_text, button_text, callback,
+def process_request( request, header_text, button_text, callback, mode = 'mlgt',
         form_modifier = None ):
 
     if not request.GET.get('_method', None) in ['_exec', '_yamlexec']:
 
-        queryform, javacode = create_form( request )
+        queryform, javacode = create_form( request, mode )
 
         if form_modifier:
             queryform, javacode = form_modifier(queryform, javacode)
@@ -172,9 +180,9 @@ def process_request( request, header_text, button_text, callback,
 
 
 
-def create_form( request ):
+def create_form( request, mode = 'mlgt' ):
     """ return the form and javascript code """
-    return _FORM_FACTORY_(request)
+    return _FORM_FACTORY_(request, mode)
 
 
 def set_form_factory( factory_func ):
@@ -182,8 +190,8 @@ def set_form_factory( factory_func ):
     global _FORM_FACTORY_
     _FORM_FACTORY_ = factory_func
 
-def genaf_form_factory( request ):
-    return ( basic_query_form(request), jscode(request) )
+def genaf_form_factory( request, mode = 'mlgt' ):
+    return ( basic_query_form(request, mode), jscode(request, mode) )
 
 _FORM_FACTORY_ = genaf_form_factory
 

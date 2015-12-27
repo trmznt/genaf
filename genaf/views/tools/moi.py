@@ -5,7 +5,7 @@ from genaf.views.tools import *
 def index(request):
 
     return process_request( request, 'Multiplicity of Infection (MoI) Summary',
-            'Calculate MoI', callback = func_callback )
+            'Calculate MoI', callback = func_callback, mode = 'allele' )
 
 
 def func_callback( query, request ):

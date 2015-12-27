@@ -13,7 +13,7 @@ TABFILE = 'alleles.tab'
 def index(request):
 
     return process_request( request, 'Allele Summary', 'Summarize Alleles',
-            callback = func_callback )
+            callback = func_callback, mode = 'allele' )
 
 
 def func_callback( query, request ):

@@ -9,7 +9,7 @@ from math import isnan
 def index(request):
 
     return process_request( request, 'Genotype Summary', 'Summarize genotypes',
-            callback = func_callback )
+            callback = func_callback, mode = 'allele' )
 
 
 def func_callback( query, request ):

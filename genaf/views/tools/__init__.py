@@ -253,6 +253,8 @@ def form2dict( request ):
 def format_sample_summary(sample_summary_df):
     """ return (html, jscode) """
 
+    body = div()
+
     tbl = table(class_='table table-condensed table-striped')
     headings = ['Label'] + list(sample_summary_df.columns)
     tbl.add( thead( tr( * ( th(heading) for heading in headings ) ) ) )
@@ -266,6 +268,25 @@ def format_sample_summary(sample_summary_df):
             row.add( td(str(N)) )
         tbl_body.add( row )
 
-    return (tbl, '')
+    body.add( tbl )
 
+    return (body, '')
+
+
+def format_marker_summary(query):
+
+    body = div()
+
+
+    markers = ' '.join( str(x) for x in query.get_analytical_sets().marker_ids )
+    body.add( div(class_='row')[
+        div(b('Initial markers'), class_='col-md-3'),
+        div(markers, class_='col-md-9')
+        ])
+    markers = ' '.join( str(x) for x in query.get_filtered_analytical_sets().marker_ids )
+    body.add( div(class_='row')[
+        div(b('Filtered markers'), class_='col-md-3'),
+        div(markers, class_='col-md-9')
+        ])
+    body.add( br() )
 

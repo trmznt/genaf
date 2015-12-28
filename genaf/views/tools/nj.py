@@ -33,11 +33,7 @@ def func_callback( query, request ):
 
     html, code = format_output( options )
 
-    return render_to_response("genaf:templates/tools/report.mako",
-            {   'header_text': 'Neighbor-Joining (NJ) Tree Result',
-                'html': html,
-                'code': code,
-            }, request = request )
+    return ('Neighbor-Joining (NJ) Tree Result', html, code)
 
 
 def format_output( options ):

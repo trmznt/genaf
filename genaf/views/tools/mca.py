@@ -17,14 +17,12 @@ def index(request):
 
 def func_callback( query, request ):
 
-    from fatools.lib.analytics.haploset import get_haplotype_sets
     from fatools.lib.analytics.dist import get_distance_matrix, null_distance
     from fatools.lib.analytics.ca import mca, plot_pca
 
     dimension = 2
 
-    analytical_sets = query.get_filtered_analytical_sets()
-    haplotype_sets = get_haplotype_sets(analytical_sets)
+    haplotype_sets = query.get_filtered_haplotype_sets()
     dm = get_distance_matrix(haplotype_sets, null_distance)
     mca_res = mca(dm)
 
@@ -41,8 +39,4 @@ def func_callback( query, request ):
 
     html, code = format_output( (mca_res, dm), options )
 
-    return render_to_response("genaf:templates/tools/report.mako",
-            {   'header_text': 'Multiple Correspondence Analysis (MCA) Result',
-                'html': html,
-                'code': code,
-            }, request = request )
+    return ('Multiple Correspondence Analysis (MCA) Result', html, code)

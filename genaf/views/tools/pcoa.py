@@ -14,14 +14,12 @@ def index(request):
 
 def func_callback( query, request ):
 
-    from fatools.lib.analytics.haploset import get_haplotype_sets
     from fatools.lib.analytics.dist import get_distance_matrix
     from fatools.lib.analytics.ca import pcoa, plot_pca
 
     dimension = 2
 
-    analytical_sets = query.get_filtered_analytical_sets()
-    haplotype_sets = get_haplotype_sets(analytical_sets)
+    haplotype_sets = query.get_filtered_haplotype_sets()
 
     dm = get_distance_matrix(haplotype_sets)
     pca_res = pcoa(dm, dim = dimension)
@@ -39,11 +37,7 @@ def func_callback( query, request ):
 
     html, code = format_output( (pca_res, dm), options )
 
-    return render_to_response("genaf:templates/tools/report.mako",
-            {   'header_text': 'Principal Coordinate Analysis (PCoA) Result',
-                'html': html,
-                'code': code,
-            }, request = request )
+    return ('Principal Coordinate Analysis (PCoA) Result', html, code)
 
 
 def format_output( results, options ):

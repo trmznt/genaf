@@ -176,7 +176,23 @@ def process_request( request, header_text, button_text, callback, mode = 'mlgt',
 
     q = Query( params, get_dbhandler() )
 
-    return callback(q, request)
+    # callback needs to return (header_text, html, jscode) tuple
+
+    response = callback(q, request)
+
+    if type(response) != tuple:
+        return response
+
+    (header_text, html, code) = response
+
+    sample_html, sample_code = format_sample_summary( q.get_sample_summary(mode) )
+
+    return render_to_response("genaf:templates/tools/report.mako",
+            {   'header_text': header_text,
+                'sample_report': sample_html,
+                'html': html if html is not None else '',
+                'code': sample_code + code if code is not None else '',
+            }, request = request )
 
 
 
@@ -215,13 +231,13 @@ def form2dict( request ):
     filter_d = {}
     filter_d['marker_ids'] = [ int(x) for x in p.getall('marker_ids') ]
     filter_d['abs_threshold'] = int(p.get('allele_abs_treshhold'))
-    filter_d['rel_threshold'] = float( p.get('allele_rel_threshold'))
+    filter_d['rel_threshold'] = float( p.get('allele_rel_threshold', 1))
     filter_d['rel_cutoff'] = float( p.get('allele_rel_cutoff'))
     filter_d['sample_qual_threshold'] = float( p.get('sample_qual_threshold'))
     filter_d['marker_qual_threshold'] = float( p.get('marker_qual_threshold'))
     filter_d['sample_option'] = p.get('sample_option')
-    filter_d['stutter_ratio'] = float( p.get('stutter_ratio') )
-    filter_d['stutter_range'] = float( p.get('stutter_range') )
+    filter_d['stutter_ratio'] = float( p.get('stutter_ratio', 0) )
+    filter_d['stutter_range'] = float( p.get('stutter_range', 0) )
 
     d['selector'] = selector_d
     d['filter'] = filter_d
@@ -233,5 +249,23 @@ def form2dict( request ):
 
     return d
 
+
+def format_sample_summary(sample_summary_df):
+    """ return (html, jscode) """
+
+    tbl = table(class_='table table-condensed table-striped')
+    headings = ['Label'] + list(sample_summary_df.columns)
+    tbl.add( thead( tr( * ( th(heading) for heading in headings ) ) ) )
+
+    tbl_body = tbody()
+    tbl.add( tbl_body )
+    for data in sample_summary_df.itertuples():
+        row = tr()
+        row.add( td(data[0] ))
+        for N in data[1:]:
+            row.add( td(str(N)) )
+        tbl_body.add( row )
+
+    return (tbl, '')
 
 

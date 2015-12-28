@@ -21,11 +21,7 @@ def func_callback( query, request ):
     export_func(analytical_sets, dbh, None, recode=True)
     html, code = format_output(haplo_res, options)
 
-    return render_to_response("genaf:templates/tools/report.mako",
-        {   'header_text': 'Genotype Summary',
-                'html': html,
-                'code': code,
-        }, request = request )
+    return ('Data Export Tool', html, code)
 
 
 def func_form_modifier( eform, jcode):

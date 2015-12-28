@@ -153,6 +153,9 @@ def includeme( config ):
     config.add_route('tools-nj', '/tools/nj')
     config.add_view('genaf.views.tools.nj.index', route_name='tools-nj')
 
+    config.add_route('tools-sample', '/tools/sample')
+    config.add_view('genaf.views.tools.sample.index', route_name='tools-sample')
+
 
 def init_app( global_config, settings, prefix = '/mgr' ):
 

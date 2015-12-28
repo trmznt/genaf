@@ -25,11 +25,7 @@ def func_callback( query, request ):
 
     html, code = format_output(genotypes, request, options)
 
-    return render_to_response("genaf:templates/tools/report.mako",
-        {	'header_text': 'Genotype Summary',
-    			'html': html,
-    			'code': code,
-        }, request = request )
+    return ('Genotype Summary', html, code)
 
 
 def format_output( genotypes, request, options ):

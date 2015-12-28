@@ -19,11 +19,7 @@ def func_callback( query, request ):
 
     html, code = format_output(results, request, options)
 
-    return render_to_response("genaf:templates/tools/report.mako",
-        {   'header_text': 'Multiplicity of Infection (MoI) Summary',
-            'html': html,
-            'code': code,
-        }, request = request )
+    return ('Multiplicity of Infection (MoI) Summary', html, code)
 
 
 def format_output(results, request, options):

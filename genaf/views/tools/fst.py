@@ -17,6 +17,11 @@ def func_callback( query, request ):
     dbh = get_dbhandler()
     analytical_sets = query.get_filtered_analytical_sets()
 
+    if len(analytical_sets) < 2:
+        return ('FST Calculation Result',
+            p(b('Error:'), 'FST can be calculated with 2 or more data set'),
+            '')
+
     # prepare the directory
 
     fso_dir = get_fso_temp_dir(request.user.login)

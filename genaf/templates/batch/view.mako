@@ -15,7 +15,8 @@
 
   <div class='row'>
     <div class='col-sm-12'>
-      <p><a href="${request.route_url('genaf.sample', _query = dict(batch_id=batch.id))}"><span class="btn btn-info">Browse samples</span></a></p>
+      <p><a href="${request.route_url('genaf.sample', _query = dict(batch_id=batch.id, mode='meta'))}"><span class="btn btn-info">Browse samples (metadata view)</span></a></p>
+      <p><a href="${request.route_url('genaf.sample', _query = dict(batch_id=batch.id))}"><span class="btn btn-info">Browse samples (FSA view)</span></a></p>
       <p><button class="btn btn-info">Add new sample</button></p>
     </div>
   </div>
@@ -59,9 +60,9 @@
 </div>
 <div class='col-md-6'>
 
-  <h4>FSA Processing</h4>
+  <h4>FSA Fragment Analysis Manager</h4>
   <a href="${request.route_url('genaf.famgr-view', id=batch.id)}">
-    <button>Start FSA Process Session</button>
+    <button>Start FSA FA Manager</button>
   </a>
   </ul>
 

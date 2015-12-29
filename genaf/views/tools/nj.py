@@ -11,12 +11,10 @@ def index(request):
 
 def func_callback( query, request ):
 
-    from fatools.lib.analytics.haploset import get_haplotype_sets
     from fatools.lib.analytics.dist import get_distance_matrix
     from fatools.lib.analytics.nj import plot_nj
 
-    analytical_sets = query.get_filtered_analytical_sets()
-    haplotype_sets = get_haplotype_sets(analytical_sets)
+    haplotype_sets = query.get_filtered_haplotype_sets()
 
     dm = get_distance_matrix(haplotype_sets)
 

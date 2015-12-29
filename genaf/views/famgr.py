@@ -114,7 +114,11 @@ def view(request):
     summary_content.add(
         row()[ div(class_='col-md-3')[
             a(href=request.route_url('genaf.famgr-process', id=batch_id)) [
-                span(class_='btn btn-success')[ 'Process FSA' ] ] ]
+                span(class_='btn btn-success')[ 'Process FSA' ] ],
+            a(href=request.route_url('genaf.assay',
+                    _query={'batch_id': batch_id})) [
+                span(class_='btn btn-default')[ 'Browse FSA files' ] ],
+            ]
         ]
     )
 

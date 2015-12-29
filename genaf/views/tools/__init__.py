@@ -186,12 +186,14 @@ def process_request( request, header_text, button_text, callback, mode = 'mlgt',
     (header_text, html, code) = response
 
     sample_html, sample_code = format_sample_summary( q.get_sample_summary(mode) )
+    marker_html, marker_code = format_marker_summary( q )
 
     return render_to_response("genaf:templates/tools/report.mako",
             {   'header_text': header_text,
                 'sample_report': sample_html,
+                'marker_report': marker_html,
                 'html': html if html is not None else '',
-                'code': sample_code + code if code is not None else '',
+                'code': sample_code + marker_code + code if code is not None else '',
             }, request = request )
 
 
@@ -275,18 +277,24 @@ def format_sample_summary(sample_summary_df):
 
 def format_marker_summary(query):
 
+    dbh = get_dbhandler()
+
     body = div()
 
-
-    markers = ' '.join( str(x) for x in query.get_analytical_sets().marker_ids )
+    marker_ids = query.get_analytical_sets().marker_ids
+    markers = ' | '.join( dbh.get_marker_by_id(x).label for x in marker_ids )
     body.add( div(class_='row')[
-        div(b('Initial markers'), class_='col-md-3'),
-        div(markers, class_='col-md-9')
+        div(b('Initial markers'), class_='col-md-2'),
+        div(markers + ' : [%d]' % len(marker_ids), class_='col-md-10')
         ])
-    markers = ' '.join( str(x) for x in query.get_filtered_analytical_sets().marker_ids )
+
+    marker_ids = query.get_filtered_analytical_sets().marker_ids
+    markers = ' | '.join( dbh.get_marker_by_id(x).label for x in marker_ids )
     body.add( div(class_='row')[
-        div(b('Filtered markers'), class_='col-md-3'),
-        div(markers, class_='col-md-9')
+        div(b('Filtered markers'), class_='col-md-2'),
+        div(markers + ' : [%d]' % len(marker_ids), class_='col-md-10')
         ])
     body.add( br() )
+
+    return (body, '')
 

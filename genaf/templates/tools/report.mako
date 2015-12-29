@@ -6,6 +6,7 @@
 <h4>Filtering Summary</h4>
 
 ${sample_report}
+${marker_report}
 
 </div></div>
 

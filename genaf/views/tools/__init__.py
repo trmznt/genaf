@@ -282,6 +282,8 @@ def format_marker_summary(query):
     body = div()
 
     marker_ids = query.get_analytical_sets().marker_ids
+    if marker_ids is None:
+        marker_ids = []
     markers = ' | '.join( dbh.get_marker_by_id(x).label for x in marker_ids )
     body.add( div(class_='row')[
         div(b('Initial markers'), class_='col-md-2'),
@@ -289,6 +291,8 @@ def format_marker_summary(query):
         ])
 
     marker_ids = query.get_filtered_analytical_sets().marker_ids
+    if marker_ids is None:
+        marker_ids = []
     markers = ' | '.join( dbh.get_marker_by_id(x).label for x in marker_ids )
     body.add( div(class_='row')[
         div(b('Filtered markers'), class_='col-md-2'),

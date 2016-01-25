@@ -142,7 +142,13 @@ def action_get(request):
         eform = assay_process_form(assay, dbh, request, parameters)
         body = div( class_='row')[
             div(class_ = 'col-md-12')[
-                h3('Process Assay'),
+                h3('Process FSA'),
+                p('The FSA processing involves scanning for peaks, '
+                    'preannotating the peaks, aligning peaks to ladder peaks, '
+                    'calling and binning the peaks '
+                    'and finally post-annotating the peaks.'),
+                p('The process may take approximately 1 to 5 minutes, depending on '
+                    'how clean or how noisy the trace is.'),
                 eform
             ]
         ]
@@ -203,11 +209,19 @@ def action_post(request):
         assay.scan( params )
         dbh.session().flush()
         assay.preannotate( params )
-        assay.alignladder( excluded_peaks = None )
+        retval = assay.alignladder( excluded_peaks = None )
+        (dpscore, rss, peaks_no, ladders_no, qcscore, remarks, method) = retval
         dbh.session().flush()
         assay.call( params )
         assay.bin( params )
         assay.postannotate( params )
+
+        request.session.flash(
+            ('success', 'Successfully processing FSA file %s with score: %3.2f '
+                'RSS: %5.2f and %d ladder peaks.'
+                % (assay.filename, qcscore, rss, peaks_no)
+            )
+        )
 
         return HTTPFound( location = request.route_url('genaf.assay-view',
                     id = assay.id) )

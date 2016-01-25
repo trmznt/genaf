@@ -18,6 +18,12 @@
 </div>
 </div><!-- row -->
 
+<div class='row'>
+<div class='col-md-8'>
+${h.link_to( 'Process FSA', request.route_url('genaf.assay-action', _query=dict(_method='process_fsa', id=assay.id)), class_='btn btn-success', ** { 'data-toggle':'modal', 'data-target':'#allele-modal-view', 'data-remote': 'false' } )}
+</div>
+</div>
+
 ##<div class='row'>
 ##<form method='POST' action='/assay/@@action'>
 ##<input type="hidden" name='assay_id' value="${assay.id}" />

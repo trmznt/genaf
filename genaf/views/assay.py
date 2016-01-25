@@ -112,19 +112,37 @@ def action(request):
 def action_get(request):
 
     method = request.GET.get('_method', None)
+    dbh = get_dbhandler()
 
     if method == 'edit_allele':
 
         from genaf.views.allele import edit_form as allele_edit_form
 
         allele_id = request.GET.get('id')
-        dbh = get_dbhandler()
         allele = dbh.Allele.get(allele_id)
 
         eform = allele_edit_form(allele, dbh, request)
         body = div( class_='row')[
             div(class_='col-md-12')[
                 h3('Edit Allele'),
+                eform
+            ]
+        ]
+
+        return Response(body=str(body), content_type='text/html')
+
+    elif method == 'process_fsa':
+
+        from fatools.lib.params import Params
+
+        parameters = Params()
+        assay_id = request.GET.get('id')
+        assay = dbh.Assay.get(assay_id)
+
+        eform = assay_process_form(assay, dbh, request, parameters)
+        body = div( class_='row')[
+            div(class_ = 'col-md-12')[
+                h3('Process Assay'),
                 eform
             ]
         ]
@@ -162,6 +180,39 @@ def action_post(request):
         #return render_to_response( 'genaf:templates/allele/edit_form.mako',
         #    { 'allele': allele }, request = request )
 
+    elif method == 'process_fsa':
+
+        assay_id = int(request.POST.get('genaf-assay_id', 0))
+        assay = dbh.Assay.get(assay_id) if assay_id else None
+
+        if not assay:
+            return error_page('Cannot find assay with id: %d' % assay_id)
+
+        from fatools.lib.params import Params
+        params = Params()
+
+        # parse parameter
+        params.nonladder.stutter_ratio = float(
+                    request.POST.get('genaf-assay_stutter_ratio'))
+        params.nonladder.stutter_range = float(
+                    request.POST.get('genaf-assay_stutter_range'))
+
+        # start processing FSA
+
+        assay.clear()
+        assay.scan( params )
+        dbh.session().flush()
+        assay.preannotate( params )
+        assay.alignladder( excluded_peaks = None )
+        dbh.session().flush()
+        assay.call( params )
+        assay.bin( params )
+        assay.postannotate( params )
+
+        return HTTPFound( location = request.route_url('genaf.assay-view',
+                    id = assay.id) )
+
+
     raise RuntimeError('Unknown method: %s' % method)
 
 
@@ -186,3 +237,25 @@ def drawchannels(request):
 
     return render_to_response( 'genaf:templates/assay/drawchannels.mako',
                 { 'datasets': json.dumps( datasets ) }, request = request )
+
+
+def assay_process_form(assay, dbh, request, params):
+
+    eform = form( name='genaf/assay', method=POST,
+                    action=request.route_url('genaf.assay-action') )
+    eform.add(
+        fieldset(
+            input_hidden(name='genaf-assay_id', value=assay.id),
+            #input_show('genaf-allele_marker', 'Marker', value=allele.alleleset.marker.label),
+            #input_show('genaf-allele_size', 'Size', value=allele.size),
+            #input_show('genaf-allele_rtime', 'Retention time', value=allele.rtime),
+            #input_show('genaf-allele_height', 'Height', value=allele.height),
+            input_text('genaf-assay_stutter_ratio', 'Stutter Ratio',
+                    value = params.nonladder.stutter_ratio),
+            input_text('genaf-assay_stutter_range', 'Stutter Range',
+                    value = params.nonladder.stutter_range),
+            submit_bar('Process FSA', 'process_fsa')
+        )
+    )
+
+    return eform

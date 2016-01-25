@@ -53,9 +53,29 @@ def view(request):
     #if not assay.is_authorized( request.userinstance().groups ):
     #    return not_authorized()
 
+    sample = assay.sample
+    batch = sample.batch
+    assay_info = div(class_='form-horizontal input-group-sm')[ fieldset()[
+        input_text('genaf-fsa_batch', 'Batch',
+            value = a( batch.code,
+                    href=request.route_url('genaf.batch-view', id=batch.id)),
+            static=True),
+        input_text('genaf-fsa_sample', 'Sample',
+            value = a( sample.code,
+                    href=request.route_url('genaf.sample-view', id=sample.id)),
+            static=True),
+        input_text('genaf-fsa_filename', 'Filename', value=assay.filename,
+            static=True),
+        input_text('genaf-fsa_ladder', 'Ladder', value=assay.size_standard,
+            static=True),
+        input_text('genaf-fsa_score', 'Score', value=assay.score, static=True),
+        input_text('genaf-fsa_rss', 'RSS', value=assay.rss, static=True),
+    ]]
+
 
     return render_to_response( 'genaf:templates/assay/view.mako',
             {   'assay': assay,
+                'assay_info': assay_info,
             }, request = request )
 
 

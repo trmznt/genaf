@@ -7,11 +7,11 @@
 
 ## input: assay, lsp (ladder_scanning_parameter)
 
-<h2>Assay Viewer</h2>
+<h2>FSA Viewer</h2>
 
 <div class='row'>
 <div class='col-md-8'>
-  ${show_assay(assay)}
+  ${assay_info}
 </div>
 <div class='col-md-4'>
   ${list_channels(assay.channels)}

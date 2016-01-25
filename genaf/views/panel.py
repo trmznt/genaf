@@ -21,7 +21,8 @@ def index(request):
 
     panel_table = table(class_='table table-condensed table-striped')
     panel_table[ thead()[ tr()[
-                    th(''), th('Panel code'), th('Ladder'), th('Markers')
+                    th(''), th('Panel code'), th('Group'), th('Ladder'),
+                    th('Markers')
                     ] ] ]
     body_table = tbody()
 
@@ -35,7 +36,9 @@ def index(request):
                             span(class_=dye_colours[d['filter']])[ l ] ]
                 )
         body_table[ tr() [
-                    td(''), td( panel.code ), td(panel.get_ladder_code()),
+                    td(''), td( panel.code ),
+                    td(panel.group.name),
+                    td(panel.get_ladder_code()),
                     td( * labels )
 #                    td( * list(
 #                        a(href=request.route_url('genaf.marker', id=m.id))[

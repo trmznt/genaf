@@ -8,6 +8,7 @@ from rhombus.views.generics import error_page
 from genaf.views import *
 
 import json
+import sqlalchemy.exc, transaction
 
 
 @roles( PUBLIC )
@@ -64,13 +65,120 @@ def view(request):
                     },
                     request = request)
 
-
+@roles( PUBLIC )
 def edit(request):
+    """ editing sample metadata """
 
-    return render_to_response("genaf:templates/sample/edit.mako",
+    sample_id = int(request.matchdict.get('id'))
+    if sample_id < 0:
+        return error_page(request, 'Please provide valid sample ID')
+
+    dbh = get_dbhandler()
+
+    if request.method == 'GET':
+        sample = dbh.get_sample_by_id( sample_id )
+
+        batch = sample.batch
+
+        # XXX: check authorization here: whether current user belongs to batch owner group
+        if not request.user.in_group( batch.group ):
+            return error_page(request, 'User is not a member of batch: %s' % batch.code)
+
+
+        # prepare form
+
+        eform = edit_form(sample, dbh, request)
+
+        return render_to_response("genaf:templates/sample/edit.mako",
                     {   'sample': sample,
+                        'eform': eform,
                     },
                     request = request)
+
+    elif request.method == 'POST':
+
+        sample_d = parse_form( request.POST )
+        if sample_d['id'] != sample_id:
+            return error_page(request, 'Inconsistent sample ID!')
+
+        try:
+            if sample_id == 0:
+
+                pass
+
+            else:
+
+                sample = dbh.get_sample_by_id( sample_id )
+                batch = sample.batch
+
+                # authorisation: current user must belongs to batch owner group
+                if not request.user.in_group( batch.group ):
+                    return error_page(request,
+                        'User is not a member of batch: %s' % batch.code)
+
+                sample.update(sample_d)
+                dbh.session().flush()
+                request.session.flash(
+                    (   'success',
+                        'Sample [%s] has been updated.' % sample.code )
+                )
+
+
+        except RuntimeError as err:
+            return error_Page(request, str(err))
+
+        except sqlalchemy.exc.IntegrityError as err:
+            dbh.session().rollback()
+            detail = err.args[0]
+            if not sample.id: sample.id = sample_id
+            editform = edit_form(sample, dbh, request)
+            if 'DETAIL' in detail:
+                if 'code, batch_id' in detail:
+                    editform.get('genaf-sample_code').add_error('The sample code: %s is '
+                        'already being used. Please use other sample code!'
+                        % sample_d['code'])
+                r = render_to_response( "genaf:templates/sample/edit.mako",
+                    {   'sample': None,
+                        'eform': editform,
+                    },
+                    request = request )
+                transaction.abort()
+                return r
+            return error_page(request, str(err))
+
+
+        return HTTPFound(location = request.route_url('genaf.sample-view', id = sample.id))
+
+
+    return error_page(request, 'Invalid method!')
+
+
+def edit_form(sample, dbh, request):
+
+    eform = form( name='genaf/sample', method=POST,
+                action=request.route_url('genaf.sample-edit', id=sample.id))
+    eform.add(
+        fieldset(
+            input_hidden(name='genaf-sample_id', value=sample.id),
+            input_show('genaf-sample_batch', 'Batch', value=sample.batch.code),
+            input_text('genaf-sample_code', 'Code', value=sample.code),
+            input_text('genaf-sample_type', 'Type', value=sample.type),
+
+            submit_bar(),
+        )
+    )
+
+    return eform
+
+
+def parse_form(f):
+
+    d = dict()
+    d['id'] = int( f['genaf-sample_id'] )
+    d['code'] = f['genaf-sample_code']
+    d['type'] = f['genaf-sample_type']
+
+    return d
 
 
 def save(request):

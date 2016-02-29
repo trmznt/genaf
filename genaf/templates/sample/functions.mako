@@ -79,6 +79,7 @@ ${selection_bar('sample')}
     ${'%15s : %s<br />' % ('Collection date', sample.collection_date ) | n}
     ${'%15s : %s<br />' % ('Location', sample.location.render() ) | n}
 </pre>
+${button_edit('Edit', request.route_url('genaf.sample-edit', id=sample.id))}
 </%def>
 
 

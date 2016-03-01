@@ -132,20 +132,18 @@ def edit(request):
             detail = err.args[0]
             if not sample.id: sample.id = sample_id
             editform = edit_form(sample, dbh, request)
-            if 'DETAIL' in detail:
-                if 'code, batch_id' in detail:
-                    editform.get('genaf-sample_code').add_error('The sample code: %s is '
+            # use constraint name to detect error type
+            if 'uq_samples_code_batch_id' in detail:
+                editform.get('genaf-sample_code').add_error('The sample code: %s is '
                         'already being used. Please use other sample code!'
                         % sample_d['code'])
-                r = render_to_response( "genaf:templates/sample/edit.mako",
+            r = render_to_response( "genaf:templates/sample/edit.mako",
                     {   'sample': None,
                         'eform': editform,
                     },
                     request = request )
-                transaction.abort()
-                return r
-            return error_page(request, str(err))
-
+            transaction.abort()
+            return r
 
         return HTTPFound(location = request.route_url('genaf.sample-view', id = sample.id))
 

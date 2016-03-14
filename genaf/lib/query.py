@@ -46,16 +46,151 @@ class Query(query.Query):
         return self._sample_sets
 
 
+class FieldBuilder(object):
+
+    def __init__(self, q, dbh):
+        self._q = q
+        self._dbh = dbh
+        self._joined_classes = []
+
+
+    def _eval_arg(self, arg, field):
+
+        if type(arg) == str:
+            if '|' in arg:
+                arg = [ x.strip() for x in arg.split('|') ]
+            elif ',' in arg:
+                arg = [ x.strip() for x in arg.split(',') ]
+
+        if type(arg) == list:
+            return field.in_(arg)
+
+        if type(arg) == str:
+            arg = arg.strip()
+
+        if type(arg) == str and arg.startswith('!'):
+            return field != arg[1:].strip()
+        return field == arg
+
+
+    def _eval_ek_arg(self, arg, field_id):
+
+        if '|' in arg:
+            arg = [ x.strip() for x in arg.split('|') ]
+        elif ',' in arg:
+            arg = [ x.strip() for x in arg.split(',') ]
+
+        if type(arg) == list:
+            ek_ids = [ self._dbh.EK._id(x) for x in arg ]
+            return field_id.in_( ek_ids )
+
+        arg = arg.strip()
+
+        if arg.startswith('!'):
+            return field_id != self._dbh.EK._id( arg[1:].strip() )
+        return field_id == self._dbh.EK._id( arg )
+
+
+    def _add_class(self, class_):
+        if class_ not in self._joined_classes:
+            self._joined_classes.append(class_)
+            self._q = self._q.join(class_)
+
+
+    def _get_query(self):
+        return self._q
+
+
+    # fields
+
+    def batch(self, arg):
+        self._add_class(self._dbh.Batch)
+        self._q = self._q.filter(
+            self._eval_arg(arg, self._dbh.Batch.code) )
+
+
+    def code(self, arg):
+        self._q = self._q.filter(
+            self._eval_arg(arg, self._dbh.Sample.code) )
+
+    def category(self, arg):
+        self._q = self._q.filter(
+            self._eval_arg(arg, self._dbh.Sample.category) )
+
+    def int1(self, arg):
+        self._q = self._q.filter(
+            self._eval_arg(arg, self._dbh.Sample.int1) )
+
+    def int2(self, arg):
+        self._q = self._q.filter(
+            self._eval_arg(arg, self._dbh.Sample.int2) )
+
+    def string1(self, arg):
+        self._q = self._q.filter(
+            self._eval_arg(arg, self._dbh.Sample.string1) )
+
+    def string2(self, arg):
+        self._q = self._q.filter(
+            self._eval_arg(arg, self._dbh.Sample.string2) )
+
+    def country(self, arg):
+        self._add_class( self._dbh.Location )
+        self._q = self._q.filter(
+            self._eval_ek_arg(arg, self._dbh.Location.country_id) )
+
+    def adminl1(self, arg):
+        self._add_class( self._dbh.Location )
+        self._q = self._q.filter(
+            self._eval_ek_arg(arg, self._dbh.Location.level1_id) )
+
+    def adminl2(self, arg):
+        self._add_class( self._dbh.Location )
+        self._q = self._q.filter(
+            self._eval_ek_arg(arg, self._dbh.Location.level2_id) )
+
+    def adminl3(self, arg):
+        self._add_class( self._dbh.Location )
+        self._q = self._q.filter(
+            self._eval_ek_arg(arg, self._dbh.Location.level3_id) )
+
+    def adminl4(self, arg):
+        self._add_class( self._dbh.Location )
+        self._q = self._q.filter(
+            self._eval_ek_arg(arg, self._dbh.Location.level4_id) )
+
+
+
 class Selector(query.Selector):
 
+    def get_fieldbuilder(self, q, dbh):
+        return FieldBuilder(q, dbh)
+
     def filter_sample(self, spec, dbh, q):
+        """ return the query after being built with YAML spec """
+
+        builder = self.get_fieldbuilder(q, dbh)
+
         print('>>>>> GENAF FILTERING >>>>>>')
 
-        if 'adminl1' in spec:
-            arg = spec['adminl1']
-            q = q.join(dbh.Location).filter(
-                self.eval_ek_arg( arg, dbh.Location.level1_id, dbh))
+        for key in spec:
+            if key.startswith('_'):
+                continue
 
+            try:
+                func = getattr(builder, key)
+
+            except AttributeError:
+                raise RuntimeError('ERR: unknown field: %s' % key)
+
+            func( spec[key] )
+
+        return builder._get_query()
+
+
+    def add_class(self, q, class_list, class_):
+        if class_ not in class_list:
+            class_list.append(class_)
+            return q.join(class_)
         return q
 
 

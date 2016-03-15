@@ -5,7 +5,7 @@ from fatools.lib.analytics.sampleset import SampleSet, SampleSetContainer
 
 from rhombus.lib.utils import get_dbhandler
 
-from sqlalchemy import extract
+from sqlalchemy import extract, and_
 from pandas import DataFrame, pivot_table
 
 from collections import OrderedDict
@@ -48,10 +48,8 @@ class Query(query.Query):
 
 class FieldBuilder(object):
 
-    def __init__(self, q, dbh):
-        self._q = q
+    def __init__(self, dbh):
         self._dbh = dbh
-        self._joined_classes = []
 
 
     def _eval_arg(self, arg, field):
@@ -91,86 +89,75 @@ class FieldBuilder(object):
         return field_id == self._dbh.EK._id( arg )
 
 
-    def _add_class(self, class_):
-        if class_ not in self._joined_classes:
-            self._joined_classes.append(class_)
-            self._q = self._q.join(class_)
-
-
-    def _get_query(self):
-        return self._q
-
-
     # fields
 
-    def batch(self, arg):
-        self._add_class(self._dbh.Batch)
-        self._q = self._q.filter(
-            self._eval_arg(arg, self._dbh.Batch.code) )
+    def query(self, arg, q):
+        from genaf.lib.querytext import parse_querytext
+        return parse_querytext(self, arg, q)
 
+    def batch(self, arg, q=None):
+        return ( self._eval_arg(arg, self._dbh.Batch.code),
+            self._dbh.Batch)
 
-    def code(self, arg):
-        self._q = self._q.filter(
-            self._eval_arg(arg, self._dbh.Sample.code) )
+    def code(self, arg, q=None):
+        return ( self._eval_arg(arg, self._dbh.Sample.code),
+                None )
 
-    def category(self, arg):
-        self._q = self._q.filter(
-            self._eval_arg(arg, self._dbh.Sample.category) )
+    def category(self, arg, q=None):
+        return ( self._eval_arg(arg, self._dbh.Sample.category),
+                None )
 
-    def int1(self, arg):
-        self._q = self._q.filter(
-            self._eval_arg(arg, self._dbh.Sample.int1) )
+    def int1(self, arg, q=None):
+        return ( self._eval_arg(arg, self._dbh.Sample.int1),
+                None )
 
-    def int2(self, arg):
-        self._q = self._q.filter(
-            self._eval_arg(arg, self._dbh.Sample.int2) )
+    def int2(self, arg, q=None):
+        return ( self._eval_arg(arg, self._dbh.Sample.int2),
+                None )
 
-    def string1(self, arg):
-        self._q = self._q.filter(
-            self._eval_arg(arg, self._dbh.Sample.string1) )
+    def string1(self, arg, q=None):
+        return ( self._eval_arg(arg, self._dbh.Sample.string1),
+                None )
 
-    def string2(self, arg):
-        self._q = self._q.filter(
-            self._eval_arg(arg, self._dbh.Sample.string2) )
+    def string2(self, arg, q=None):
+        return ( self._eval_arg(arg, self._dbh.Sample.string2),
+                None )
 
-    def country(self, arg):
-        self._add_class( self._dbh.Location )
-        self._q = self._q.filter(
-            self._eval_ek_arg(arg, self._dbh.Location.country_id) )
+    def country(self, arg, q=None):
+        return ( self._eval_ek_arg(arg, self._dbh.Location.country_id),
+                self._dbh.Location )
 
-    def adminl1(self, arg):
-        self._add_class( self._dbh.Location )
-        self._q = self._q.filter(
-            self._eval_ek_arg(arg, self._dbh.Location.level1_id) )
+    def adminl1(self, arg, q=None):
+        return ( self._eval_ek_arg(arg, self._dbh.Location.level1_id),
+                self._dbh.Location )
 
-    def adminl2(self, arg):
-        self._add_class( self._dbh.Location )
-        self._q = self._q.filter(
-            self._eval_ek_arg(arg, self._dbh.Location.level2_id) )
+    def adminl2(self, arg, q=None):
+        return ( self._eval_ek_arg(arg, self._dbh.Location.level2_id),
+                self._dbh.Location )
 
-    def adminl3(self, arg):
-        self._add_class( self._dbh.Location )
-        self._q = self._q.filter(
-            self._eval_ek_arg(arg, self._dbh.Location.level3_id) )
+    def adminl3(self, arg, q=None):
+        return ( self._eval_ek_arg(arg, self._dbh.Location.level3_id),
+                self._dbh.Location )
 
-    def adminl4(self, arg):
-        self._add_class( self._dbh.Location )
-        self._q = self._q.filter(
-            self._eval_ek_arg(arg, self._dbh.Location.level4_id) )
-
+    def adminl4(self, arg, q=None):
+        return ( self._eval_ek_arg(arg, self._dbh.Location.level4_id),
+                self._dbh.Location )
 
 
 class Selector(query.Selector):
 
-    def get_fieldbuilder(self, q, dbh):
-        return FieldBuilder(q, dbh)
+    def get_fieldbuilder(self, dbh):
+        return FieldBuilder(dbh)
 
     def filter_sample(self, spec, dbh, q):
         """ return the query after being built with YAML spec """
 
-        builder = self.get_fieldbuilder(q, dbh)
+        builder = self.get_fieldbuilder(dbh)
 
         print('>>>>> GENAF FILTERING >>>>>>')
+
+        joined_classes = set()
+        expressions = []
 
         for key in spec:
             if key.startswith('_'):
@@ -182,9 +169,16 @@ class Selector(query.Selector):
             except AttributeError:
                 raise RuntimeError('ERR: unknown field: %s' % key)
 
-            func( spec[key] )
+            expr, class_ = func( spec[key], q )
+            if class_:
+                joined_classes.add( class_ )
 
-        return builder._get_query()
+            expressions.append( expr )
+
+        for class_ in joined_classes:
+            q = q.join( class_ )
+
+        return q.filter( and_( *expressions ))
 
 
     def add_class(self, q, class_list, class_):

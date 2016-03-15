@@ -89,57 +89,62 @@ class FieldBuilder(object):
         return field_id == self._dbh.EK._id( arg )
 
 
+    def _get_dbh(self):
+        return self._dbh
+
+
     # fields
 
-    def query(self, arg, q):
+    def query(self, arg):
         from genaf.lib.querytext import parse_querytext
-        return parse_querytext(self, arg, q)
+        return ( parse_querytext(self, arg ),
+                None )
 
-    def batch(self, arg, q=None):
+    def batch(self, arg):
         return ( self._eval_arg(arg, self._dbh.Batch.code),
-            self._dbh.Batch)
+                self._dbh.Batch )
 
-    def code(self, arg, q=None):
+    def code(self, arg):
         return ( self._eval_arg(arg, self._dbh.Sample.code),
                 None )
 
-    def category(self, arg, q=None):
+    def category(self, arg):
         return ( self._eval_arg(arg, self._dbh.Sample.category),
                 None )
 
-    def int1(self, arg, q=None):
+    def int1(self, arg):
         return ( self._eval_arg(arg, self._dbh.Sample.int1),
                 None )
 
-    def int2(self, arg, q=None):
+    def int2(self, arg):
         return ( self._eval_arg(arg, self._dbh.Sample.int2),
                 None )
 
-    def string1(self, arg, q=None):
+    def string1(self, arg):
         return ( self._eval_arg(arg, self._dbh.Sample.string1),
                 None )
 
-    def string2(self, arg, q=None):
+    def string2(self, arg):
         return ( self._eval_arg(arg, self._dbh.Sample.string2),
                 None )
 
-    def country(self, arg, q=None):
+    def country(self, arg):
         return ( self._eval_ek_arg(arg, self._dbh.Location.country_id),
                 self._dbh.Location )
 
-    def adminl1(self, arg, q=None):
+    def adminl1(self, arg):
         return ( self._eval_ek_arg(arg, self._dbh.Location.level1_id),
                 self._dbh.Location )
 
-    def adminl2(self, arg, q=None):
+    def adminl2(self, arg):
         return ( self._eval_ek_arg(arg, self._dbh.Location.level2_id),
                 self._dbh.Location )
 
-    def adminl3(self, arg, q=None):
+    def adminl3(self, arg):
         return ( self._eval_ek_arg(arg, self._dbh.Location.level3_id),
                 self._dbh.Location )
 
-    def adminl4(self, arg, q=None):
+    def adminl4(self, arg):
         return ( self._eval_ek_arg(arg, self._dbh.Location.level4_id),
                 self._dbh.Location )
 
@@ -169,7 +174,8 @@ class Selector(query.Selector):
             except AttributeError:
                 raise RuntimeError('ERR: unknown field: %s' % key)
 
-            expr, class_ = func( spec[key], q )
+            print(key)
+            expr, class_ = func( spec[key] )
             if class_:
                 joined_classes.add( class_ )
 
@@ -178,7 +184,29 @@ class Selector(query.Selector):
         for class_ in joined_classes:
             q = q.join( class_ )
 
-        return q.filter( and_( *expressions ))
+        q = q.filter( and_( *expressions ))
+
+        raise RuntimeError
+        return q
+
+
+    def spec_to_sample_ids(self, spec_list, dbh, sample_ids=None):
+
+        global_ids = set()
+
+        for spec in spec_list:
+
+            q = dbh.session().query(dbh.Sample.id)
+
+            q = self.filter_sample(spec, dbh, q)
+
+            raise RuntimeError
+
+            ids = set(x.id for x in q)
+
+            global_ids.update( ids )
+
+        return global_ids
 
 
     def add_class(self, q, class_list, class_):

@@ -97,7 +97,7 @@ class FieldBuilder(object):
 
     def query(self, arg):
         from genaf.lib.querytext import parse_querytext
-        return ( parse_querytext(self, arg ),
+        return ( self._dbh.Sample.id.in_( parse_querytext(self, arg )),
                 None )
 
     def batch(self, arg):
@@ -186,7 +186,6 @@ class Selector(query.Selector):
 
         q = q.filter( and_( *expressions ))
 
-        raise RuntimeError
         return q
 
 
@@ -199,8 +198,6 @@ class Selector(query.Selector):
             q = dbh.session().query(dbh.Sample.id)
 
             q = self.filter_sample(spec, dbh, q)
-
-            raise RuntimeError
 
             ids = set(x.id for x in q)
 

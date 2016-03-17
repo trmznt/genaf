@@ -1,7 +1,7 @@
 
 from genaf.views import *
 from genaf.lib.query import Query, load_params, load_yaml
-from genaf.lib.query2dict import query2dict
+from genaf.lib.querytext import query2dict
 from genaf.lib.configs import get_temp_path, TEMP_TOOLS
 
 from rhombus.lib import fsoverlay

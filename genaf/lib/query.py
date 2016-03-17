@@ -100,6 +100,10 @@ class FieldBuilder(object):
         return ( self._dbh.Sample.id.in_( parse_querytext(self, arg )),
                 None )
 
+    def batch_id(self, arg):
+        return ( self._eval_arg(arg, self._dbh.Sample.batch_id),
+                None )
+
     def batch(self, arg):
         return ( self._eval_arg(arg, self._dbh.Batch.code),
                 self._dbh.Batch )

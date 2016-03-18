@@ -1,5 +1,6 @@
 
 from genaf.views.tools import *
+from rhombus.lib import fsoverlay as fso
 
 @roles(PUBLIC)
 def index(request):
@@ -96,6 +97,26 @@ def format_output(results, request, options):
                 dbh.get_marker_by_id(r[0]).code, r[1]/res.M)
         txt += '</table>'
         table_row.add( td( literal(txt) ))
+    table_body.add( table_row )
+
+    fso_dir = get_fso_temp_dir(request.user.login)
+    table_row = tr( td('Data file') )
+    for l in labels:
+        res = results[l]
+        data_file = 'moi-%s.txt' % l.replace('|','_').replace('/','_').replace(' ', '_')
+        data_path = fso_dir.abspath + '/' + data_file
+        outstream = open(data_path, 'w')
+        outstream.write('SAMPLE_ID\tSAMPLE\tMOI\tMLOCI\n')
+        for t in res.sample_dist.itertuples():
+            (sample_id, moi_number, mloci_number) = t
+            sample_code = dbh.get_sample_by_id(sample_id).code
+            outstream.write('%d\t%s\t%d\t%d\n' %
+                (sample_id, sample_code, moi_number, mloci_number))
+        outstream.close()
+        #res.sample_dist.to_csv(data_path)
+        table_row.add( td(
+            literal('<a href="%s">%s</a>' % (fso.get_urlpath(data_path), data_file)) )
+        )
     table_body.add( table_row )
 
     # construct full table

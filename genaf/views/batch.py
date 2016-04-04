@@ -228,16 +228,17 @@ def edit_form(batch, dbh, request):
 
 
 def parse_form( f ):
+    """ parse and sanitize inputs """
 
     d = dict()
     d['id'] = int(f['genaf-batch_id'])
-    d['code'] = f['genaf-batch_code']
+    d['code'] = f['genaf-batch_code'][:16]
     d['group_id'] = int(f['genaf-batch_group_id'])
     d['assay_provider_id'] = int(f['genaf-batch_assay_provider_id'])
     d['bin_batch_id'] = int(f['genaf-batch_bin_batch_id'])
     d['species_id'] = int(f['genaf-batch_species_id'])
-    d['description'] = f['genaf-batch_desc']
-    d['remark'] = f['genaf-batch_remark']
+    d['description'] = f['genaf-batch_desc'][:256]
+    d['remark'] = f['genaf-batch_remark'][:2048]
 
     return d
 

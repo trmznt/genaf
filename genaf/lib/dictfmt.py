@@ -18,7 +18,11 @@ default_date = date(1990,1,1)
 def check_csv_headers( fieldnames, csv_headers ):
 
     err_log = []
+
     # check field names
+    if 'SAMPLE' not in fieldnames:
+        err_log.append('WARNING: SAMPLE not in the header!')
+
     for fieldname in fieldnames:
         if fieldname not in csv_headers:
             for csv_allele in csv_alleles:

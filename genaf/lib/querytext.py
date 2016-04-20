@@ -104,7 +104,7 @@ class EvalSetOp(QueryExpr):
         while tokens:
             op = tokens[0]
             eval_2 = tokens[1].eval( builder )
-            tokens = tplems[2:]
+            tokens = tokens[2:]
 
             if op == '|':
                 eval_1 = sqla.union(eval_1, eval_2)

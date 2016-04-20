@@ -233,6 +233,11 @@ def scan_assays(assay_list, dbh, log, scanning_parameter, comm):
                     ( assay.filename, sample_code, str(err) )
                 )
                 failed += 1
+            except ZeroDivisionError as err:
+                log.append('ERR scanning -- FSA %s | %s - error division by zero' %
+                    ( assay.filename, sample_code)
+                )
+                failed += 1
         subtotal += 1
         if comm:
             comm.output = (

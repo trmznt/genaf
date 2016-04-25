@@ -85,7 +85,7 @@ def basic_query_form(request, mode='mlgt'):
     qform.add(
         fieldset(name='differentiation_fields')[
 
-            input_select(name='sample_option', label='Sample option', value='AP',
+            input_select(name='sample_option', label='Sample option', value='AA',
                     options = [ ('AA', 'All available samples'),
                                 ('AS', 'Strict samples'),
                                 ('PS', 'Strict samples for each differentiation '),

@@ -38,7 +38,14 @@ def basic_query_form(request, mode='mlgt'):
         fieldset(name='syntax_query', style="display: none;")[
             input_textarea(name='queryset', label='Query set', disabled='disabled',
                     extra_control = '<a id="show_simple_query">Use query form</a>'),
-        ]
+        ],
+        fieldset(name='sample_options')[
+            input_select(name='sample_selection', label='Sample selection', value='P',
+                    options = [ ('A', 'All available samples'),
+                                ('F', 'All field samples'),
+                                ('R', 'All reference samples'),
+                    ] )
+        ],
     )
 
     # markers
@@ -85,12 +92,11 @@ def basic_query_form(request, mode='mlgt'):
     qform.add(
         fieldset(name='differentiation_fields')[
 
-            input_select(name='sample_option', label='Sample option', value='AA',
-                    options = [ ('AA', 'All available samples'),
-                                ('AS', 'Strict samples'),
-                                ('PS', 'Strict samples for each differentiation '),
-                                ('AU', 'Unique samples'),
-                                ('PU', 'Unique samples for each differentiation'), ]
+            input_select(name='sample_filtering', label='Sample filtering', value='A',
+                    options = [ ('A', 'All genotype samples'),
+                                ('S', 'Strict genotype samples'),
+                                ('U', 'Unique genotype samples'),
+                            ]
                     ),
             input_select(name='spatial_differentiation', label='Spatial differentiation', value=-1,
                     options = [ (-1, 'No spatial differentiation'),
@@ -230,6 +236,11 @@ def form2dict( request ):
     else:
         raise RuntimeError('WHOA, need to have either batch code(s) or queryset')
 
+    if p.get('sample_selection', None):
+        sample_selection = p.get('sample_selection')
+        if sample_selection != 'N':
+            selector_d['_:_'] = { 'sample_selection': sample_selection}
+
     filter_d = {}
     filter_d['marker_ids'] = [ int(x) for x in p.getall('marker_ids') ]
     filter_d['abs_threshold'] = int(p.get('allele_abs_treshhold'))
@@ -237,7 +248,7 @@ def form2dict( request ):
     filter_d['rel_cutoff'] = float( p.get('allele_rel_cutoff'))
     filter_d['sample_qual_threshold'] = float( p.get('sample_qual_threshold'))
     filter_d['marker_qual_threshold'] = float( p.get('marker_qual_threshold'))
-    filter_d['sample_option'] = p.get('sample_option')
+    filter_d['sample_filtering'] = p.get('sample_filtering')
     filter_d['stutter_ratio'] = float( p.get('stutter_ratio', 0) )
     filter_d['stutter_range'] = float( p.get('stutter_range', 0) )
 

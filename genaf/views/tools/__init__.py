@@ -93,8 +93,8 @@ def basic_query_form(request, mode='mlgt'):
         fieldset(name='differentiation_fields')[
 
             input_select(name='sample_filtering', label='Sample filtering', value='A',
-                    options = [ ('A', 'All genotype samples'),
-                                ('S', 'Strict genotype samples'),
+                    options = [ ('N', 'No futher sample filtering'),
+                                ('S', 'Strict/low-complexity samples'),
                                 ('U', 'Unique genotype samples'),
                             ]
                     ),

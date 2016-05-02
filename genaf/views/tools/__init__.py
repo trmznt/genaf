@@ -32,12 +32,20 @@ def basic_query_form(request, mode='mlgt'):
     qform.add(
         fieldset(name='simple_query')[
             input_select(name='batch_ids', label='Batch code(s)', multiple = True,
-                    options = [ (b.id, b.code) for b in batches ],
-                    extra_control = '<a id="show_syntax_query">Use query set</a>'),
+                    options = [ (b.id, '%s | %s' % (b.code, b.description)) for b in batches ],
+                    extra_control = '<a class="show_syntax_query">Use query set</a> | '
+                                    '<a class="show_file_query">Use source file</a>'),
         ],
         fieldset(name='syntax_query', style="display: none;")[
             input_textarea(name='queryset', label='Query set', disabled='disabled',
-                    extra_control = '<a id="show_simple_query">Use query form</a>'),
+                    extra_control = '<a class="show_simple_query">Use query form</a> | '
+                                    '<a class="show_file_query">Use source file</a>'),
+        ],
+        fieldset(name="file_query", style="display:none;")[
+            input_file(name='queryfile', label='Sample source file', disabled='disabled',
+                    extra_control = '<a class="show_simple_query">Use query form</a> | '
+                                    '<a class="show_syntax_query">Use query set</a>'
+                                    )
         ],
         fieldset(name='sample_options')[
             input_select(name='sample_selection', label='Sample selection', value='P',
@@ -126,15 +134,31 @@ def basic_query_form(request, mode='mlgt'):
 def jscode(request, mode = 'mlgt'):
 
     return '\n'.join([
-            "$('#batch_ids').select2();",
+            "function template(data, container) { return data.text.split(' ', 1); };",
+            "$('#batch_ids').select2({ templateSelection: template });",
             "$('#marker_ids').select2();",
             "$('#markers_clear').on('click', function() { $('#marker_ids').val(null).trigger('change'); });",
-            "$('#show_syntax_query').on('click', function() {"
-                "$('#syntax_query').show(); $('#queryset').prop('disabled', false); "
+            "$('.show_syntax_query').on('click', function() {"
+                "$('#syntax_query').show();"
+                "$('#queryset').prop('disabled', false);"
+                "$('#queryfile').prop('disabled', true);"
+                "$('#batch_ids').prop('disabled', true);"
+                "$('#file_query').hide();"
                 "$('#simple_query').hide(); });",
-            "$('#show_simple_query').on('click', function() {"
-                "$('#syntax_query').hide(); $('#queryset').prop('disabled', true); "
+            "$('.show_simple_query').on('click', function() {"
+                "$('#syntax_query').hide();"
+                "$('#file_query').hide();"
+                "$('#queryset').prop('disabled', true);"
+                "$('#queryfile').prop('disabled', true);"
+                "$('#batch_ids').prop('disabled', false);"
                 "$('#simple_query').show(); });",
+            "$('.show_file_query').on('click', function() {"
+                "$('#syntax_query').hide();"
+                "$('#simple_query').hide();"
+                "$('#queryset').prop('disabled', true);"
+                "$('#batch_ids').prop('disabled', true);"
+                "$('#queryfile').prop('disabled', false);"
+                "$('#file_query').show(); });",
 
         ])
 

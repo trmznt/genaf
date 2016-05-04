@@ -3,6 +3,7 @@ import logging
 log = logging.getLogger(__name__)
 
 from rhombus.lib.utils import random_string, silent_remove
+from rhombus.lib.roles import SYSADM, DATAADM, SYSVIEW, DATAVIEW
 
 from genaf.views import *
 from genaf.lib.dictfmt import csv2dict
@@ -19,7 +20,10 @@ def index(request):
 
     dbh = get_dbhandler()
 
-    batches = dbh.get_batches( groups = request.user.groups )
+    if request.user.has_roles( SYSADM, DATAADM, SYSVIEW, DATAVIEW ):
+        batches = dbh.get_batches( groups = None )
+    else:
+        batches = dbh.get_batches( groups = request.user.groups )
 
     return render_to_response( "genaf:templates/batch/index.mako",
                 { 'batches': batches },

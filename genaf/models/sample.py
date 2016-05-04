@@ -6,6 +6,7 @@ from rhombus.models.ek import EK
 from rhombus.models.user import User, Group
 from rhombus.models.mixin import *
 from rhombus.lib.utils import cout, cerr
+from rhombus.lib.roles import SYSADM, DATAADM
 
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import func
@@ -247,6 +248,20 @@ class Batch(BaseMixIn, Base, BatchMixIn):
     def get_parser_module():
         """ return module that provides CSV/JSON """
         return dictfmt
+
+
+    def is_manageable(self, user):
+        """ return True if user can manage this batch """
+        if not user:
+            raise RuntimeError('user object is None!')
+
+        if user.has_roles(SYSADM, DATAADM):
+            return True
+
+        if user.in_group(self.group):
+            return True
+
+        return False
 
 
 class BatchNote(Base, BatchNoteMixIn):

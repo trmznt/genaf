@@ -72,7 +72,7 @@ def edit(request):
                 return error_page(request, 'Batch with ID: %d does not exist!' % objid)
 
             # check permission
-            if not request.user.in_group( batch.group ):
+            if not batch.is_manageable(request.user):
                 return error_page(request, 'Current user is not part of Batch group')
 
         editform = edit_form(batch, dbh, request)

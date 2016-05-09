@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 
 from rhombus.views.fso import save_file
 from rhombus.lib.utils import get_dbhandler, get_dbhandler_notsafe, silent_rmdir
+from rhombus.lib.roles import SYSADM, DATAADM
 
 from genaf.views import *
 from genaf.lib.procmgmt import subproc, getproc, getmanager, estimate_time
@@ -74,7 +75,7 @@ class UploaderSession(object):
 
 
     def is_authorized(self, user):
-        return self.meta['user'] == user
+        return self.meta['user'] == user or user.has_roles(SYSADM, DATAADM)
 
 
     def get_sesskey(self):
@@ -273,13 +274,13 @@ def index(request):
 
     batch_id = request.params.get('batch_id', 0)
     if batch_id == 0:
-        error_page('Please provide batch id!')
+        return error_page(request, 'Please provide batch id!')
 
     batch = get_dbhandler().get_batch_by_id( batch_id )
 
     # check authorization
-    if not request.user.in_group( batch.group ):
-        error_page('You are not authorized to view this batch!')
+    if not batch.is_manageable(request.user):
+        return error_page(request, 'You are not authorized to view this batch!')
 
     uploader_sessions = list_sessions(batch)
 

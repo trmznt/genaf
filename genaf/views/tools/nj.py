@@ -39,10 +39,10 @@ def func_callback( query, request ):
 
     dm = get_distance_matrix(haplotype_sets)
 
-    dbh = get_dbhandler()
+    dbh = query.dbh
     fso_dir = get_fso_temp_dir(request.user.login)
 
-    tip_label = request.params.get('tip_label', 'S')
+    tip_label = query.options.get('tip_label', 'S')
     label_callback = {
         'S': lambda x: dbh.get_sample_by_id(x).code,
         'I': None,

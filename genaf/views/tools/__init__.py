@@ -284,6 +284,10 @@ def form2dict( request ):
                 'temporal': int(p.get('temporal_differentiation', 0))
     }
 
+    d['options'] = {
+                'tip_label': p.get('tip_label', None),
+    }
+
     return d
 
 

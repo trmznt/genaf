@@ -29,6 +29,8 @@ def load_params( d ):
             instances['filter'] = _FILTER_CLASS_.from_dict( d[k] )
         elif k == 'differentiator':
         	instances['differentiator'] = _DIFFERENTIATOR_CLASS_.from_dict( d[k] )
+        elif k == 'options':
+            instances['options'] = d[k]
         else:
             raise RuntimeError()
 

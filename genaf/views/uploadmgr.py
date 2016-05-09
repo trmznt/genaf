@@ -54,7 +54,7 @@ class UploaderSession(object):
         os.makedirs(self.rootpath + '/tmp')
         os.makedirs(self.rootpath + '/payload')
         curtime = time.time()
-        self.meta = dict(   user = user, batch = batch.code, batch_id = batch.id,
+        self.meta = dict(   user = user.login, batch = batch.code, batch_id = batch.id,
                             payload = '', ctime = curtime, mtime = curtime,
                             state = 'N' )
         self.save_metadata()
@@ -75,7 +75,7 @@ class UploaderSession(object):
 
 
     def is_authorized(self, user):
-        return self.meta['user'] == user or user.has_roles(SYSADM, DATAADM)
+        return self.meta['user'] == user.login or user.has_roles(SYSADM, DATAADM)
 
 
     def get_sesskey(self):
@@ -241,10 +241,9 @@ class UploaderSession(object):
         silent_rmdir(self.rootpath)
 
 
-
 def new_session(request, batch):
 
-    uploader_session = UploaderSession( user = request.user.login, batch = batch )
+    uploader_session = UploaderSession( user = request.user, batch = batch )
     return uploader_session.get_sesskey()
 
 
@@ -264,8 +263,6 @@ def list_sessions(batch):
         uploader_sessions.append( uploader_session )
 
     return uploader_sessions
-
-    raise NotImplementedError()
 
 
 @roles( PUBLIC )
@@ -302,7 +299,7 @@ def view(request):
     #if not os.path.exists(temp_path):
     #    raise error_page('Upload session with key: %s does not exist!' % sesskey)
 
-    if not uploader_session.is_authorized( request.user.login ):
+    if not uploader_session.is_authorized( request.user ):
         raise error_page('You are not authorized to view this session')
 
     # if sesskey in commit_procs, just redirect to the running uploading process page
@@ -331,7 +328,7 @@ def mainpanel(request):
 
     uploader_session = UploaderSession( sesskey = sesskey )
 
-    if not uploader_session.is_authorized( request.user.login ):
+    if not uploader_session.is_authorized( request.user ):
         return dict( html = p('You are not authorized to view this session') )
 
     html, code = compose_mainpanel(uploader_session, request)
@@ -589,7 +586,7 @@ def save(request):
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
 
-    if not uploader_session.is_authorized( request.user.login ):
+    if not uploader_session.is_authorized( request.user ):
         raise error_page('You are not authorized to view this session')
 
     if False:
@@ -673,7 +670,7 @@ def uploaddata(request):
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
 
-    if not uploader_session.is_authorized( request.user.login ):
+    if not uploader_session.is_authorized( request.user ):
         raise error_page('You are not authorized to view this session')
 
 
@@ -694,73 +691,12 @@ def uploaddata(request):
 
 
 @roles( PUBLIC )
-def verifydatafile(request):
-    """ this function returns JSON data """
-
-    raise NotImplementedError
-
-    sesskey = request.matchdict.get('id')
-    uploader_session = UploaderSession( sesskey = sesskey )
-
-    if not uploader_session.is_authorized( request.user.login ):
-        raise error_page('You are not authorized to view this session')
-
-    result = uploader_session.verify_datafile()
-    (assay_no, err_log) = result
-
-    container = div(class_='container')
-    container.add(
-        row()[  div(class_='col-sm-2')[ span(class_='pull-right')['No of assay'] ],
-                div(class_='col-sm-5')[ '%d' % assay_no ]
-        ]
-    )
-    if err_log:
-        container.add(
-            row()[ div(class_='col-sm-8')[ '<br/>'.join( err_log ) ]]
-        )
-    else:
-        container.add(
-            row()[ div(class_='col-sm-8')[ 'No errors found' ] ]
-        )
-
-
-    return dict(html = str(container), status=True)
-
-
-
-@roles( PUBLIC )
-def checkdatafile(request):
-    """ this function returns JSON data """
-
-    raise NotImplementedError
-
-    sesskey = request.matchdict.get('id')
-    uploader_session = UploaderSession( sesskey = sesskey )
-
-    if not uploader_session.is_authorized( request.user.login ):
-        raise error_page('You are not authorized to view this session')
-
-    result = uploader_session.check_datafile()
-    if result:
-        container = div(class_='container')
-        container.add(
-            row(    div( span('Filename :', class_='pull-right'), class_='col-sm-2'),
-                    div( result['filename'], class_='col-sm-8')),
-            row(    div( span('File size :', class_='pull-right'), class_='col-sm-2'),
-                    div( "%d bytes" % result['filesize'], class_='col-sm-8'))
-        )
-        return dict(html = str(container), status=True)
-    return None
-
-
-
-@roles( PUBLIC )
 def uploadinfo(request):
 
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
 
-    if not uploader_session.is_authorized( request.user.login ):
+    if not uploader_session.is_authorized( request.user ):
         raise error_page('You are not authorized to view this session')
 
 
@@ -778,122 +714,6 @@ def uploadinfo(request):
 
 
 @roles( PUBLIC )
-def verifyinfofile(request):
-    """ this function returns JSON data """
-
-    raise NotImplementedError
-
-    sesskey = request.matchdict.get('id')
-    uploader_session = UploaderSession( sesskey = sesskey )
-
-    if not uploader_session.is_authorized( request.user.login ):
-        raise error_page('You are not authorized to view this session')
-
-    result = uploader_session.upload_payload(dry_run=True)
-    assay_no, err_log = result
-
-    container = div(class_='container')
-    container.add(
-        row()[  div(class_='col-sm-2')[ span(class_='pull-right')['No of assay'] ],
-                div(class_='col-sm-5')[ '%d' % assay_no ]
-        ]
-    )
-    if err_log:
-        container.add(
-            row()[ div(class_='col-sm-8')[ '<br/>'.join( err_log ) ]]
-        )
-    else:
-        container.add(
-            row()[ div(class_='col-sm-8')[ 'No errors found' ] ]
-        )
-
-
-    return dict(html = str(container), status=True)
-
-
-
-@roles( PUBLIC )
-def checkinfofile(request):
-    """ this function returns JSON data """
-
-    raise NotImplementedError
-
-    sesskey = request.matchdict.get('id')
-    uploader_session = UploaderSession( sesskey = sesskey )
-
-    if not uploader_session.is_authorized( request.user.login ):
-        raise error_page('You are not authorized to view this session')
-
-    result = uploader_session.check_infofile()
-    if result:
-        content = container()[
-            row()[
-                div(class_='col-sm-2')[ span(class_='pull-right')[ 'Filename :' ]],
-                div(class_='col-sm-4')[ result['filename'] ] ],
-            row()[
-                div(class_='col-sm-2')[ span(class_='pull-right')[ 'File size :' ]],
-                div(class_='col-sm-4')[ result['filesize'] ] ],
-            ]
-
-        return dict(html = str(content), status=True)
-    return None
-
-
-@roles( PUBLIC )
-def commitpayload(request):
-
-    raise NotImplementedError
-
-    sesskey = request.matchdict.get('id')
-    uploader_session = UploaderSession( sesskey = sesskey )
-
-    if not uploader_session.is_authorized( request.user.login ):
-        raise error_page('You are not authorized to view this session')
-
-    result = uploader_session.upload_payload()
-    assay_no, err_log = result
-
-    container = div(class_='container')
-    container.add(
-        row()[  div(class_='col-sm-2')[ span(class_='pull-right')['No of assay'] ],
-                div(class_='col-sm-5')[ '%d' % assay_no ]
-        ]
-    )
-    if err_log:
-        container.add(
-            row()[ div(class_='col-sm-8')[ '<br/>'.join( err_log ) ]]
-        )
-    else:
-        container.add(
-            row()[ div(class_='col-sm-8')[ 'No errors found' ] ]
-        )
-
-
-    return dict(html = str(container), status=True)
-
-
-
-@roles( PUBLIC )
-def verifyassay(request):
-
-    raise NotImplementedError
-
-    sesskey = request.matchdict.get('id')
-    uploader_session = UploaderSession( sesskey = sesskey )
-
-    uploader_session.extract_payload()
-    count, errlog = uploader_session.verify_payload()
-
-    uploader_session.meta['payload_count'] = count
-    uploader_session.meta['payload_error'] = len(errlog)
-
-    return render_to_response('genaf:templates/uploadmgr/verify.mako',
-            {   'status': status,
-                'errlog': errlog,
-            }, request = request )
-
-
-@roles( PUBLIC )
 def rpc(request):
     """ this function return JSON: true or false
     """
@@ -901,7 +721,7 @@ def rpc(request):
     sesskey = request.matchdict.get('id')
     uploader_session = UploaderSession( sesskey = sesskey )
 
-    if not uploader_session.is_authorized( request.user.login ):
+    if not uploader_session.is_authorized( request.user ):
         return dict( html = p('You are not authorized to view this session') )
 
     if request.params.get('_method','') == 'verifypayload':

@@ -92,12 +92,7 @@ def includeme( config ):
         ('/uploadmgr/{id}@@mainpanel', 'mainpanel', 'json'),
         ('/uploadmgr/{id}@@rpc', 'rpc', 'json'),
         ('/uploadmgr/{id}@@uploaddata', 'uploaddata', 'json'),
-        ('/uploadmgr/{id}@@checkdatafile', 'checkdatafile', 'json'),
         ('/uploadmgr/{id}@@uploadinfo', 'uploadinfo', 'json'),
-        ('/uploadmgr/{id}@@checkinfofile', 'checkinfofile', 'json'),
-        ('/uploadmgr/{id}@@verifydatafile', 'verifydatafile', 'json'),
-        ('/uploadmgr/{id}@@verifyinfofile', 'verifyinfofile', 'json'),
-        ('/uploadmgr/{id}@@commitpayload', 'commitpayload', 'json'),
         ('/uploadmgr/{id}', 'view')
 
     )

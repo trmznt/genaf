@@ -66,10 +66,6 @@ function hide_spinner() {
     $('#spinner').hide();
     $('#screen').hide();
 }
-    
-function hide_spinne() {
-    
-}
 
 function get_main_panel() {
     $.getJSON( "${request.route_url('genaf.uploadmgr-mainpanel', id=sesskey)}",

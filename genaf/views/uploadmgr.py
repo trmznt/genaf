@@ -13,7 +13,8 @@ from genaf.lib.procmgmt import subproc, getproc, getmanager, estimate_time
 
 from fatools.lib.utils import tokenize
 
-import os, yaml, re, shutil, time, csv, threading, transaction, sys
+from pyramid.response import Response
+import os, yaml, re, shutil, time, csv, threading, transaction, sys, io
 
 from pprint import pprint
 
@@ -204,6 +205,7 @@ class UploaderSession(object):
                                 species = batch.species,
                                 dbhandler = dbh,
                                 dry_run = dry_run )
+                    dbh.session().flush()
 
                     total_assay += 1
 
@@ -232,10 +234,21 @@ class UploaderSession(object):
 
         return total_assay, err_log
 
-    def verify_infofile_XXX(self):
+
+    def get_template(self):
 
         with open('%s/assay_list.yaml' % self.rootpath) as f:
             assay_files = yaml.load( f )
+
+        filenames = sorted(assay_files.keys())\
+
+        buf_str = io.StringIO()
+        buf_str.write('FILENAMES\tSAMPLE\tPANEL\tOPTIONS\n')
+        for filename in filenames:
+            buf_str.write('%s\t\t\t\n' % filename)
+        buf_str.seek(0)
+        return buf_str
+
 
     def clear(self):
         silent_rmdir(self.rootpath)
@@ -357,7 +370,7 @@ def get_payload_info(up_session, request):
 
         info_panel.add(
             row()[
-                div(class_='col-md-3')[ span(class_='pull-right')['FSA archived file :'] ],
+                div(class_='col-md-3')[ span(class_='pull-right')['FSA archived/payload file :'] ],
                 div(class_='col-md-5')[ up_session.meta['payload'] ],
             ],
             row()[
@@ -409,9 +422,11 @@ def get_payload_bar(up_session, request):
     else:
         html = row()[
             p()[
-                span(id='gettemplatefile', class_='btn btn-default')[
+                span( a( id='gettemplatefile', class_='btn btn-default', target='_blank',
+                        href=request.route_url('genaf.uploadmgr-template', id=up_session.get_sesskey())
+                    )[
                      'Get CSV template for FSA info file'
-                     ],
+                     ] ),
                 br(),
                 span(class_="btn btn-default fileinput-button")[
                     span('Change/replace the uploaded archive file'),
@@ -607,9 +622,9 @@ def save(request):
                     ]
 
                 result = procunit.result
-                if result is None:
-                    raise procunit.exc
-                if result[1]:
+                #if result is None:
+                #    raise procunit.exc
+                if result and result[1]:
                     msg.add( div()[ p( *result[1] ) ] )
 
             else:
@@ -738,7 +753,7 @@ def rpc(request):
         err_log = None
         try:
             assay_no, err_log = uploader_session.upload_payload(dry_run=True)
-        except:
+        except RuntimeError:
             exc_info = sys.exc_info()
             if err_log:
                 err_log.append( 'Exception %s : %s' % (str(exc_info[0]), exc_info[1]) )
@@ -757,6 +772,23 @@ def rpc(request):
         return dict( html = str(html), code = code )
 
     return dict( html='', code='' )
+
+
+@roles( PUBLIC)
+def template(request):
+
+    sesskey = request.matchdict.get('id')
+    uploader_session = UploaderSession( sesskey = sesskey )
+
+    if not uploader_session.is_authorized( request.user ):
+        raise error_page('You are not authorized to view this session')
+
+    resp = Response()
+    resp.content_type = 'text/plain'
+    resp.text = uploader_session.get_template().read()
+    resp.content_disposition = 'attachment; filename="template.txt"'
+
+    return resp
 
 
 

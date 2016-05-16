@@ -93,6 +93,7 @@ def includeme( config ):
         ('/uploadmgr/{id}@@rpc', 'rpc', 'json'),
         ('/uploadmgr/{id}@@uploaddata', 'uploaddata', 'json'),
         ('/uploadmgr/{id}@@uploadinfo', 'uploadinfo', 'json'),
+        '/uploadmgr/{id}@@template',
         ('/uploadmgr/{id}', 'view')
 
     )

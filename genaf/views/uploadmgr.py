@@ -13,6 +13,8 @@ from genaf.lib.procmgmt import subproc, getproc, getmanager, estimate_time
 
 from fatools.lib.utils import tokenize
 
+from sqlalchemy.exc import IntegrityError
+
 from pyramid.response import Response
 import os, yaml, re, shutil, time, csv, threading, transaction, sys, io
 
@@ -194,13 +196,17 @@ class UploaderSession(object):
                                         ( line_counter, r['FILENAME'] ))
                     continue
 
+                filename = r['FILENAME']
+                panel_code = r['PANEL']
+                sample_code = sample.code
+
                 try:
-                    with open( assay_files[ r['FILENAME'] ], 'rb') as f:
+                    with open( assay_files[ filename ], 'rb') as f:
                         trace = f.read()
 
                     a = sample.add_fsa_assay( trace,
-                                filename=r['FILENAME'],
-                                panel_code = r['PANEL'],
+                                filename=filename,
+                                panel_code = panel_code,
                                 options = options,
                                 species = batch.species,
                                 dbhandler = dbh,
@@ -213,6 +219,16 @@ class UploaderSession(object):
                     err_log.append('Line %03d - runtime error: %s' % (line_counter, str(err)))
                     failed_assay += 1
 
+
+                except IntegrityError as err:
+                    if 'uq_assays_filename_panel_id_sample_id' in repr(err):
+                        raise RuntimeError('Line %03d - integrity error: '
+                            'FSA with filename %s for sample %s with panel %s already exists. '
+                            'Please recheck your data, or remove the FSA from the database first, or '
+                            'remove this line entry.'
+                            % (line_counter, filename, sample_code, panel_code))
+                    else:
+                        raise err
 
             except RuntimeError as err:
                 failed_assay += 1
@@ -605,7 +621,7 @@ def save(request):
         raise error_page('You are not authorized to view this session')
 
     if False:
-        # set the above condition to True for non-multiprocess flow
+        # NOTE: set the above condition to True for non-multiprocess flow
         result = uploader_session.upload_payload()
         assay_no, err_log = result
 
@@ -622,8 +638,11 @@ def save(request):
                     ]
 
                 result = procunit.result
+
+                # NOTE: uncomment these 2 lines for debugging the exception
                 #if result is None:
                 #    raise procunit.exc
+
                 if result and result[1]:
                     msg.add( div()[ p( *result[1] ) ] )
 
@@ -637,9 +656,9 @@ def save(request):
                                         ]
                             ]
                     ]
+                uploader_session.clear()
             del ns
             del commit_procs[sesskey]
-            uploader_session.clear()
         else:
             # XXX: need to check whether the process is still running or stopped
             seconds = 10

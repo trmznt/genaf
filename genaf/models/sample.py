@@ -343,13 +343,16 @@ class Sample(BaseMixIn, Base, SampleMixIn):
 
 
     def new_fsa_assay(self, raw_data, filename, status, panel=None):
-        Assay = self.get_assay_class()
-        assay = Assay( raw_data = raw_data, filename = filename )
-        if panel is None:
-            panel = Panel.search('undefined', object_session(self))
-        assay.panel = panel
-        assay.sample = self
-        assay.status = status
+        try:
+            Assay = self.get_assay_class()
+            assay = Assay( raw_data = raw_data, filename = filename )
+            if panel is None:
+                panel = Panel.search('undefined', object_session(self))
+            assay.panel = panel
+            assay.sample = self
+            assay.status = status
+        except RuntimeError as err:
+            raise err
         return assay
 
 

@@ -223,7 +223,7 @@ class UploaderSession(object):
                 except IntegrityError as err:
                     if 'uq_assays_filename_panel_id_sample_id' in repr(err):
                         raise RuntimeError('Line %03d - integrity error: '
-                            'FSA with filename %s for sample %s with panel %s already exists. '
+                            'FSA with filename %s for sample %s with panel %s already exists in the database. '
                             'Please recheck your data, or remove the FSA from the database first, or '
                             'remove this line entry.'
                             % (line_counter, filename, sample_code, panel_code))

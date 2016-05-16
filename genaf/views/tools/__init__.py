@@ -21,7 +21,10 @@ def basic_query_form(request, mode='mlgt'):
 
     if mode not in ['mlgt', 'allele']:
         return RuntimeError('ERR - basic_query_form mode unknown: %s' % mode)
-    allele_mode = True if mode == 'allele' else False
+    #allele_mode = True if mode == 'allele' else False
+
+    # we need all options because of sample genotype filtering (low complexity & unique haplotype)
+    allele_mode = True
 
     dbh = get_dbhandler()
 

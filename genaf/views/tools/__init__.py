@@ -162,6 +162,13 @@ def jscode(request, mode = 'mlgt'):
                 "$('#batch_ids').prop('disabled', true);"
                 "$('#queryfile').prop('disabled', false);"
                 "$('#file_query').show(); });",
+            "$('#queryform').submit( function() {"
+                "if ( ! $('#marker_ids').val() )"
+                    "{ alert('Error: please provide the marker(s)!'); return false; }"
+                "if ( ! ( $('#batch_ids').val() || $('#queryset').val() || $('#queryfile').val() ) )"
+                    "{ alert('Error: please provide Batch id(s) or query set or sample source file!');"
+                    "return false; }"
+                "});",
 
         ])
 

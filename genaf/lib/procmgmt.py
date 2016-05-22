@@ -32,6 +32,7 @@ class ProcUnit(object):
         self.output = None
         self.error = None
         self.result = None
+        self.ns = None
 
 
 def reraise_with_stack(func):
@@ -74,8 +75,11 @@ class ProcQueue(object):
                 if procid not in self.procs:
                     break
 
+            procunit = ProcUnit(None, uid, wd)
+            procunit.ns = self.prepare_namespace()
+            kwargs['ns'] = procunit.ns
             proc = self.pool.submit( func, *args, **kwargs )
-            procunit = ProcUnit(proc, uid, wd)
+            procunit.proc = proc
             self.procs[procid] = procunit
             self.queue += 1
             proc.add_done_callback( lambda x: self.callback(x, procid) )
@@ -102,9 +106,21 @@ class ProcQueue(object):
     def get(self, procid):
         return self.procs[procid]
 
+    def clear(self, procid):
+        del self.procs[procid]
+
     def manager(self):
         return self._manager
 
+    def prepare_namespace(self):
+        ns = self.manager().Namespace()
+        ns.cout = ''
+        ns.cerr = ''
+        ns.msg = None
+        ns.status = 'Q'
+        ns.start_time = 0
+        ns.finish_time = 0
+        return ns
 
 
 class PoolExecuter(futures.ProcessPoolExecutor):
@@ -138,6 +154,9 @@ def subproc( uid, wd, func, *args, **kwargs ):
 
 def getproc( procid ):
     return get_queue().get(procid)
+
+def clearproc( procid ):
+    return get_queue().clear(procid)
 
 
 def getmanager():

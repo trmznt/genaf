@@ -30,7 +30,7 @@ def form_modifier(html, javacode):
 
 
 
-def func_callback( query, request ):
+def func_callback( query, user ):
 
     from fatools.lib.analytics.dist import get_distance_matrix
     from fatools.lib.analytics.nj import plot_nj
@@ -40,7 +40,7 @@ def func_callback( query, request ):
     dm = get_distance_matrix(haplotype_sets)
 
     dbh = query.dbh
-    fso_dir = get_fso_temp_dir(request.user.login)
+    fso_dir = get_fso_temp_dir(user.login)
 
     tip_label = query.options.get('tip_label', 'S')
     label_callback = {
@@ -63,7 +63,12 @@ def func_callback( query, request ):
 
     html, code = format_output( options )
 
-    return ('Neighbor-Joining (NJ) Tree Result', html, code)
+    return {    'custom': None,
+                'options': None,
+                'title': 'Neighbor-Joining (NJ) Tree Result',
+                'html': html,
+                'jscode': code,
+    }
 
 
 def format_output( options ):

@@ -10,7 +10,7 @@ def index(request):
             callback = func_callback )
 
 
-def func_callback( query, request ):
+def func_callback( query, user):
 
     from fatools.lib.analytics.fst_arlequin import run_arlequin, standardized_fst
 
@@ -18,20 +18,27 @@ def func_callback( query, request ):
     analytical_sets = query.get_filtered_analytical_sets()
 
     if len(analytical_sets) < 2:
-        return ('FST Calculation Result',
-            p(b('Error:'), 'FST can be calculated with 2 or more data set'),
-            '')
+        return {    'title': 'FST Calculation Result',
+                    'html': p(b('Error:'), 'FST can be calculated with 2 or more data set'),
+                    'jscode': '',
+                    'custom': None,
+                    'options': None }
 
     # prepare the directory
 
-    fso_dir = get_fso_temp_dir(request.user.login)
+    fso_dir = get_fso_temp_dir(user.login)
     fst = run_arlequin( analytical_sets, dbh,  tmp_dir = fso_dir.abspath)
     fst_max = run_arlequin( analytical_sets, dbh, tmp_dir = fso_dir.abspath, recode=True)
     fst_std = standardized_fst( fst, fst_max )
 
     html, code = format_output( fst, fst_max, fst_std )
 
-    return ('FST Calculation Result', html, code)
+    return {    'custom': None,
+                'options': None,
+                'title': 'FST Calculation Result',
+                'html': html,
+                'jscode': code,
+    }
 
 
 def format_output( fst, fst_max, fst_std ):
@@ -72,6 +79,3 @@ def create_table( fst_result ):
     t.add( body )
 
     return t
-
-
-    raise RuntimeError

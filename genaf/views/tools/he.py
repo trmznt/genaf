@@ -13,7 +13,7 @@ def index(request):
             callback = func_callback )
 
 
-def func_callback( query, request ):
+def func_callback( query, user ):
 
     from fatools.lib.analytics.he import summarize_he
 
@@ -24,7 +24,12 @@ def func_callback( query, request ):
 
     html, code = format_output(results, options)
 
-    return ('Heterozygosity (He) Summary Result', html, code)
+    return {    'custom': None,
+                'options': None,
+                'title': "Heterozygosity (He) Summary Result",
+                'html': html,
+                'jscode': code,
+    }
 
 
 def format_output(results, options=None):

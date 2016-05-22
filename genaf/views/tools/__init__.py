@@ -3,8 +3,13 @@ from genaf.views import *
 from genaf.lib.query import Query, load_params, load_yaml
 from genaf.lib.querytext import query2dict
 from genaf.lib.configs import get_temp_path, TEMP_TOOLS
+from genaf.lib.procmgmt import subproc, getproc
 
 from rhombus.lib import fsoverlay
+from rhombus.lib.utils import get_dbhandler_notsafe
+
+from time import time
+import threading
 
 
 def get_fso_temp_dir(userid, rootdir = TEMP_TOOLS):
@@ -190,8 +195,64 @@ def yaml_query_form(request):
 
 
 
-def process_request( request, header_text, button_text, callback, mode = 'mlgt',
-        form_modifier = None ):
+def process_request( request, header_text, button_text, callback, format_callback=None,
+        mode = 'mlgt', form_modifier = None ):
+
+    global task_ids
+
+    # check whether request have taskid as GET parameter
+    taskid = request.GET.get('taskid', None)
+    if taskid:
+
+        if taskid not in task_ids:
+            return error_page(request, 'task with ID %s is not registered in the system!')
+
+        (procid, login, title, current_route_path, format_callback) = task_ids[taskid]
+
+        procunit = getproc(procid)
+
+        if procunit.status in ['D', 'U']:
+
+            result = procunit.result
+            if not result and procunit.exc:
+                raise procunit.exc
+
+            if format_callback:
+                output = format_callback(result, request)
+                html = output['html']
+                jscode = output['jscode']
+            else:
+                html = result['html']
+                jscode = result['jscode']
+
+            # dummy
+            sample_html, sample_code = result['sample_filtering']
+            marker_html, marker_code = result['marker_filtering']
+
+            return render_to_response("genaf:templates/tools/report.mako",
+                {   'header_text': result['title'],
+                    'sample_report': sample_html,
+                    'marker_report': marker_html,
+                    'html': html if html is not None else '',
+                    'code': sample_code + marker_code + jscode if jscode is not None else '',
+                }, request = request )
+
+            clearproc(procid)
+            del task_ids[taskid]
+
+        else:
+            seconds = 5
+            ns = procunit.ns
+
+            return render_to_response('genaf:templates/tools/progress.mako',
+                {   'msg': ns.cerr,
+                    'title': title,
+                    'taskid': taskid,
+                    'seconds': seconds,
+                }, request = request )
+
+
+    # prepare form and/or process form
 
     if not request.GET.get('_method', None) in ['_exec', '_yamlexec']:
 
@@ -213,6 +274,45 @@ def process_request( request, header_text, button_text, callback, mode = 'mlgt',
 
     elif request.GET.get('_method', None) == '_yamlexec':
         params = load_yaml( request.params.get('yamlquery') )
+
+
+    if False:    # set this to True for debugging in non-concurrent mode
+
+        result = mp_run_callback(request.registry.settings,
+                    callback, params, request.user, mode)
+
+        if format_callback:
+            output = format_callback(result, request)
+            html = output['html']
+            jscode = output['jscode']
+        else:
+            html = result['html']
+            jscode = result['jscode']
+
+        # dummy
+        sample_html = marker_html = sample_code = marker_code = ''
+
+        return render_to_response("genaf:templates/tools/report.mako",
+            {   'header_text': result['title'],
+                'sample_report': sample_html,
+                'marker_report': marker_html,
+                'html': html if html is not None else '',
+                'code': sample_code + marker_code + jscode if jscode is not None else '',
+            }, request = request )
+
+    # this is code for concurrent mode
+
+    with glock:
+        procid, msg = subproc( request.user.login, None,
+                    mp_run_callback, request.registry.settings, callback, params,
+                    request.user, mode )
+        task_ids[procid] = ( procid, request.user.login, header_text,
+                                request.current_route_path(), format_callback )
+
+    return HTTPFound(location = request.current_route_path(_query = { 'taskid': procid }))
+
+    raise NotImplementedError()
+    ## method stops here
 
     q = Query( params, get_dbhandler() )
 
@@ -301,6 +401,9 @@ def form2dict( request ):
     return d
 
 
+def sample_summary(sample_summary_df):
+    return None
+
 def format_sample_summary(sample_summary_df):
     """ return (html, jscode) """
 
@@ -323,6 +426,9 @@ def format_sample_summary(sample_summary_df):
 
     return (body, '')
 
+
+def marker_summary(query):
+    return None
 
 def format_marker_summary(query):
 
@@ -351,3 +457,51 @@ def format_marker_summary(query):
 
     return (body, '')
 
+
+# multiprocessing capabilities
+
+task_ids = {}
+glock = threading.Lock()
+
+
+def mp_run_callback( settings, callback, params, user, mode, ns=None):
+    """ run analyis """
+
+    if ns:
+        ns.start_time = int(time())
+        ns.status = 'R'
+        ns.msg = 'Processing...'
+        ns.cerr += 'mp_run_callback(): connecting to db...\n'
+
+    dbh = get_dbhandler_notsafe()
+    if dbh is None:
+        dbh = get_dbhandler(settings)
+
+
+    # user authorization should be performed by Query
+    q = Query( params, dbh )
+
+    # callback needs to return result (a dictionary object)
+    # { 'custom': data, 'options': options,
+    # 'html': html_or_None, 'jscode': jscode_or_None }
+
+    if ns:
+        ns.cerr += 'mp_run_callback(): processing callback...\n'
+    result = callback( q, user )
+
+    if type(result) != dict:
+        return result
+
+    #result['sample_filtering'] = sample_summary( q.get_sample_summary(mode))
+    #result['marker_filtering'] = marker_summary( q )
+
+    result['sample_filtering'] = format_sample_summary( q.get_sample_summary(mode) )
+    result['marker_filtering'] = format_marker_summary( q )
+
+    if ns:
+        ns.finish_time = int(time())
+        ns.status = 'D'
+        ns.msg = 'Finished...'
+        ns.cerr += 'mp_run_callback(): callback finished...\n'
+
+    return result

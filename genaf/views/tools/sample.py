@@ -13,6 +13,6 @@ def index(request):
             callback = func_callback, mode = 'allele' )
 
 
-def func_callback( query, request ):
+def func_callback( query ):
 
     return ("Sample Summary Report", None, None)

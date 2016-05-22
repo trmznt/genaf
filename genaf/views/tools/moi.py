@@ -9,7 +9,7 @@ def index(request):
             'Calculate MoI', callback = func_callback, mode = 'allele' )
 
 
-def func_callback( query, request ):
+def func_callback( query, user ):
 
     from fatools.lib.analytics.moi import summarize_moi
 
@@ -18,12 +18,17 @@ def func_callback( query, request ):
     options = None
     results = summarize_moi(analytical_sets)
 
-    html, code = format_output(results, request, options)
+    html, code = format_output(results, user, options)
 
-    return ('Multiplicity of Infection (MoI) Summary', html, code)
+    return {    'custom': None,
+                'options': None,
+                'title': "Multiplicity of Infection (MoI) Summary",
+                'html': html,
+                'jscode': code,
+    }
 
 
-def format_output(results, request, options):
+def format_output(results, user, options):
 
     dbh = get_dbhandler()
 
@@ -99,7 +104,7 @@ def format_output(results, request, options):
         table_row.add( td( literal(txt) ))
     table_body.add( table_row )
 
-    fso_dir = get_fso_temp_dir(request.user.login)
+    fso_dir = get_fso_temp_dir(user.login)
     table_row = tr( td('Data file') )
     for l in labels:
         res = results[l]

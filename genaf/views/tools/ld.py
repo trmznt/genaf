@@ -7,7 +7,7 @@ def index(request):
             callback = func_callback )
 
 
-def func_callback( query, request ):
+def func_callback( query, user ):
 
     from fatools.lib.analytics.ld_lian import run_lian
 
@@ -20,7 +20,12 @@ def func_callback( query, request ):
 
     html, code = format_output(results)
 
-    return ('LD Calculatino Result', html, code)
+    return {    'custom': None,
+                'options': None,
+                'title': 'LD Calculation Result',
+                'html': html,
+                'jscode': code,
+    }
 
 
 def format_output(results):

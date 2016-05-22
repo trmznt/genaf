@@ -12,7 +12,7 @@ def index(request):
             callback = func_callback )
 
 
-def func_callback( query, request ):
+def func_callback( query, user ):
 
     from fatools.lib.analytics.dist import get_distance_matrix
     from fatools.lib.analytics.ca import pcoa, plot_pca
@@ -24,7 +24,7 @@ def func_callback( query, request ):
     dm = get_distance_matrix(haplotype_sets)
     pca_res = pcoa(dm, dim = dimension)
 
-    fso_dir = get_fso_temp_dir(request.user.login)
+    fso_dir = get_fso_temp_dir(user.login)
     plotfile_urls = []
 
     for (ax, ay) in combinations(range( dimension ), 2):
@@ -36,6 +36,13 @@ def func_callback( query, request ):
     options = { 'plotfile_urls': plotfile_urls }
 
     html, code = format_output( (pca_res, dm), options )
+
+    return {    'custom': None,
+                'options': None,
+                'title': 'Principal Coordinate Analysis (PCoA) Result',
+                'html': html,
+                'jscode': code,
+    }
 
     return ('Principal Coordinate Analysis (PCoA) Result', html, code)
 

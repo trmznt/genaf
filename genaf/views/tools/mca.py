@@ -15,7 +15,7 @@ def index(request):
         'Generate MCA', callback = func_callback)
 
 
-def func_callback( query, request ):
+def func_callback( query, user ):
 
     from fatools.lib.analytics.dist import get_distance_matrix, null_distance
     from fatools.lib.analytics.ca import mca, plot_pca
@@ -26,7 +26,7 @@ def func_callback( query, request ):
     dm = get_distance_matrix(haplotype_sets, null_distance)
     mca_res = mca(dm)
 
-    fso_dir = get_fso_temp_dir(request.user.login)
+    fso_dir = get_fso_temp_dir(user.login)
     plotfile_urls = []
 
     for (ax, ay) in combinations(range( dimension ), 2):
@@ -38,5 +38,12 @@ def func_callback( query, request ):
     options = { 'plotfile_urls': plotfile_urls }
 
     html, code = format_output( (mca_res, dm), options )
+
+    return {    'custom': None,
+                'options': None,
+                'title': 'Multiple Correspondence Analysis (MCA) Result',
+                'html': html,
+                'jscode': code,
+    }
 
     return ('Multiple Correspondence Analysis (MCA) Result', html, code)

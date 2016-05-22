@@ -16,7 +16,7 @@ def index(request):
             callback = func_callback, mode = 'allele' )
 
 
-def func_callback( query, request ):
+def func_callback( query, user ):
 
     from fatools.lib.analytics.summary import summarize_alleles, plot_alleles
 
@@ -29,7 +29,7 @@ def func_callback( query, request ):
     if True:
         # create plot file
         if fso_dir is None:
-            fso_dir = get_fso_temp_dir(request.user.login)
+            fso_dir = get_fso_temp_dir(user.login)
         plotfile = fso_dir.abspath + '/' + PLOTFILE
         plot_alleles(report, plotfile, dbh=get_dbhandler())
         options['plotfile'] = fso.get_urlpath(plotfile)
@@ -37,14 +37,19 @@ def func_callback( query, request ):
     if False:
         # create tab-delimited text file
         if fso_dir is None:
-            fso_dir = get_fso_temp_dir(request.user.login)
+            fso_dir = get_fso_temp_dir(user.login)
 
         tabfile = fso_dir.abspath + '/' + TABFILE
         options['tabfile'] = fso.get_urlpath(tabfile)
 
     html, code = format_output(report, options)
 
-    return ('Allele Summary Result', html, code)
+    return {    'custom': None,
+                'options': options,
+                'title': 'Allele Summary Result',
+                'html': html,
+                'jscode': code,
+    }
 
 
 def format_output(summaries, options=None):

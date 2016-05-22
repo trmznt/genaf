@@ -245,7 +245,7 @@ class Differentiator(object):
         self.location_cache = {}
 
         #handler
-        self.dbh = get_dbhandler()
+        self.dbh = None
 
 
     @staticmethod

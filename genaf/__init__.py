@@ -105,6 +105,11 @@ def includeme( config ):
         ('/famgr/{id}', 'view')
     )
 
+    add_route_view( config, 'genaf.views.task', 'genaf.task',
+        '/task',
+        ('/task/{id}', 'view'),
+    )
+
     add_route_view( config, 'rhombus.views.fso', 'rhombus.fso',
         '/fso{path:.*}@@view',
         '/fso{path:.*}@@edit',
@@ -112,7 +117,6 @@ def includeme( config ):
         '/fso{path:.*}@@action',
         ('/fso{path:.*}', 'index'),
     )
-
 
     # tools and analysis
 
@@ -151,6 +155,9 @@ def includeme( config ):
 
     config.add_route('tools-sample', '/tools/sample')
     config.add_view('genaf.views.tools.sample.index', route_name='tools-sample')
+
+    config.add_route('tools-djost', '/tools/djost')
+    config.add_view('genaf.views.tools.djost.index', route_name='tools-djost')
 
 
 def init_app( global_config, settings, prefix = '/mgr' ):

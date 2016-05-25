@@ -9,10 +9,10 @@ from math import isnan
 def index(request):
 
     return process_request( request, 'Genotype Summary', 'Summarize genotypes',
-            callback = func_callback, mode = 'allele' )
+            callback = func_callback, format_callback = format_output, mode = 'allele' )
 
 
-def func_callback( query, request ):
+def func_callback( query, user, ns=None ):
 
     from fatools.lib.analytics.he import summarize_he
 
@@ -23,14 +23,24 @@ def func_callback( query, request ):
     for analytical_set in analytical_sets:
         genotypes[analytical_set.label] = analytical_set.allele_df.genotype_df
 
+    return {    'custom': genotypes,
+                'options': options,
+                'title': 'Genotype Summary',
+                'html': None,
+                'jscode': None,
+    }
+
+
     html, code = format_output(genotypes, request, options)
 
     return ('Genotype Summary', html, code)
 
 
-def format_output( genotypes, request, options ):
+def format_output( result, request ):
 
     print('formatting')
+
+    genotypes = result['custom']
 
     dbh = get_dbhandler()
     html = div()
@@ -75,7 +85,7 @@ def format_output( genotypes, request, options ):
 
     #raise RuntimeError
 
-    return html, ''
+    return { 'html': html, 'jscode': '' }
 
 
 def format_allele(v,h):

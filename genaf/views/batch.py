@@ -448,7 +448,8 @@ def add_sample_info( batch, ifile, request):
         dict_text = yaml.dump( dict(codes = sample_codes, samples = dict_samples) )
 
     elif ext in ['.json', '.yaml']:
-        dict_text = yaml.dump( yaml.load( input_file.file.read().decode('UTF-8') ) )
+        dict_text = yaml.dump( yaml.load( ifile.file.read().decode('UTF-8') ) )
+        errlog = ''
 
     else:
 

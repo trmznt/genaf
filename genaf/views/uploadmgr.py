@@ -160,6 +160,10 @@ class UploaderSession(object):
         inrows = csv.DictReader( open('%s/tmp/%s' % (self.rootpath, self.meta['infofile'])),
                         delimiter = ',' if self.meta['infofile'].endswith('.csv') else '\t' )
 
+        for f in ['SAMPLE', 'FILENAME', 'PANEL', 'OPTIONS']:
+            if f not in inrows.fieldnames:
+                return 0, ['ERROR - field %s not in the header of FSA manifest file!' % f]
+
         dbh = get_dbhandler()
         batch = dbh.get_batch( self.meta['batch'] )
 
@@ -237,12 +241,12 @@ class UploaderSession(object):
             if (total_assay + failed_assay) % 20 == 0 and comm is not None:
 
                 remaining_assay = counted_assay - total_assay - failed_assay
-                comm.output = ('uploaded: %d | failed: %d | remaining: %d | estimated remaining time: %s'
+                comm.cout = ('uploaded: %d | failed: %d | remaining: %d | estimated remaining time: %s'
                         % (total_assay, failed_assay, remaining_assay,
                             estimate_time(start_time, time.time(), total_assay, remaining_assay)))
 
         if comm is not None:
-            comm.output = 'uploaded %d FSA file(s), failed %d FSA file(s)' % (
+            comm.cout = 'uploaded %d FSA file(s), failed %d FSA file(s)' % (
                                 total_assay, failed_assay )
 
         if not err_log:
@@ -628,7 +632,7 @@ def save(request):
     if sesskey in commit_procs:
 
         # check whether we have done or not
-        procid, ns = commit_procs[sesskey]
+        procid = commit_procs[sesskey]
         procunit = getproc(procid)
         if procunit.status in [ 'D', 'U' ]:
             seconds = 0
@@ -649,7 +653,7 @@ def save(request):
             else:
                 result = procunit.result
                 msg = div()[ p('Uploading finished.'),
-                             p('Total uploaded assay: %d' % result[0] ),
+                             p('Total uploaded FSA file(s): %d' % result[0] ),
                              p()[ a(href=request.route_url('genaf.batch-view',
                                         id = uploader_session.meta['batch_id']))[
                                             span(class_='btn btn-success')[ 'Continue' ]
@@ -657,12 +661,11 @@ def save(request):
                             ]
                     ]
                 uploader_session.clear()
-            del ns
             del commit_procs[sesskey]
         else:
             # XXX: need to check whether the process is still running or stopped
             seconds = 10
-            msg = div()[ p('Output: %s' % ns.output),
+            msg = div()[ p('Output: %s' % procunit.ns.cout),
                         p('Processing...')
                 ]
 
@@ -671,12 +674,10 @@ def save(request):
     else:
 
         with glock:
-            ns = getmanager().Namespace()
-            ns.output = ''
             procid, msg = subproc( request.user.login, uploader_session.rootpath,
                                 mp_commit_payload, request.registry.settings,
-                                sesskey, request.user.login, ns )
-            commit_procs[sesskey] = (procid, ns)
+                                sesskey, request.user.login)
+            commit_procs[sesskey] = procid
 
         msg = div()[ p('Submitting...') ]
         seconds = 10

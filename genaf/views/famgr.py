@@ -144,7 +144,7 @@ def process(request):
     batch_id = request.matchdict.get('id')
 
     if batch_id in local_procs:
-        (procid, login, batch_code, ns) = local_procs[batch_id]
+        (procid, login, batch_code) = local_procs[batch_id]
 
         if login != request.user.login:
             seconds = 0
@@ -174,12 +174,11 @@ def process(request):
                     if result[1]:
                         msg.add( div()[ p( *result[1] ) ] )
 
-                del ns
                 del local_procs[batch_id]
 
             else:
                 seconds = 10
-                msg = div()[ p('Output: %s' % ns.output), p('Processing...') ]
+                msg = div()[ p('Output: %s' % procunit.ns.cout), p('Processing...') ]
 
     else:
 
@@ -196,12 +195,10 @@ def process(request):
 
         with glock:
 
-            ns = getmanager().Namespace()
-            ns.output = ''
             procid, msg = subproc( request.user.login, None,
                     mp_process_assays, request.registry.settings,
-                    batch_id, request.user.login, ns )
-            local_procs[batch_id] = (procid, request.user.login, batch_code, ns)
+                    batch_id, request.user.login )
+            local_procs[batch_id] = (procid, request.user.login, batch_code)
 
         msg = div()[ p('Starting assay processing task') ]
         seconds = 10
@@ -220,33 +217,33 @@ def scan_assays(assay_list, dbh, log, scanning_parameter, comm):
     total = len(assay_list)
     start_time = time()
     for (assay_id, sample_code) in assay_list:
-        with transaction.manager:
-            assay = dbh.get_assay_by_id(assay_id)
-            try:
+        try:
+            with transaction.manager:
+                assay = dbh.get_assay_by_id(assay_id)
                 if assay.status == assaystatus.assigned:
                     assay.scan( scanning_parameter )
                     success += 1
                 else:
                     skipped += 1
-            except RuntimeError as err:
-                log.append('ERR scanning -- assay %s | %s - error: %s' %
+        except RuntimeError as err:
+            log.append('ERR scanning -- assay %s | %s - error: %s' %
                     ( assay.filename, sample_code, str(err) )
-                )
-                failed += 1
-            except ZeroDivisionError as err:
-                log.append('ERR scanning -- FSA %s | %s - error division by zero' %
+            )
+            failed += 1
+        except ZeroDivisionError as err:
+            log.append('ERR scanning -- FSA %s | %s - error division by zero' %
                     ( assay.filename, sample_code)
-                )
-                failed += 1
+            )
+            failed += 1
         subtotal += 1
         if comm:
-            comm.output = (
+            comm.cout = (
                 'scanned: %d | failed: %d | skipped: %d | remaining: %d | estimated: %s'
                 % ( success, failed, skipped, total-subtotal,
                     estimate_time(start_time, time(), success, total-subtotal)) )
 
     if comm:
-        comm.output = 'scanned: %d | failed: %d | skipped: %d' % (
+        comm.cout = 'scanned: %d | failed: %d | skipped: %d' % (
                     success, failed, skipped)
 
     return (success, failed, skipped)
@@ -258,29 +255,29 @@ def preannotate_assays(assay_list, dbh, log, scanning_parameter, comm):
     total = len(assay_list)
     start_time = time()
     for (assay_id, sample_code) in assay_list:
-        with transaction.manager:
-            assay = dbh.get_assay_by_id(assay_id)
-            try:
+        try:
+            with transaction.manager:
+                assay = dbh.get_assay_by_id(assay_id)
                 if assay.status == assaystatus.scanned:
                     assay.preannotate( scanning_parameter )
                     success += 1
                 else:
                     skipped += 1
-            except RuntimeError as err:
-                log.append('ERR preannotating -- assay %s | %s - error: %s' %
+        except RuntimeError as err:
+            log.append('ERR preannotating -- assay %s | %s - error: %s' %
                     ( assay.filename, sample_code, str(err) )
-                )
-                failed += 1
+            )
+            failed += 1
         subtotal += 1
 
         if comm and subtotal % 5 == 0:
-            comm.output = (
+            comm.cout = (
                 'preannotated: %d | failed: %d | skipped: %d | remaining: %d | estimated: %s'
                 % (success, failed, skipped, total-subtotal,
                     estimate_time(start_time, time(), success, total-subtotal )) )
 
     if comm:
-        comm.output = 'preannotated: %d | failed: %d | skipped: %d' % (
+        comm.cout = 'preannotated: %d | failed: %d | skipped: %d' % (
                     success, failed, skipped)
 
     return (success, failed, skipped)
@@ -292,9 +289,9 @@ def align_assays(assay_list, dbh, log, scanning_parameter, comm):
     total = len(assay_list)
     start_time = time()
     for (assay_id, sample_code) in assay_list:
-        with transaction.manager:
-            assay = dbh.get_assay_by_id(assay_id)
-            try:
+        try:
+            with transaction.manager:
+                assay = dbh.get_assay_by_id(assay_id)
                 if assay.status == assaystatus.preannotated:
                     retval = assay.alignladder(excluded_peaks = None)
                     (dpscore, rss, peaks_no, ladders_no, qcscore, remarks, method) = retval
@@ -308,20 +305,20 @@ def align_assays(assay_list, dbh, log, scanning_parameter, comm):
                 else:
                     skipped += 1
 
-            except RuntimeError as err:
-                log.append('ERR aligning ladder - assay %s | %s - error: %s' %
+        except RuntimeError as err:
+            log.append('ERR aligning ladder - assay %s | %s - error: %s' %
                     ( assay.filename, sample_code, str(err) ) )
-                failed += 1
+            failed += 1
         subtotal += 1
 
         if comm and subtotal % 5 == 0:
-            comm.output = (
+            comm.cout = (
                 'aligned: %d | failed: %d | skipped: %d | remaining: %d | estimated: %s'
                 % ( success, failed, skipped, total-subtotal,
                     estimate_time(start_time, time(), success, total-subtotal)) )
 
     if comm:
-        comm.output = 'aligned: %d | failed: %d | skipped: %d' % (
+        comm.cout = 'aligned: %d | failed: %d | skipped: %d' % (
                     success, failed, skipped)
 
     return (success, failed, skipped)
@@ -333,29 +330,29 @@ def call_assays(assay_list, dbh, log, scanning_parameter, comm):
     total = len(assay_list)
     start_time = time()
     for (assay_id, sample_code) in assay_list:
-        with transaction.manager:
-            assay = dbh.get_assay_by_id(assay_id)
-            try:
+        try:
+            with transaction.manager:
+                assay = dbh.get_assay_by_id(assay_id)
                 if assay.status == assaystatus.aligned:
                     assay.call( scanning_parameter )
                     success += 1
                 else:
                     skipped += 1
-            except RuntimeError as err:
-                log.append('ERR calling -- assay %s | %s - error: %s' %
+        except RuntimeError as err:
+            log.append('ERR calling -- assay %s | %s - error: %s' %
                     ( assay.filename, sample_code, str(err) )
-                )
-                failed += 1
+            )
+            failed += 1
         subtotal += 1
 
         if comm and subtotal % 10 == 0:
-            comm.output = (
+            comm.cout = (
                 'called: %d | failed: %d | skipped: %d | remaining: %d | estimated: %s'
                 % (success, failed, skipped, total-subtotal,
                     estimate_time(start_time, time(), success, total-subtotal )) )
 
     if comm:
-        comm.output = 'called: %d | failed: %d | skipped: %d' % (
+        comm.cout = 'called: %d | failed: %d | skipped: %d' % (
                     success, failed, skipped)
 
     return (success, failed, skipped)
@@ -366,29 +363,29 @@ def bin_assays(assay_list, dbh, log, scanning_parameter, comm):
     total = len(assay_list)
     start_time = time()
     for (assay_id, sample_code) in assay_list:
-        with transaction.manager:
-            assay = dbh.get_assay_by_id(assay_id)
-            try:
+        try:
+            with transaction.manager:
+                assay = dbh.get_assay_by_id(assay_id)
                 if assay.status == assaystatus.called:
                     assay.bin( scanning_parameter )
                     success += 1
                 else:
                     skipped += 1
-            except RuntimeError as err:
-                log.append('ERR binning -- assay %s | %s - error: %s' %
+        except RuntimeError as err:
+            log.append('ERR binning -- assay %s | %s - error: %s' %
                     ( assay.filename, sample_code, str(err) )
-                )
-                failed += 1
+            )
+            failed += 1
         subtotal += 1
 
         if comm and subtotal % 10 == 0:
-            comm.output = (
+            comm.cout = (
                 'binned: %d | failed: %d | skipped: %d | remaining: %d | estimated: %s'
                 % (success, failed, skipped, total-subtotal,
                     estimate_time(start_time, time(), success, total-subtotal )) )
 
     if comm:
-        comm.output = 'binned: %d | failed: %d | skipped: %d' % (
+        comm.cout = 'binned: %d | failed: %d | skipped: %d' % (
                     success, failed, skipped)
 
     return (success, failed, skipped)
@@ -400,29 +397,29 @@ def postannotate_assays(assay_list, dbh, log, scanning_parameter, comm):
     total = len(assay_list)
     start_time = time()
     for (assay_id, sample_code) in assay_list:
-        with transaction.manager:
-            assay = dbh.get_assay_by_id(assay_id)
-            try:
+        try:
+            with transaction.manager:
+                assay = dbh.get_assay_by_id(assay_id)
                 if assay.status == assaystatus.binned:
                     assay.postannotate( scanning_parameter )
                     success += 1
                 else:
                     skipped += 1
-            except RuntimeError as err:
-                log.append('ERR postannotating -- assay %s | %s - error: %s' %
+        except RuntimeError as err:
+            log.append('ERR postannotating -- assay %s | %s - error: %s' %
                     ( assay.filename, sample_code, str(err) )
-                )
-                failed += 1
+            )
+            failed += 1
         subtotal += 1
 
         if comm and subtotal % 5 == 0:
-            comm.output = (
+            comm.cout = (
                 'postannotated: %d | failed: %d | skipped: %d | remaining: %d | estimated: %s'
                 % (success, failed, skipped, total-subtotal,
                     estimate_time(start_time, time(), success, total-subtotal )) )
 
     if comm:
-        comm.output = 'postannotated: %d | failed: %d | skipped: %d' % (
+        comm.cout = 'postannotated: %d | failed: %d | skipped: %d' % (
                     success, failed, skipped)
 
     return (success, failed, skipped)
@@ -490,11 +487,11 @@ def process_assays(batch_id, login, comm = None, stage = 'all'):
                 failed += 1
 
         if comm and (success + failed) % 10 == 0:
-            comm.output = 'Aligned ladder with %d successful assay(s), %d failed assay(s)' % (
+            comm.cout = 'Aligned ladder with %d successful assay(s), %d failed assay(s)' % (
                      success, failed )
 
     if comm:
-        comm.output = 'Aligned ladder with %d successful assay(s), %d failed assay(s)' % (
+        comm.cout = 'Aligned ladder with %d successful assay(s), %d failed assay(s)' % (
             success, failed )
     stats['aligned'] = (success, failed)
 
@@ -514,11 +511,11 @@ def process_assays(batch_id, login, comm = None, stage = 'all'):
                 failed += 1
 
         if comm and (success + failed) % 10 == 0:
-            comm.output = 'Called %d successful assay(s), %d failed assay(s)' % (
+            comm.cout = 'Called %d successful assay(s), %d failed assay(s)' % (
                      success, failed )
 
     if comm:
-        comm.output = 'Called %d successful assay(s), %d failed assay(s)' % (
+        comm.cout = 'Called %d successful assay(s), %d failed assay(s)' % (
             success, failed )
     stats['called'] = (success, failed)
 

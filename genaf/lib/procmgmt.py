@@ -169,8 +169,8 @@ def estimate_time(start_time, current_time, processed, unprocessed):
         return 'undetermined'
     average_time = used_time / processed
     estimated = average_time * unprocessed
-    print('AVERAGTE_TIME', average_time)
-    print('ESTIMATED_TIME', estimated )
+    cerr('Average time: %3.6f sec' % average_time)
+    cerr('Estimated remaining time: %3.6f sec' % estimated)
 
     text = ''
     if estimated > 86400:

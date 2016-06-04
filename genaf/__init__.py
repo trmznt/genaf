@@ -159,6 +159,11 @@ def includeme( config ):
     config.add_route('tools-djost', '/tools/djost')
     config.add_view('genaf.views.tools.djost.index', route_name='tools-djost')
 
+    # utilities
+
+    config.add_route('utils-plot', '/utils/plot')
+    config.add_view('genaf.views.utils.plot.index', route_name='utils-plot')
+
 
 def init_app( global_config, settings, prefix = '/mgr' ):
 

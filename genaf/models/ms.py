@@ -112,6 +112,16 @@ class Panel(BaseMixIn, Base, PanelMixIn):
         return q.one()
 
 
+    def to_dict(self):
+        """ return a dictionary """
+        d = {}
+        d['code'] = self.code
+        d['data'] = self.data
+        d['remark'] = self.remark
+        d['group'] = self.group.name
+        d['notes'] = [ n.to_dict for n in self.notes ]
+        return d
+
 
 class PanelNote(Base, PanelNoteMixIn):
 
@@ -122,6 +132,8 @@ class PanelNote(Base, PanelNoteMixIn):
     note_id = Column(types.Integer, ForeignKey('notes.id', ondelete='CASCADE'),
                 nullable=False)
 
+    panel = relationship(Panel, uselist=False, backref=backref('notes'))
+    note = relationship(Note, uselist=False)
 
 
 class Marker(BaseMixIn, Base, MarkerMixIn):

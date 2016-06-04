@@ -131,6 +131,12 @@ class Note(BaseMixIn, Base, NoteMixIn):
     cat = Column(types.String(32), nullable=False, server_default='')
     stamp = Column(types.DateTime, nullable=False)
 
+    def to_dict(self):
+        d = {}
+        d['stamp'] = str(self.stamp)
+        d['cat'] = self.cat
+        d['text'] = self.text
+        return d
 
 
 class Batch(BaseMixIn, Base, BatchMixIn):

@@ -28,7 +28,9 @@ def func_callback( query, user ):
     }
 
 
-def format_output(results, user, options):
+def format_output(result_data, user, options):
+
+    results, stats = result_data
 
     dbh = get_dbhandler()
 
@@ -69,6 +71,12 @@ def format_output(results, user, options):
         txt += '</table>'
         table_row.add( td( literal(txt) ))
     table_body.add( table_row )
+
+    if stats:
+        table_row = tr( td('Statistical test') )
+        table_row.add( td( '%s -- p-value: %4.3f' % (stats['test'], stats['stats'].pvalue),
+            colspan = len(results) - 1 ))
+        table_body.add( table_row )
 
     table_row = tr( td('# of polyclonal markers') )
     for l in labels:

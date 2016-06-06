@@ -43,10 +43,24 @@ def index(request):
     else:
         return error_page(request, 'No suitable mode provided!')
 
+    if batch:
+        add_button = (  'New sample',
+                        request.route_url('genaf.sample-edit', id=0, _query={ 'batch_id': batch.id })
+        )
+        others = p()[   'Batch code:',
+                        a(batch.code, href=request.route_url('genaf.batch-view', id=batch.id))
+        ]
+    else:
+        add_button = others = None
+
+    bar = selection_bar('sample-ids', action=request.route_url('genaf.sample-action'),
+                add=add_button, others=others)
+    html, jscode = bar.render(html, jscode)
+
     return render_to_response("genaf:templates/sample/index.mako",
                     {   'samples': samples,
                         'batch': batch,
-                        'html': html,
+                        'html': str(html),
                         'code': jscode,
                     },
                     request = request)
@@ -203,6 +217,41 @@ def action(request):
 
         return HTTPFound(location = request.route_url('genaf.sample-view', id=sample.id))
 
+    elif method == 'delete':
+
+        dbh = get_dbhandler()
+        sample_ids = request.POST.getall('sample-ids')
+        samples = [ dbh.get_sample_by_id(sample_id) for sample_id in sample_ids ]
+
+        return Response(
+            modal_delete % ''.join('<li>%s | %s</li>' % (s.code, s.batch.code) for s in samples )
+        )
+
+    elif method == 'delete/confirm':
+
+        dbh = get_dbhandler()
+        sample_ids = request.POST.getall('sample-ids')
+        for sample_id in sample_ids:
+            sample = dbh.get_sample_by_id(sample_id)
+            if not sample:
+                request.session.flash( ('error',
+                    'Sample with ID [%d] does not exists' % sample_id) )
+                continue
+            if not sample.batch.is_manageable( request.user ):
+                request.session.flash( ('error',
+                    'You are not authorized to delete sample [%s | %s]'
+                    % (sample.code, sample.batch.code) ))
+                continue
+
+            sample_code = '%s | %s' % (sample.code, sample.batch.code)
+            dbh.session().delete( sample )
+            request.session.flash(
+                ('success', 'Sample [%s] has been deleted.' % sample_code ) )
+
+        return HTTPFound( location = request.referrer or
+            request.route_url( 'genaf.batch' ) )
+
+
     else:
         return error_page(request, 'Unknown method!')
 
@@ -215,7 +264,8 @@ def format_samplefsa(samples, request):
     T = table(class_='table table-condensed table-striped', id='sample_table')
 
     data = [
-        [   '<a href="%s">%s</a>' % (request.route_url('genaf.sample-view',
+        [   '<input type="checkbox" name="sample-ids" value="%d" />' % s.id,
+            '<a href="%s">%s</a>' % (request.route_url('genaf.sample-view',
                                                 id = s.id),
                                     s.code),
             s.batch.code,
@@ -231,7 +281,9 @@ $(document).ready(function() {
         data: dataset,
         paging: false,
         fixedHeader: true,
+        order: [[1, 'asc']],
         columns: [
+            { title: "", orderable: false },
             { title: "Sample Code" },
             { title: "Batch" },
             { title: "FSA counts" }
@@ -286,3 +338,39 @@ $(document).ready(function() {
 ''' % json.dumps( data )
 
     return ( str(T), jscode )
+
+
+modal_delete = '''
+<div class="modal-dialog" role="document"><div class="modal-content">
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Deleting Sample(s)</h3>
+</div>
+<div class="modal-body">
+    <p>You are going to delete the following Sample(s):
+        <ul>
+        %s
+        </ul>
+    </p>
+</div>
+<div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+    <button class="btn btn-danger" type="submit" name="_method" value="delete/confirm">Confirm Delete</button>
+</div>
+</div></div>
+'''
+
+modal_error = '''
+<div class="modal-dialog" role="document"><div class="modal-content">
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Error</h3>
+</div>
+<div class="modal-body">
+    <p>Please select Sample(s) to be removed</p>
+</div>
+<div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+</div>
+</div></div>
+'''

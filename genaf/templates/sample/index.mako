@@ -4,20 +4,9 @@
 <h2>Samples</h2>
 
 <form class='form-inline' method='get'>
-  <input type='text' id='q' name='q' value='${request.params.get("q","")}'class='input-xlarge' placeholder='QueryText' />
+  <input type='text' id='q' name='q' value='${request.params.get("q","")}' class='input-xlarge' placeholder='QueryText' />
   <button type='submit' cls='btn'>Filter</button>
 </form>
-
-% if batch is not None:
-  <!-- show Batch information -->
-  <div class='row'>
-    <div class='col-md-2'>
-      <a class='btn btn-small btn-success pull-right' href='${request.route_url("genaf.sample-edit", id=0, _query = {"batch_id": batch.id})}'>Add New sample</a>
-    </div>
-    <div class='col-md-4'><p>Batch code:
-    <a href="${request.route_url('genaf.batch-view', id=batch.id)}">${batch.code}</a></p></div>
-  </div>
-% endif
 
 ${ html | n }
 

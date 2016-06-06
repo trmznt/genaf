@@ -411,7 +411,8 @@ def action(request):
         if len(batches) == 0:
             return Response(modal_error)
 
-        return Response(modal_delete % ''.join( '<li>%s</li>' % b.code for b in batches ))
+        return Response( modal_delete %
+            ''.join( '<li>%s | %s</li>' % (b.code, b.description) for b in batches ) )
 
 
     elif method == 'delete/confirm':

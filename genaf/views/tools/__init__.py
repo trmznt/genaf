@@ -8,6 +8,8 @@ from genaf.lib.procmgmt import subproc, getproc
 from rhombus.lib import fsoverlay
 from rhombus.lib.utils import get_dbhandler_notsafe
 
+from pyramid.settings import asbool
+
 from time import time
 import threading
 
@@ -110,6 +112,7 @@ def basic_query_form(request, mode='mlgt'):
 
             input_select(name='sample_filtering', label='Sample filtering', value='A',
                     options = [ ('N', 'No futher sample filtering'),
+                                ('M', 'Monoclonal samples'),
                                 ('S', 'Strict/low-complexity samples'),
                                 ('U', 'Unique genotype samples'),
                             ]
@@ -276,7 +279,8 @@ def process_request( request, header_text, button_text, callback, format_callbac
         params = load_yaml( request.params.get('yamlquery') )
 
 
-    if False:    # set this to True for debugging in non-concurrent mode
+    if not asbool(request.registry.settings['genaf.concurrent.analysis']):
+        # set this to false for debugging in non-concurrent mode
 
         result = mp_run_callback(request.registry.settings,
                     callback, params, request.user, mode)
@@ -290,7 +294,8 @@ def process_request( request, header_text, button_text, callback, format_callbac
             jscode = result['jscode']
 
         # dummy
-        sample_html = marker_html = sample_code = marker_code = ''
+        sample_html, sample_code = result['sample_filtering']
+        marker_html, marker_code = result['marker_filtering']
 
         return render_to_response("genaf:templates/tools/report.mako",
             {   'header_text': result['title'],

@@ -404,6 +404,39 @@ def action(request):
                     request = request
                 )
 
+    elif method == 'delete':
+        batch_ids = request.POST.getall('batch-ids')
+        batches = [ dbh.get_batch_by_id(batch_id) for batch_id in batch_ids ]
+
+        if len(batches) == 0:
+            return Response(modal_error)
+
+        return Response(modal_delete % ''.join( '<li>%s</li>' % b.code for b in batches ))
+
+
+    elif method == 'delete/confirm':
+        batch_ids = request.POST.getall('batch-ids')
+
+        for batch_id in batch_ids:
+            batch = dbh.get_batch_by_id(batch_id)
+            if not batch:
+                request.session.flash( ('error',
+                    'Batch with ID [%d] does not exists' % batch_id) )
+                continue
+            if not batch.is_manageable( request.user ):
+                request.session.flash( ('error',
+                    'You are not authorized to delete batch [%s]' % batch.code) )
+                continue
+
+            code = batch.code
+            #batch.reset_samples()
+            dbh.session().delete( batch )
+            request.session.flash(
+                ('success', 'Batch [%s] has been deleted' % code ) )
+
+
+        return HTTPFound( location = request.referrer or
+            request.route_url( 'genaf.batch' ) )
 
     else:
         raise RuntimeError('unknown method')
@@ -581,3 +614,38 @@ def add_assay_info(assayinfo_file, assaydata_file):
     with open( '%s/%s.%s' % (temppath, assaydata_name, assaydata_ext)) as f:
         f.write()
 
+
+modal_delete = '''
+<div class="modal-dialog" role="document"><div class="modal-content">
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Deleting Batch(es)</h3>
+</div>
+<div class="modal-body">
+    <p>You are going to delete the following Batch(es):
+        <ul>
+        %s
+        </ul>
+    </p>
+</div>
+<div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+    <button class="btn btn-danger" type="submit" name="_method" value="delete/confirm">Confirm Delete</button>
+</div>
+</div></div>
+'''
+
+modal_error = '''
+<div class="modal-dialog" role="document"><div class="modal-content">
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Error</h3>
+</div>
+<div class="modal-body">
+    <p>Please select Batch(es) to be removed</p>
+</div>
+<div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+</div>
+</div></div>
+'''

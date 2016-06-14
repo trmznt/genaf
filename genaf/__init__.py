@@ -161,6 +161,9 @@ def includeme( config ):
 
     # utilities
 
+    config.add_route('utils-export', '/utils/export')
+    config.add_view('genaf.views.utils.export.index', route_name='utils-export')
+
     config.add_route('utils-plot', '/utils/plot')
     config.add_view('genaf.views.utils.plot.index', route_name='utils-plot')
 

@@ -205,6 +205,11 @@ def save(request):
 
 def edit_form(batch, dbh, request):
 
+    if request.user.has_roles( SYSADM, DATAADM):
+        group_opts = [ (g.id, g.name) for g in dbh.get_groups() if not g.name.startswith('_') ]
+    else:
+        group_opts = [ (x[1], x[0]) for x in request.user.groups if not x[0].startswith('_') ]
+
     eform = form( name='genaf/batch', method=POST,
                 action=request.route_url('genaf.batch-edit', id=batch.id))
     eform.add(
@@ -213,8 +218,7 @@ def edit_form(batch, dbh, request):
             input_text('genaf-batch_code', 'Batch code', value=batch.code),
             input_text('genaf-batch_desc', 'Description', value=batch.description),
             input_select('genaf-batch_group_id', 'Primary group', value=batch.group_id,
-                options = [ (x[1], x[0]) for x in request.user.groups
-                            if not x[0].startswith('_') ]),
+                options = group_opts),
             input_select('genaf-batch_assay_provider_id', 'Assay provider group',
                 value = batch.assay_provider_id,
                 options = [ (g.id, g.name) for g in dbh.get_groups() ]),

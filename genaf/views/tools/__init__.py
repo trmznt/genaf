@@ -38,7 +38,11 @@ def basic_query_form(request, mode='mlgt'):
     qform = form(name='queryform', action='#')
 
     # samples
-    batches = list( dbh.get_batches(groups = request.user.groups) )
+    if request.user.has_roles(SYSADM, DATAADM):
+        batches = list( dbh.get_batches(groups=None) )
+    else:
+        batches = list( dbh.get_batches(groups = request.user.groups) )
+
     qform.add(
         fieldset(name='simple_query')[
             input_select(name='batch_ids', label='Batch code(s)', multiple = True,

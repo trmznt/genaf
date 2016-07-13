@@ -19,7 +19,7 @@ def index(request):
     dbh = get_dbhandler()
     batch = dbh.get_batch_by_id(batch_id)
 
-    assays = dbh.Assay.query().join(dbh.Sample).filter(dbh.Sample.batch_id == batch.id)
+    assays = dbh.Assay.query(dbh.session()).join(dbh.Sample).filter(dbh.Sample.batch_id == batch.id)
 
     data = [ [  '<a href="%s">%s</a>' % (request.route_url('genaf.assay-view',
                                                 id = a.id),
@@ -119,7 +119,7 @@ def action_get(request):
         from genaf.views.allele import edit_form as allele_edit_form
 
         allele_id = request.GET.get('id')
-        allele = dbh.Allele.get(allele_id)
+        allele = dbh.Allele.get(allele_id, dbh.session())
 
         eform = allele_edit_form(allele, dbh, request)
         body = div( class_='row')[
@@ -137,7 +137,7 @@ def action_get(request):
 
         parameters = Params()
         assay_id = request.GET.get('id')
-        assay = dbh.Assay.get(assay_id)
+        assay = dbh.Assay.get(assay_id, dbh.session())
 
         eform = assay_process_form(assay, dbh, request, parameters)
         body = div( class_='row')[
@@ -189,7 +189,7 @@ def action_post(request):
     elif method == 'process_fsa':
 
         assay_id = int(request.POST.get('genaf-assay_id', 0))
-        assay = dbh.Assay.get(assay_id) if assay_id else None
+        assay = dbh.Assay.get(assay_id, dbh.session()) if assay_id else None
 
         if not assay:
             return error_page('Cannot find assay with id: %d' % assay_id)

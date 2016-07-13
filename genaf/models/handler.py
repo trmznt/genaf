@@ -23,7 +23,7 @@ class DBHandler(rho_handler.DBHandler, base_sqlhandler):
         super().initdb(create_table, init_data)
         if init_data:
             from genaf.models.setup import setup
-            setup( self.session )
+            setup( self.session() )
             cerr('[genaf] Database has been initialized.')
 
 
@@ -31,7 +31,7 @@ class DBHandler(rho_handler.DBHandler, base_sqlhandler):
 
     def get_batches(self, groups):
 
-        q = self.Batch.query(self.session)
+        q = self.Batch.query(self.session())
         if groups is not None:
             # enforce security
             q = q.filter( self.Batch.group_id.in_( [ x[1] for x in groups ] ) )
@@ -52,7 +52,7 @@ class DBHandler(rho_handler.DBHandler, base_sqlhandler):
 
 
     def get_location_by_id(self, location_id):
-        return self.Location.get(location_id)
+        return self.Location.get(location_id, self.session())
 
 
     @classmethod

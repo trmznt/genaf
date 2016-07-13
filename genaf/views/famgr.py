@@ -82,7 +82,7 @@ def view(request):
 
     # check authorization
     if not request.user.in_group( batch.group ):
-        error_page('You are not authorized to view this batch!')
+        return error_page(request, 'You are not authorized to view this batch!')
 
 
     # get all assay list

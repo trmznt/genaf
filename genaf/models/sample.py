@@ -154,6 +154,7 @@ class Batch(BaseMixIn, Base, BatchMixIn):
     bin_batch_id = Column(types.Integer, ForeignKey('batches.id'), nullable=True)
 
     ## GenAF spesific schema
+    public = Column(types.Boolean(), nullable=False, server_default="false")
     group_id = Column(types.Integer, ForeignKey('groups.id'), nullable=False)
 
     ## relationship

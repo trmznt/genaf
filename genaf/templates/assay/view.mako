@@ -87,6 +87,7 @@ ${h.link_to( 'Process FSA', request.route_url('genaf.assay-action', _query=dict(
 </div>
 
 
+<h3>Allele List</h3>
 <div class='row' style="height:300px;overflow-y:auto">
 
 <div class='col-md-12'>

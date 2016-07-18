@@ -67,7 +67,7 @@ def format_output( result, request ):
         table_body = tbody()
         for alleleinfo in data.itertuples():
             print(alleleinfo)
-            pairs = tuple(zip(alleleinfo[1:M+1], alleleinfo[M+1:]))
+            pairs = tuple(zip(alleleinfo[1:M+1], alleleinfo[M+1:M*2+1], alleleinfo[M*2+1:M*3+1], alleleinfo[M*3+1:]))
             print(pairs)
             sample = dbh.get_sample_by_id(alleleinfo[0])
             table_body.add(
@@ -75,7 +75,7 @@ def format_output( result, request ):
                         href=request.route_url('genaf.sample-view',
                             id=sample.id))))
                 .add(
-                    * tuple( td( format_allele(v,h) ) for v,h in pairs )
+                    * tuple( td( format_allele(v,h,f,i,request) ) for v,h,f,i in pairs )
                     )
                 )
 
@@ -88,8 +88,12 @@ def format_output( result, request ):
     return { 'html': html, 'jscode': '' }
 
 
-def format_allele(v,h):
+def format_allele(v, h, f, i, request):
     if type(v) is float and isnan(v):
         return 'NaN'
     #return 'a' + literal('<br>') + 'b'
-    return literal('<br />'.join('%03d' % x for x in v))
+    return literal('<br />'.join(
+        str(a('%03d' % x, style="color:black;",
+                href=request.route_url('genaf.assay-view', id=w, _anchor='a-'+str(z))))
+        for (x,y,w,z) in zip(v, h, f, i))
+    )

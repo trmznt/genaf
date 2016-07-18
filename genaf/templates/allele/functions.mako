@@ -14,7 +14,7 @@
   kwargs = { 'data-toggle':'modal', 'data-target':'#allele-modal-view', 'data-remote': 'false' }
 %>
 % for a in alleles:
-  <tr><td>${a.bin}</td><td>${'%03.2f' % a.size}</td><td>${'%05d' % a.rtime}</td>
+  <tr id='a-${a.id}'><td>${a.bin}</td><td>${'%03.2f' % a.size}</td><td>${'%05d' % a.rtime}</td>
       <td>${'%05d' % a.height}</td><td>${'%06.1f' % a.area}</td>
       <td>${'%05d - %05d' % (a.brtime, a.ertime)}</td><td>${'%02.3f' % a.beta}</td>
       <td>${a.type}</td>

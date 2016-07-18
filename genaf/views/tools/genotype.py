@@ -81,9 +81,6 @@ def format_output( result, request ):
 
         genotype_table.add( table_body )
         html.add(genotype_table)
-        html.add( b('a') )
-
-    #raise RuntimeError
 
     return { 'html': html, 'jscode': '' }
 

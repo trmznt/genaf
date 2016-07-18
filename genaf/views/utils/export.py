@@ -106,6 +106,25 @@ def format_output(analytical_sets, user, options):
         outputs['fmt'] = 'Flat MLTG data format / LIAN'
         outputs['files'] = outfiles
 
+    elif fmt == 'T':
+        # return genotype list
+        filename = 'genotypes.txt'
+        outpath = fso_dir.abspath + '/' + filename
+        with open(outpath, 'w') as fout:
+            export.export_tab(analytical_sets, dbh, fout)
+
+        outputs['fmt'] = 'Tab-delimited genotypes file'
+        outputs['files'] = [ (filename, fso_dir.get_urlpath(outpath)), ]
+
+    elif fmt == 'TM':
+        # return genotype list
+        filename = 'mlgs.txt'
+        outpath = fso_dir.abspath + '/' + filename
+        with open(outpath, 'w') as fout:
+            export.export_major_tab(analytical_sets, dbh, fout)
+
+        outputs['fmt'] = 'Tab-delimited multi-locus genotypes (MLGs) file'
+        outputs['files'] = [ (filename, fso_dir.get_urlpath(outpath)), ]
     else:
 
         raise RuntimeError('Format currently not supported')

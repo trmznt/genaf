@@ -1,5 +1,9 @@
 <%inherit file="rhombus:templates/base.mako" />
 
+%if path_qs:
+    <a href="${path_qs}" class="btn btn-info">Resubmit analysis</a>
+%endif
+
 <h3>${header_text}</h3>
 
 <div class='row'><div class='col-md-10'>

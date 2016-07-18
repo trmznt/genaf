@@ -214,7 +214,7 @@ def process_request( request, header_text, button_text, callback, format_callbac
         if taskid not in task_ids:
             return error_page(request, 'task with ID %s is not registered in the system!')
 
-        (procid, login, title, current_route_path, format_callback) = task_ids[taskid]
+        (procid, login, title, current_route_path, format_callback, path_qs) = task_ids[taskid]
 
         procunit = getproc(procid)
 
@@ -242,6 +242,7 @@ def process_request( request, header_text, button_text, callback, format_callbac
                     'marker_report': marker_html,
                     'html': html if html is not None else '',
                     'code': sample_code + marker_code + jscode if jscode is not None else '',
+                    'path_qs': path_qs
                 }, request = request )
 
             clearproc(procid)
@@ -307,6 +308,7 @@ def process_request( request, header_text, button_text, callback, format_callbac
                 'marker_report': marker_html,
                 'html': html if html is not None else '',
                 'code': sample_code + marker_code + jscode if jscode is not None else '',
+                'path_qs': request.path_qs
             }, request = request )
 
     # this is code for concurrent mode
@@ -316,7 +318,7 @@ def process_request( request, header_text, button_text, callback, format_callbac
                     mp_run_callback, request.registry.settings, callback, params,
                     request.user, mode )
         task_ids[procid] = ( procid, request.user.login, header_text,
-                                request.current_route_path(), format_callback )
+                                request.current_route_path(), format_callback, request.path_qs )
 
     return HTTPFound(location = request.current_route_path(_query = { 'taskid': procid }))
 

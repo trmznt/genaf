@@ -87,12 +87,20 @@ ${h.link_to( 'Process FSA', request.route_url('genaf.assay-action', _query=dict(
 </div>
 
 
-<h3>Allele List</h3>
-<div class='row' style="height:300px;overflow-y:auto">
+<br/>
+<nav id="navbar-alleles" class="navbar navbar-default navbar-static">
+  <ul class="nav navbar-nav">
+  % for c in assay.channels:
+    <li><a href="#M-${c.marker.id}">${c.dye} / ${c.marker.code}</a></li>
+  % endfor 
+  </ul>
+</nav>
+
+<div class='row' style="height:300px;overflow-y:auto;position-relative;" data-spy="scroll" data-target="#navbar-alleles" >
 
 <div class='col-md-12'>
 % for c in assay.channels:
-  <p><b>${c.dye} / ${c.marker.code}</b></p>
+  <p id="M-${c.marker.id}"><b>${c.dye} / ${c.marker.code}</b></p>
     % if c.allelesets.count() >= 1:
         ${list_alleles(sorted(c.get_latest_alleleset().alleles, key=lambda x: x.rtime))}
     % endif

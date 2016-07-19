@@ -63,10 +63,33 @@ def format_output(results, options=None):
     he_table = table(class_='table table-condensed table-striped')[
         table_header, table_body
     ]
+
     html.add( he_table )
 
     if 'test' in results:
         html.add( p('Statistics: ' + results['test'] +
             ' (p-value = %5.4f)' % results['stats'].pvalue) )
 
-    return (html, '')
+    html = div( div(html, id="toselect") )
+    html.add(
+        div(
+            button('Select table', id="select_button", class_='btn btn-info'),
+            'and use Ctrl-C to copy the table content to clipboard.'
+        )
+    )
+
+    return (html, jscode)
+
+jscode = '''
+
+$('#select_button').click(function() {
+    if (window.getSelection) {
+        var range = document.createRange();
+        range.selectNode( $('#toselect')[0] );
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+    }
+});
+
+
+'''

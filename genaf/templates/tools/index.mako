@@ -2,7 +2,7 @@
 
 <h3>${header_text}</h3>
 
-<div class='row'><div class='col-md-8'>
+<div class='row'><div class='col-md-12'>
 
 <ul class='nav nav-tabs' role='tablist'>
   <li role='presentation' class='active'>

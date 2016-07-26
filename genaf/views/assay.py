@@ -72,10 +72,13 @@ def view(request):
         input_text('genaf-fsa_rss', 'RSS', value=assay.rss, static=True),
     ]]
 
+    allele_table, allele_table_js = assay_allele_table(assay, request)
 
     return render_to_response( 'genaf:templates/assay/view.mako',
             {   'assay': assay,
                 'assay_info': assay_info,
+                'allele_table': allele_table,
+                'code': allele_table_js,
             }, request = request )
 
 
@@ -247,6 +250,7 @@ def drawchannels(request):
         rgb = wavelen2rgb( c.wavelen, 255 )
         datasets[c.dye] = { "data": [ [x,int(downsample[x])] for x in range(len(downsample)) ],
                             "label": "%s / %s" % (c.dye, c.marker.code),
+                            "anchor": "#C-%d" % c.id,
                             "color": "rgb(%d,%d,%d)" % tuple(rgb) }
 
     return render_to_response( 'genaf:templates/assay/drawchannels.mako',
@@ -273,3 +277,75 @@ def assay_process_form(assay, dbh, request, params):
     )
 
     return eform
+
+
+def assay_allele_table(assay, request):
+
+    html = div()
+
+    # create placeholder for tables
+
+    holder = div(class_='row', id='table-holder', style="height:300px;overflow-y:auto;position-relative;",
+        #** { 'data-spy':"scroll", 'data-target': "#navbar-alleles" }
+    )
+
+    # create table here
+
+    table_area = div(class_='col-md-12')
+
+    jscode = ''
+
+    for c in assay.channels:
+        #table_area.add(
+        #    h4("%s | %s" % (c.dye, c.marker.code), id='C-%d' % c.id)
+        #)
+        allele_table = table(class_='table table-striped table-condensed', id='T-%d' % c.id)[
+            thead(
+                tr( th( b("%s | %s" % (c.dye, c.marker.code), id='C-%d' % c.id), colspan=9 ) ),
+                tr(
+                    th('Allele'),
+                    th('Size'),
+                    th('RTime'),
+                    th('Height'),
+                    th('Area'),
+                    th('Boundary'),
+                    th('Beta'),
+                    th('Type'),
+                    th('')
+                ),
+                style="background-color: #fff;"
+            )
+        ]
+        kwargs = { 'data-toggle':'modal', 'data-target':'#allele-modal-view', 'data-remote': 'false' }
+        body = tbody()
+        for al in sorted(c.get_latest_alleleset().alleles, key=lambda x: x.rtime):
+            body.add(
+                tr(
+                    td(al.bin),
+                    td('%03.2f' % al.size),
+                    td('%05d' % al.rtime),
+                    td('%05d' % al.height),
+                    td('%06.1f' % al.area),
+                    td('%05d - %05d' % (al.brtime, al.ertime)),
+                    td('%02.3f' % al.beta),
+                    td(al.type),
+                    td(
+                        a('Edit',
+                            href=request.route_url('genaf.assay-action',
+                                    _query=dict(_method='edit_allele', id=al.id)),
+                            **kwargs )
+                    ),
+                    id='a-%d' % al.id
+                )
+            )
+        allele_table.add( body )
+        table_area.add( allele_table )
+        jscode += "$('#T-%d').stickyTableHeaders({scrollableArea: $('#table-holder')});\n" % c.id
+    holder.add( table_area )
+
+    html.add( holder )
+
+    return html, jscode
+    # + "$('#table-holder').scrollspy({target:'#navbar-alleles'});"
+    #"$('table').stickyTableHeaders({scrollableArea: $('#table-holder')});"
+

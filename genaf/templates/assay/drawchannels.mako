@@ -17,8 +17,9 @@ $(function () {
     $.each(datasets, function(key, val) {
         choiceContainer.append('<input type="checkbox" name="' + key +
                                '" checked="checked" id="id' + key + '" />' +
-                               '<label for="id' + key + '">'
-                                + val.label + '</label><br />');
+                               '<label for="id' + key + '">&nbsp; '
+                                + '<a href="' + val.anchor + '">' +
+                                val.label + '</a></label><br />');
     });
     choiceContainer.append('</form>');
     choiceContainer.find("input").click(plotAccordingToChoices);

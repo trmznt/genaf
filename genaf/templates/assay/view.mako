@@ -86,12 +86,16 @@ ${h.link_to( 'Process FSA', request.route_url('genaf.assay-action', _query=dict(
 </div>
 </div>
 
+<br />
+${allele_table}
+
+% if False:
 
 <br/>
 <nav id="navbar-alleles" class="navbar navbar-default navbar-static">
   <ul class="nav navbar-nav">
   % for c in assay.channels:
-    <li><a href="#M-${c.marker.id}">${c.dye} / ${c.marker.code}</a></li>
+    <li><a href="#M-${c.dye}">${c.dye} / ${c.marker.code}</a></li>
   % endfor 
   </ul>
 </nav>
@@ -100,7 +104,7 @@ ${h.link_to( 'Process FSA', request.route_url('genaf.assay-action', _query=dict(
 
 <div class='col-md-12'>
 % for c in assay.channels:
-  <p id="M-${c.marker.id}"><b>${c.dye} / ${c.marker.code}</b></p>
+  <p id="M-${c.dye}"><b>${c.dye} / ${c.marker.code}</b></p>
     % if c.allelesets.count() >= 1:
         ${list_alleles(sorted(c.get_latest_alleleset().alleles, key=lambda x: x.rtime))}
     % endif
@@ -108,6 +112,8 @@ ${h.link_to( 'Process FSA', request.route_url('genaf.assay-action', _query=dict(
 % endfor
 </div>
 </div><!-- row -->
+
+% endif
 ##
 ##
 <%def name="jscode()">
@@ -120,9 +126,12 @@ ${h.link_to( 'Process FSA', request.route_url('genaf.assay-action', _query=dict(
     var link = $(e.relatedTarget);
     $(this).find(".modal-body").load(link.attr("href"));
   });
+
+  ${code | n}
 </%def>
 ##
 <%def name="jslink()">
+<script src="${request.static_url('genaf:static/js/jquery.stickytableheaders.min.js')}"></script>
 <script src="${request.static_url('genaf:static/flot/jquery.flot.js')}"></script>
 <script src="${request.static_url('genaf:static/flot/jquery.flot.selection.js')}"></script>
 <script src="/assay/${assay.id}@@drawchannels" type="text/javascript"></script>

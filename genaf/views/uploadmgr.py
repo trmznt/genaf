@@ -16,6 +16,7 @@ from fatools.lib.utils import tokenize
 from sqlalchemy.exc import IntegrityError
 
 from pyramid.response import Response
+from datetime import datetime
 import os, yaml, re, shutil, time, csv, threading, transaction, sys, io
 
 from pprint import pprint
@@ -272,6 +273,14 @@ class UploaderSession(object):
 
     def clear(self):
         silent_rmdir(self.rootpath)
+
+    @property
+    def ctime(self):
+        return datetime.fromtimestamp(self.meta['ctime'])
+
+    @property
+    def mtime(self):
+        return datetime.fromtimestamp(self.meta['mtime'])
 
 
 def new_session(request, batch):

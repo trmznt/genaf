@@ -1,7 +1,7 @@
 
 from genaf.views.tools import *
 
-## FST calculation, uses Arlequin
+## D.jost index calculation, uses DEMETICS
 
 @roles(PUBLIC)
 def index(request):
@@ -10,7 +10,7 @@ def index(request):
             callback = func_callback )
 
 
-def func_callback( query, request ):
+def func_callback( query, user, temp_dir = None ):
 
     from fatools.lib.analytics.djost_demetics import run_demetics
 
@@ -24,12 +24,12 @@ def func_callback( query, request ):
 
     # prepare the directory
 
-    fso_dir = get_fso_temp_dir(request.user.login)
-    fst = run_demetics( analytical_sets, dbh,  tmp_dir = fso_dir.abspath)
+    if not temp_dir: temp_dir = get_fso_temp_dir(user.login)
+    djost = run_demetics( analytical_sets, dbh,  tmp_dir = temp_dir.abspath)
     #fst_max = run_arlequin( analytical_sets, dbh, tmp_dir = fso_dir.abspath, recode=True)
     #fst_std = standardized_fst( fst, fst_max )
 
-    #html, code = format_output( fst, fst_max, fst_std )
+    html, code = format_output( djost )
 
     return ('FST Calculation Result', html, code)
 

@@ -203,7 +203,7 @@ def yaml_query_form(request):
 
 
 def process_request( request, header_text, button_text, callback, format_callback=None,
-        mode = 'mlgt', form_modifier = None ):
+        mode = 'mlgt', form_modifier = None, stdout=False, stderr=False ):
 
     global task_ids
 

@@ -15,7 +15,7 @@ import sqlalchemy.exc
 
 
 @roles( PUBLIC )
-def index(request):
+def index_XXX(request):
     """ shows batches that this particular user has access to """
 
     dbh = get_dbhandler()
@@ -28,6 +28,70 @@ def index(request):
     return render_to_response( "genaf:templates/batch/index.mako",
                 { 'batches': batches },
                 request = request )
+
+
+@roles( PUBLIC )
+def index(request):
+
+    dbh = get_dbhandler()
+
+    if request.user.has_roles( SYSADM, DATAADM, SYSVIEW, DATAVIEW ):
+        batches = dbh.get_batches( groups = None )
+    else:
+        batches = dbh.get_batches( groups = request.user.groups )
+
+    table_body = tbody()
+
+    not_guest = not request.user.has_roles( GUEST )
+
+    for batch in batches:
+        table_body.add(
+            tr(
+                td(literal('<input type="checkbox" name="batch-ids" value="%d" />' % batch.id))
+                    if not_guest else '',
+                td( a(batch.code, href=request.route_url('genaf.batch-view', id=batch.id)) ),
+                td( batch.description or '-' ),
+                td( a(batch.samples.count(),
+                        href=request.route_url('genaf.sample', _query = {'batch_id': batch.id}))),
+                td( a(batch.group.name,
+                        href=request.route_url('rhombus.group-view', id=batch.group.id))),
+                td( 'public' if batch.public else 'private'),
+            )
+        )
+
+    batch_table = table(class_='table table-condensed table-striped')[
+        thead(
+            tr(
+                th('', style="width: 2em"),
+                th('Batch code'),
+                th('Description'),
+                th('Sample size'),
+                th('Group'),
+                th('Status'),
+            )
+        )
+    ]
+
+    batch_table.add( table_body )
+
+    if not_guest:
+        add_button = ( 'New batch',
+                        request.route_url('genaf.batch-edit', id=0)
+        )
+
+        bar = selection_bar('batch-ids', action=request.route_url('genaf.batch-action'),
+                    add = add_button)
+        html, code = bar.render(batch_table)
+
+    else:
+        html = div(batch_table)
+        code = ''
+
+
+    return render_to_response('rhombus:templates/generics/page.mako',
+        {   'content': str(html),
+            'code': code,
+        },  request = request)
 
 
 @roles( PUBLIC )

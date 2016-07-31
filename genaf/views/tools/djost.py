@@ -1,5 +1,6 @@
 
 from genaf.views.tools import *
+from itertools import combinations_with_replacement
 
 ## D.jost index calculation, uses DEMETICS
 
@@ -18,9 +19,11 @@ def func_callback( query, user, temp_dir = None ):
     analytical_sets = query.get_filtered_analytical_sets()
 
     if len(analytical_sets) < 2:
-        return ('FST Calculation Result',
-            p(b('Error:'), 'FST can be calculated with 2 or more data set'),
-            '')
+        return {    'title': 'D-Jost Calculation Result',
+                    'html': p(b('Error:'), 'D-Jost can be calculated with 2 or more data set'),
+                    'jscode': '',
+                    'custom': None,
+                    'options': None }
 
     # prepare the directory
 
@@ -31,29 +34,30 @@ def func_callback( query, user, temp_dir = None ):
 
     html, code = format_output( djost )
 
-    return ('FST Calculation Result', html, code)
+    return {    'custom': None,
+                'options': None,
+                'title': 'D-Jost Calculation Result',
+                'html': html,
+                'jscode': code,
+    }
 
 
-def format_output( fst, fst_max, fst_std ):
+def format_output( djost ):
 
     body = div()
 
-    body.add( h4('FST') )
-    body.add( create_table( fst ) )
-
-    body.add( h4('FST Maximum') )
-    body.add( create_table( fst_max ) )
-
-    body.add( h4('FST Standardized') )
-    body.add( create_table( fst_std ) )
+    body.add( h4('D-Jost') )
+    body.add( create_table( djost ) )
 
     return (body, '')
 
 
-def create_table( fst_result ):
+def create_table( djost ):
+
+    labels = sorted(djost.keys())
 
     header_row = tr()[ th('X') ]
-    for label in fst_result.get_labels():
+    for label in labels:
         header_row.add( th(label) )
 
     t = table(class_='table table-condensed')[
@@ -61,17 +65,17 @@ def create_table( fst_result ):
     ]
 
     body = tbody()
-    for i in range(len(fst_result.fst_m)):
-        row = tr()[ td( fst_result.labels[i+1] ) ]
+    for l1 in range(len(labels)):
+        row = tr()[ td( l1 ) ]
 
-        for val in fst_result.fst_m[i]:
-            row.add( td('%s' % val) )
+        for l2 in range(len(labels)):
+            if l1 == l1:
+                row.add( td('-') )
+            else:
+                row.add( td('%s' % djost[l1][l2]) )
 
         body.add( row )
 
     t.add( body )
 
     return t
-
-
-    raise RuntimeError

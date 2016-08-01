@@ -55,6 +55,7 @@ def format_output( djost ):
 def create_table( djost ):
 
     labels = sorted(djost.keys())
+    print(labels)
 
     header_row = tr()[ th('X') ]
     for label in labels:
@@ -65,14 +66,14 @@ def create_table( djost ):
     ]
 
     body = tbody()
-    for l1 in range(len(labels)):
+    for l1 in labels:
         row = tr()[ td( l1 ) ]
 
-        for l2 in range(len(labels)):
-            if l1 == l1:
+        for l2 in labels:
+            if l1 == l2:
                 row.add( td('-') )
             else:
-                row.add( td('%s' % djost[l1][l2]) )
+                row.add( td('%s' % djost[l2][l1]) )
 
         body.add( row )
 

@@ -38,6 +38,7 @@ def form_modifier(html, javacode):
                         ('F', 'Allele Dataframe'),
                         ('A', 'Arlequin'),
                         ('L', 'LIAN / flat genotype'),
+                        ('D', 'DEMEtics (format.table=F)'),
                         ('G', 'GenePOP'),
                         ('R', 'Tab-delimited R-style genotypes'),
                         ('M', 'MoI dataframe')
@@ -125,6 +126,17 @@ def format_output(analytical_sets, user, options):
 
         outputs['fmt'] = 'Tab-delimited multi-locus genotypes (MLGs) file'
         outputs['files'] = [ (filename, fso_dir.get_urlpath(outpath)), ]
+
+    elif fmt == 'D':
+        # return DEMEtics data file in non-table format
+        filename = 'demetics.txt'
+        outpath = fso_dir.abspath + '/' + filename
+        with open(outpath, 'w') as fout:
+            export.export_demetics(analytical_sets, dbh, fout)
+
+        outputs['fmt'] = 'DEMEtics data format'
+        outputs['files'] = [ (filename, fso_dir.get_urlpath(outpath)), ]
+
     else:
 
         raise RuntimeError('Format currently not supported')

@@ -1,5 +1,6 @@
 
 from genaf.views.tools import *
+from rhombus.lib import fsoverlay as fso
 from itertools import combinations_with_replacement
 
 ## D.jost index calculation, uses DEMETICS
@@ -47,7 +48,15 @@ def format_output( djost ):
     body = div()
 
     body.add( h4('D-Jost') )
-    body.add( create_table( djost ) )
+    body.add( create_table( djost['M'] ) )
+
+    if djost['msg']:
+        body.add(br(), b('Warning: '), djost['msg'])
+
+    body.add(
+        br(),
+        a('Data download link', href=fso.get_urlpath( djost['data_file'] )),
+    )
 
     return (body, '')
 

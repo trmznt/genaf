@@ -51,6 +51,11 @@ def func_callback( query, user ):
                 'title': 'Multiple Correspondence Analysis (MCA) Result',
                 'html': html,
                 'jscode': code,
+                'refs': [
+                    'L&ecirc;, S., Josse, J. &amp; Husson, F. (2008). '
+                    'FactoMineR: An R Package for Multivariate Analysis. '
+                    '<em>Journal of Statistical Software</em>. <strong>25(1)</strong>. pp. 1-18.',
+                    '<a href="http://factominer.free.fr/">FactoMineR website</a>'
+                ],
     }
 
-    return ('Multiple Correspondence Analysis (MCA) Result', html, code)

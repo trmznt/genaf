@@ -18,7 +18,7 @@ def index(request):
 def func_callback( query, user ):
 
     from fatools.lib.analytics.dist import get_distance_matrix, null_distance
-    from fatools.lib.analytics.ca import mca, plot_pca
+    from fatools.lib.analytics.ca import mca, plot_pca, format_data
 
     dimension = 2
 
@@ -35,7 +35,14 @@ def func_callback( query, user ):
         plot_pdf = plot_pca(mca_res, dm, ax, ay, plotfile + '.pdf')
         plotfile_urls.append( (fso.get_urlpath(plot_png), fso.get_urlpath(plot_pdf)) )
 
-    options = { 'plotfile_urls': plotfile_urls }
+    mca_data = format_data(mca_res, dm)
+    data_file = fso_dir.abspath + '/' + 'mca-data.txt'
+    with open(data_file, 'w') as outfile:
+        for r in mca_data:
+            outfile.write( '\t'.join( r ) )
+            outfile.write( '\n' )
+
+    options = { 'plotfile_urls': plotfile_urls, 'data_file': fso.get_urlpath(data_file) }
 
     html, code = format_output( (mca_res, dm), options )
 

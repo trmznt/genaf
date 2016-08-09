@@ -228,9 +228,11 @@ def process_request( request, header_text, button_text, callback, format_callbac
                 output = format_callback(result, request)
                 html = output['html']
                 jscode = output['jscode']
+                refs = format_refs(output.get('refs', ''))
             else:
                 html = result['html']
                 jscode = result['jscode']
+                refs = format_refs(result.get('refs', ''))
 
             # dummy
             sample_html, sample_code = result['sample_filtering']
@@ -242,7 +244,8 @@ def process_request( request, header_text, button_text, callback, format_callbac
                     'marker_report': marker_html,
                     'html': html if html is not None else '',
                     'code': sample_code + marker_code + jscode if jscode is not None else '',
-                    'path_qs': path_qs
+                    'path_qs': path_qs,
+                    'refs': refs,
                 }, request = request )
 
             clearproc(procid)
@@ -294,9 +297,12 @@ def process_request( request, header_text, button_text, callback, format_callbac
             output = format_callback(result, request)
             html = output['html']
             jscode = output['jscode']
+            refs = format_refs(output.get('refs', ''))
         else:
             html = result['html']
             jscode = result['jscode']
+            refs = format_refs(result.get('refs', ''))
+
 
         # dummy
         sample_html, sample_code = result['sample_filtering']
@@ -308,7 +314,8 @@ def process_request( request, header_text, button_text, callback, format_callbac
                 'marker_report': marker_html,
                 'html': html if html is not None else '',
                 'code': sample_code + marker_code + jscode if jscode is not None else '',
-                'path_qs': request.path_qs
+                'path_qs': request.path_qs,
+                'refs': refs,
             }, request = request )
 
     # this is code for concurrent mode
@@ -469,6 +476,14 @@ def format_marker_summary(query):
 
     return (body, '')
 
+def format_refs(ref_list):
+    if not ref_list:
+        return ''
+    if type(ref_list) == str:
+        ref_list = [ ref_list ]
+
+    return ''.join('<p>%s</p>' % s for s in ref_list)
+
 
 # multiprocessing capabilities
 
@@ -517,3 +532,4 @@ def mp_run_callback( settings, callback, params, user, mode, ns=None):
         ns.cerr += 'mp_run_callback(): callback finished...\n'
 
     return result
+

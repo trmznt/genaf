@@ -19,6 +19,13 @@ ${marker_report}
 ${html}
 
 </div></div>
+
+% if refs:
+<div class='row'><div class='col-md-12'>
+<p>References:</p>
+${refs or '' | n}
+</div></div>
+% endif
 ##
 ##
 <%def name="jscode()">

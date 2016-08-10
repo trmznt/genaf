@@ -40,6 +40,13 @@ def func_callback( query, user, temp_dir = None ):
                 'title': 'D-Jost Calculation Result',
                 'html': html,
                 'jscode': code,
+                'refs': [
+                    'Gerlach, G., Jüterbock, A., Krämer, P., Deppermann, J. & Harmand, P. (2010).'
+                    'Calculations of population differentiation based on GST and D: Forget GST but not the statistics! '
+                    '<em>Molecular Ecology</em>, <strong>19</strong>: 3845-3852.',
+                    '<a href="https://www.uni-oldenburg.de/en/biology/animalbiodiversity/software/">DEMEtics website</a>'
+                ],
+
     }
 
 

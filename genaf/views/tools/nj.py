@@ -68,6 +68,12 @@ def func_callback( query, user ):
                 'title': 'Neighbor-Joining (NJ) Tree Result',
                 'html': html,
                 'jscode': code,
+                'refs': [
+                    'Paradis E., Claude J. & Strimmer K. (2004) '
+                    'APE: analyses of phylogenetics and evolution in R language. '
+                    '<em>Bioinformatics</em>, <strong>20</strong>: 289-290',
+                    '<a href="http://ape-package.ird.fr/">APE website</a>'
+                ],
     }
 
 

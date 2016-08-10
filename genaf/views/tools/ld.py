@@ -25,6 +25,12 @@ def func_callback( query, user ):
                 'title': 'LD Calculation Result',
                 'html': html,
                 'jscode': code,
+                'refs': [
+                    'Haubold, H., Hudson, R. R. (2000). '
+                    'LIAN 3.0: detecting linkage disequilibrium in multilocus data. '
+                    '<em>Bioinformatics</em>, <strong>16</strong>:847-848.',
+                    '<a href="http://guanine.evolbio.mpg.de/cgi-bin/lian/lian.cgi.pl">LIAN website</a>'
+                ],
     }
 
 

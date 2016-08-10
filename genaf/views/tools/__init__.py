@@ -482,7 +482,7 @@ def format_refs(ref_list):
     if type(ref_list) == str:
         ref_list = [ ref_list ]
 
-    return ''.join('<p>%s</p>' % s for s in ref_list)
+    return '<ul>' + ''.join('<li>%s</li>' % s for s in ref_list) + '</ul>'
 
 
 # multiprocessing capabilities

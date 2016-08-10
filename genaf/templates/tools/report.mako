@@ -22,6 +22,7 @@ ${html}
 
 % if refs:
 <div class='row'><div class='col-md-12'>
+<br/>
 <p>References:</p>
 ${refs or '' | n}
 </div></div>

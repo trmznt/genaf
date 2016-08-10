@@ -38,6 +38,13 @@ def func_callback( query, user):
                 'title': 'FST Calculation Result',
                 'html': html,
                 'jscode': code,
+                'refs': [
+                    'Excoffier, L. and H.E. L. Lischer (2010). '
+                    'Arlequin suite ver 3.5: A new series of programs to perform '
+                    'population genetics analyses under Linux and Windows. '
+                    '<em>Molecular Ecology Resources</em>, <strong>10</strong>: 564-567.',
+                    '<a href="http://cmpg.unibe.ch/software/arlequin35/">Arlequin website</a>'
+                ],
     }
 
 

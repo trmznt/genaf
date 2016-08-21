@@ -685,7 +685,7 @@ def save(request):
         with glock:
             procid, msg = subproc( request.user.login, uploader_session.rootpath,
                                 mp_commit_payload, request.registry.settings,
-                                sesskey, request.user.login)
+                                sesskey, request.user.login, request.user.id)
             commit_procs[sesskey] = procid
 
         msg = div()[ p('Submitting...') ]
@@ -823,7 +823,7 @@ def template(request):
 
 ## prototype multiprocessing stuff
 
-def mp_commit_payload(settings, sesskey, login, ns):
+def mp_commit_payload(settings, sesskey, login, user_id, ns):
     """ this function will be started in different process, so it must initialize
         everything from scratch, including database connection
     """
@@ -832,6 +832,7 @@ def mp_commit_payload(settings, sesskey, login, ns):
     dbh = get_dbhandler_notsafe()
     if dbh is None:
         dbh = get_dbhandler(settings)
+        dbh.session().user = dbh.get_user(user_id)
 
     cerr('mp_commit_payload(): uploading payload...')
     uploader_session = UploaderSession( sesskey = sesskey)

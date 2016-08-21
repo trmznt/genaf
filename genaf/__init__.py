@@ -9,8 +9,9 @@ log.info('Setting up matplotlib to use Agg')
 from pyramid.config import Configurator
 
 from rhombus import includeme as rho_includeme, init_app as rhombus_init_app, add_route_view
-from rhombus.lib.utils import cout, cerr, cexit
+from rhombus.lib.utils import cout, cerr, cexit, generic_userid_func
 from rhombus.lib.fsoverlay import fsomount
+from rhombus.models.core import set_func_userid
 
 from genaf.lib.procmgmt import init_queue
 from genaf.lib.configs import set_temp_path, get_temp_path, TEMP_TOOLS
@@ -176,6 +177,8 @@ def init_app( global_config, settings, prefix = '/mgr' ):
     set_temp_path( temp_path )
 
     fsomount(TEMP_TOOLS, get_temp_path('', TEMP_TOOLS))
+
+    set_func_userid( generic_userid_func )
 
     # preparing for multiprocessing
     init_queue(settings)

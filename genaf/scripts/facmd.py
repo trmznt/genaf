@@ -3,7 +3,7 @@
 import transaction, sys
 
 from rhombus.lib.utils import cout, cerr, cexit, get_dbhandler
-from rhombus.scripts import setup_settings
+from rhombus.scripts import setup_settings, arg_parser
 
 from fatools.scripts.facmd import ( init_argparser as fatools_init_argparser,
                                     do_facmd as fatools_do_facmd )
@@ -12,12 +12,10 @@ from fatools.scripts.facmd import ( init_argparser as fatools_init_argparser,
 def init_argparser( parser=None ):
 
     if parser is None:
-        import argparse
-        p = argparse.ArgumentParser('facmd - genaf')
+        p = arg_parser('facmd - genaf')
     else:
         p = parser
 
-    p.add_argument('--config', default=False)
     p = fatools_init_argparser( p )
 
     return p

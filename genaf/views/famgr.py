@@ -197,7 +197,7 @@ def process(request):
 
             procid, msg = subproc( request.user.login, None,
                     mp_process_assays, request.registry.settings,
-                    batch_id, request.user.login )
+                    batch_id, request.user.login, request.user.id )
             local_procs[batch_id] = (procid, request.user.login, batch_code)
 
         msg = div()[ p('Starting assay processing task') ]
@@ -532,6 +532,152 @@ def process_assays(batch_id, login, comm = None, stage = 'all'):
     return stats, log
 
 
+def process_assays(batch_id, login, comm = None, stage = 'all'):
+
+    dbh = get_dbhandler()
+
+    # get assay list
+    assay_list = get_assay_ids( batch_id )
+
+    log = []
+    stats = {}
+
+    scanning_parameter = params.Params()
+
+    failed = scanned = preannotated = aligned = called = binned = postannotated = subtotal = 0
+    total = len(assay_list)
+    start_time = time()
+
+    for (assay_id, sample_code) in assay_list:
+
+        subtotal += 1
+
+        if comm:
+            comm.cout = (
+                'failed: %d | scanned: %d | pre-annotated: %d | aligned: %d | '
+                'called: %d | binned: %d | post-annotated: %d | remaining: %d | estimated: %s' %
+                (   subtotal - 1 - scanned,
+                    scanned - preannotated,
+                    preannotated - aligned,
+                    aligned - called,
+                    called - binned,
+                    binned - postannotated,
+                    postannotated,
+                    total - subtotal - 1,
+                    estimate_time(start_time, time(), subtotal - 1, total - subtotal - 1))
+            )
+
+        if stage in ['all', 'scan']:
+            try:
+                with transaction.manager:
+                    assay = dbh.get_assay_by_id(assay_id)
+                    if assay.status == assaystatus.assigned:
+                        assay.scan( scanning_parameter )
+                        scanned += 1
+            except RuntimeError as err:
+                log.append('ERR scanning -- assay %s | %s - error: %s' %
+                        ( assay.filename, sample_code, str(err) ))
+                continue
+            except ZeroDivisionError as err:
+                log.append('ERR scanning -- FSA %s | %s - error division by zero' %
+                        ( assay.filename, sample_code))
+                continue
+
+        if stage in ['all', 'preannotate']:
+            try:
+                with transaction.manager:
+                    assay = dbh.get_assay_by_id(assay_id)
+                    if assay.status == assaystatus.scanned:
+                        assay.preannotate( scanning_parameter )
+                        preannotated += 1
+            except RuntimeError as err:
+                log.append('ERR preannotating -- assay %s | %s - error: %s' %
+                        ( assay.filename, sample_code, str(err) ))
+                continue
+
+        if stage in ['all', 'align']:
+            try:
+                with transaction.manager:
+                    assay = dbh.get_assay_by_id(assay_id)
+                    if assay.status == assaystatus.preannotated:
+                        retval = assay.alignladder(excluded_peaks = None)
+                        (dpscore, rss, peaks_no, ladders_no, qcscore, remarks, method) = retval
+                        if qcscore < 0.9:
+                            log.append('WARN alignladder - '
+                                'low qcscore %3.2f %4.2f %5.2f %d/%d %s for %s | %s'
+                                    % ( qcscore, dpscore, rss, peaks_no, ladders_no,
+                                        method, sample_code, assay.filename) )
+                        aligned += 1
+            except RuntimeError as err:
+                log.append('ERR aligning ladder - assay %s | %s - error: %s' %
+                        (assay.filename, sample_code, str(err) ) )
+                continue
+
+        if stage in ['all', 'call']:
+            try:
+                with transaction.manager:
+                    assay = dbh.get_assay_by_id(assay_id)
+                    if assay.status == assaystatus.aligned:
+                        assay.call( scanning_parameter )
+                        called += 1
+            except RuntimeError as err:
+                log.append('ERR calling -- assay %s | %s - error: %s' %
+                        ( assay.filename, sample_code, str(err) ))
+                continue
+
+        if stage in ['all', 'bin']:
+            try:
+                with transaction.manager:
+                    assay = dbh.get_assay_by_id(assay_id)
+                    if assay.status == assaystatus.called:
+                        assay.bin( scanning_parameter )
+                        binned += 1
+            except RuntimeError as err:
+                log.append('ERR binning -- assay %s | %s - error: %s' %
+                        ( assay.filename, sample_code, str(err) ))
+                continue
+
+        if stage in ['all', 'postannotate']:
+            try:
+                with transaction.manager:
+                    assay = dbh.get_assay_by_id(assay_id)
+                    if assay.status == assaystatus.binned:
+                        assay.postannotate( scanning_parameter )
+                        postannotated += 1
+            except RuntimeError as err:
+                log.append('ERR postannotating -- assay %s | %s - error: %s' %
+                        ( assay.filename, sample_code, str(err) ))
+                continue
+
+    stats = {
+        'failed': subtotal - scanned,
+        'scanned': scanned - preannotated,
+        'preannotated': preannotated - aligned,
+        'aligned': aligned - called,
+        'called': called - binned,
+        'binned': binned - postannotated,
+        'postannotated': postannotated
+
+    }
+
+    if comm:
+            comm.cout = (
+                'failed: %d | scanned: %d | pre-annotated: %d | aligned: %d | '
+                'called: %d | binned: %d | post-annotated: %d' %
+                (   stats['failed'],
+                    stats['scanned'],
+                    stats['preannotated'],
+                    stats['aligned'],
+                    stats['called'],
+                    stats['binned'],
+                    stats['postannotated'],
+                )
+            )
+
+    return stats, log
+
+
+
 def get_assay_ids(batch_id):
 
     dbh = get_dbhandler()
@@ -548,7 +694,7 @@ def get_assay_ids(batch_id):
 
 
 
-def mp_process_assays(settings, batch_id, login, ns):
+def mp_process_assays(settings, batch_id, login, user_id, ns):
     """ this function will be started in different process, so it must initialize
         everything from scratch, including database connection
     """
@@ -558,6 +704,7 @@ def mp_process_assays(settings, batch_id, login, ns):
     dbh = get_dbhandler_notsafe()
     if dbh is None:
         dbh = get_dbhandler(settings)
+        dbh.session().user = dbh.get_user(user_id)
 
     cerr('mp_process_assays(): processing...')
     result = process_assays(batch_id, login, ns)

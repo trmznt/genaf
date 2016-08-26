@@ -86,7 +86,7 @@ def format_output( result, request ):
 
 
 def format_allele(v, h, f, i, request):
-    if type(v) is float and isnan(v):
+    if (type(v) is float and isnan(v)) or v is None:
         return 'NaN'
     #return 'a' + literal('<br>') + 'b'
     return literal('<br />'.join(

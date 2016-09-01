@@ -4,7 +4,7 @@
 import sys, transaction
 
 from rhombus.lib.utils import cout, cerr, cexit, get_dbhandler
-from rhombus.scripts import setup_settings
+from rhombus.scripts import setup_settings, arg_parser
 from rhombus.scripts.rbmgr import db_argparser
 from fatools.scripts.dbmgr import ( init_argparser as fatools_init_argparser,
                                     do_dbmgr as fatools_do_dbmgr )
@@ -14,8 +14,8 @@ from fatools.scripts.dbmgr import ( init_argparser as fatools_init_argparser,
 def init_argparser( parser = None ):
 
     if parser is None:
-        import argparse
-        p = argparse.ArgumentParser('dbmgr [genaf]', conflict_handler='resolve')
+        #p = argparse.ArgumentParser('dbmgr [genaf]', conflict_handler='resolve')
+        p = arg_parser('dbmgr [genaf]')
     else:
         p = parser
 

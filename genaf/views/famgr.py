@@ -13,7 +13,7 @@ from fatools.lib import params
 from fatools.lib.const import assaystatus
 
 from collections import defaultdict
-import threading, transaction
+import threading, transaction, os
 from time import time
 
 TEMP_ROOTDIR = 'famgr'
@@ -699,15 +699,19 @@ def mp_process_assays(settings, batch_id, login, user_id, ns):
         everything from scratch, including database connection
     """
 
-    cerr('mp_process_assays(): connecting to db')
+    pid = os.getpid()
+
+    cerr('mp_process_assays()[%d]: connecting to db' % pid)
 
     dbh = get_dbhandler_notsafe()
     if dbh is None:
         dbh = get_dbhandler(settings)
-        dbh.session().user = dbh.get_user(user_id)
+    dbh.session().global_user = dbh.get_user(user_id)
 
-    cerr('mp_process_assays(): processing...')
+    cerr('mp_process_assays()[%d]: processing...' % pid)
     result = process_assays(batch_id, login, ns)
+
+    dbh.session().global_user = None
 
     return result
 

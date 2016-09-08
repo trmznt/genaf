@@ -239,7 +239,7 @@ class UploaderSession(object):
                 failed_assay += 1
                 raise
 
-            if (total_assay + failed_assay) % 20 == 0 and comm is not None:
+            if (total_assay + failed_assay) % 5 == 0 and comm is not None:
 
                 remaining_assay = counted_assay - total_assay - failed_assay
                 comm.cout = ('uploaded: %d | failed: %d | remaining: %d | estimated remaining time: %s'
@@ -828,20 +828,22 @@ def mp_commit_payload(settings, sesskey, login, user_id, ns):
         everything from scratch, including database connection
     """
 
-    cerr('mp_commit_payload(): connecting to db')
+    pid = os.getpid()
+
+    cerr('mp_commit_payload()[%d]: connecting to db' % pid)
     dbh = get_dbhandler_notsafe()
     if dbh is None:
         dbh = get_dbhandler(settings)
-        dbh.session().user = dbh.get_user(user_id)
+    dbh.session().global_user = dbh.get_user(user_id)
 
-    cerr('mp_commit_payload(): uploading payload...')
     uploader_session = UploaderSession( sesskey = sesskey)
 
-    cerr('mp_commit_payload(): returning result...')
     with transaction.manager:
+        cerr('mp_commit_payload()[%d]: processing' % pid)
         result = uploader_session.upload_payload( comm = ns)
 
-    return result
+    dbh.session().global_user = None
 
+    return result
 
 

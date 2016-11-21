@@ -1,6 +1,10 @@
 <%namespace file="rhombus:templates/common/selection_bar.mako" import="selection_bar, selection_bar_js" />
 <%namespace file="rhombus:templates/common/form.mako" import="input_text, input_hidden, input_textarea, checkboxes, submit_bar, input_show, textarea_show, button_edit, selection_ek" />
 
+<%!
+from rhombus.lib.roles import GUEST
+%>
+
 ##
 <%def name="list_samples(samples)">
 <form method='post' action='${request.route_url("genaf.sample-action")}'>
@@ -73,14 +77,17 @@ ${selection_bar('sample')}
     ${'%15s : <a href="%s">%s</a><br />' % ('Batch Code',
                 request.route_url('genaf.batch', sample.batch.id),
                 sample.batch.code) | n}
-##    ${'%15s : <a href="%s">%s</a><br />' % ('Subject Code', 
+##    ${'%15s : <a href="%s">%s</a><br />' % ('Subject Code',
 ##               request.route_url('plasmogen.subject', sample.subject.id),
 ##                sample.subject.code) | n}
     ${'%15s : %s<br />' % ('Collection date', sample.collection_date ) | n}
     ${'%15s : %s<br />' % ('Location', sample.location.render() ) | n}
 </pre>
+% if not request.user.has_roles(GUEST):
 ${button_edit('Edit', request.route_url('genaf.sample-edit', id=sample.id))}
+% endif
 </%def>
+
 
 
 ##

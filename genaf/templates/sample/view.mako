@@ -12,7 +12,7 @@ ${show_sample(sample)}
 ${list_alleles_column(allele_list)}
 
 <h3>Assay</h3>
-${list_assays(sample.assays)}
+${list_assays(sample.assays, request)}
 
 <!-- modal -->
 ${add_assay_modal(sample)}

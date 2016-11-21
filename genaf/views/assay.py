@@ -5,6 +5,7 @@ log = logging.getLogger(__name__)
 from genaf.views import *
 
 from fatools.lib.fautil.wavelen2rgb import wavelen2rgb
+from fatools.lib.const import peaktype
 
 import json
 
@@ -282,6 +283,7 @@ def assay_process_form(assay, dbh, request, params):
 def assay_allele_table(assay, request):
 
     html = div()
+    guest = request.user.has_roles(GUEST)
 
     # create placeholder for tables
 
@@ -319,6 +321,8 @@ def assay_allele_table(assay, request):
         kwargs = { 'data-toggle':'modal', 'data-target':'#allele-modal-view', 'data-remote': 'false' }
         body = tbody()
         for al in sorted(c.get_latest_alleleset().alleles, key=lambda x: x.rtime):
+            if guest and al.type != peaktype.bin:
+                continue
             body.add(
                 tr(
                     td(al.bin),
@@ -334,6 +338,7 @@ def assay_allele_table(assay, request):
                             href=request.route_url('genaf.assay-action',
                                     _query=dict(_method='edit_allele', id=al.id)),
                             **kwargs )
+                        if not guest else ''
                     ),
                     id='a-%d' % al.id
                 )

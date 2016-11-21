@@ -47,8 +47,8 @@ def index(request):
     for batch in batches:
         table_body.add(
             tr(
-                td(literal('<input type="checkbox" name="batch-ids" value="%d" />' % batch.id))
-                    if not_guest else '',
+                td(literal('<input type="checkbox" name="batch-ids" value="%d" />' % batch.id)
+                    if not_guest else ''),
                 td( a(batch.code, href=request.route_url('genaf.batch-view', id=batch.id)) ),
                 td( batch.description or '-' ),
                 td( a(batch.samples.count(),

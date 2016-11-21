@@ -36,7 +36,7 @@ def view(request):
 
 
 
-@roles( PUBLIC )
+@roles( SYSADM, DATAADM )
 def edit(request):
 
     #check permisson

@@ -5,6 +5,10 @@
 
 <%namespace file="rhombus:templates/common/form.mako" import="input_text, input_hidden, input_textarea, checkboxes, submit_bar, input_show, textarea_show, button_edit, selection_ek" />
 
+<%!
+from rhombus.lib.roles import GUEST
+%>
+
 ## input: assay, lsp (ladder_scanning_parameter)
 
 <h2>FSA Viewer</h2>
@@ -18,11 +22,13 @@
 </div>
 </div><!-- row -->
 
+% if not request.user.has_roles(GUEST):
 <div class='row'>
 <div class='col-md-8'>
 ${h.link_to( 'Process FSA', request.route_url('genaf.assay-action', _query=dict(_method='process_fsa', id=assay.id)), class_='btn btn-success', ** { 'data-toggle':'modal', 'data-target':'#allele-modal-view', 'data-remote': 'false' } )}
 </div>
 </div>
+% endif
 
 ##<div class='row'>
 ##<form method='POST' action='/assay/@@action'>
@@ -96,7 +102,7 @@ ${allele_table}
   <ul class="nav navbar-nav">
   % for c in assay.channels:
     <li><a href="#M-${c.dye}">${c.dye} / ${c.marker.code}</a></li>
-  % endfor 
+  % endfor
   </ul>
 </nav>
 

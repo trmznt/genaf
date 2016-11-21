@@ -1,11 +1,16 @@
 <%namespace file="rhombus:templates/common/selection_bar.mako" import="selection_bar, selection_bar_js" />
 <%namespace file="rhombus:templates/common/form.mako" import="input_text, input_hidden, input_textarea, input_file, selection, checkboxes, submit_bar, input_show, textarea_show, button_edit, selection_ek" />
 
+<%!
+from rhombus.lib.roles import GUEST
+%>
 
 ##
-<%def name="list_assays(assays)">
+<%def name="list_assays(assays, request)">
+% if not request.user.has_roles(GUEST):
 <form method='post' action='${request.route_url("genaf.assay-action")}'>
 ${selection_bar('assay', others='<button id="add-assay" type="button" class="btn btn-mini btn-success"  data-toggle="modal" data-target="#add-assay-modal">Add assay</button>')}
+% endif
 
 <table id='assay-list' class='table table-striped table-condensed'>
 <thead><tr>
@@ -25,7 +30,9 @@ ${selection_bar('assay', others='<button id="add-assay" type="button" class="btn
   </tr>
 % endfor
 </tbody></table>
+% if not request.user.has_roles(GUEST):
 </form>
+% endif
 </%def>
 
 ## list_assays_js: sample: current sample for adding new assay

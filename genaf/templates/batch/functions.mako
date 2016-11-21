@@ -1,6 +1,9 @@
 <%namespace file="rhombus:templates/common/selection_bar.mako" import="selection_bar, selection_bar_js" />
 <%namespace file="rhombus:templates/common/form.mako" import="input_text, input_hidden, selection, input_textarea, checkboxes, submit_bar, input_show, textarea_show, button_edit, button" />
 <%namespace file='rhombus:templates/group/functions.mako' import='select_group_js' />
+<%!
+from rhombus.lib.roles import GUEST
+%>
 
 ##
 <%def name="list_batches(batches)">
@@ -56,10 +59,12 @@ ${selection_bar('batch', ('Add New Batch', request.route_url("genaf.batch-edit",
             ##${'Published' if batch.published else 'Unpublished'}
             ##${'Shared' if batch.shared else 'Unshared'}
         </td></tr>
-    <tr><td></td>
+  % if not request.user.has_roles(GUEST):
+  <tr><td></td>
         <td>${button('Edit', request.route_url('genaf.batch-edit', id=batch.id),
                 'icon-edit icon-white')}
         </td></tr>
+  % endif
   </table>
 
 </%def>
@@ -88,7 +93,7 @@ ${selection_bar('batch', ('Add New Batch', request.route_url("genaf.batch-edit",
 <%def name="edit_batch_js__(batch)">
   ${select_group_js('#genaf-batch_group_id')}
   ${select_group_js('#genaf-assay_provider_id')}
-  
+
 % if batch.group:
     $('#genaf-batch_group_id').select2("data", { id: '${batch.group.id}', text: '${batch.group.name}' });
     $('#genaf-assay_provider_id').select2("data", { id: '${batch.group.id}', text: '${batch.group.name}' });

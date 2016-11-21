@@ -43,19 +43,21 @@ def index(request):
     else:
         return error_page(request, 'No suitable mode provided!')
 
-    if batch:
-        add_button = (  'New sample',
-                        request.route_url('genaf.sample-edit', id=0, _query={ 'batch_id': batch.id })
-        )
-        others = p()[   'Batch code:',
-                        a(batch.code, href=request.route_url('genaf.batch-view', id=batch.id))
-        ]
-    else:
-        add_button = others = None
+    if not request.user.has_roles(GUEST):
 
-    bar = selection_bar('sample-ids', action=request.route_url('genaf.sample-action'),
+        if batch:
+            add_button = (  'New sample',
+                        request.route_url('genaf.sample-edit', id=0, _query={ 'batch_id': batch.id })
+            )
+            others = p()[   'Batch code:',
+                        a(batch.code, href=request.route_url('genaf.batch-view', id=batch.id))
+            ]
+        else:
+            add_button = others = None
+
+        bar = selection_bar('sample-ids', action=request.route_url('genaf.sample-action'),
                 add=add_button, others=others)
-    html, jscode = bar.render(html, jscode)
+        html, jscode = bar.render(html, jscode)
 
     return render_to_response("genaf:templates/sample/index.mako",
                     {   'samples': samples,

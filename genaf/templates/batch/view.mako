@@ -1,6 +1,9 @@
 <%inherit file="rhombus:templates/base.mako" />
 <%namespace file="genaf:templates/batch/functions.mako" import="show_batch" />
 <%namespace file="rhombus:templates/common/form.mako" import="input_file, input_hidden, submit_bar" />
+<%!
+from rhombus.lib.roles import GUEST
+%>
 
 <h2>Batch</h2>
 
@@ -8,6 +11,8 @@
   ${show_batch(batch)}
 </div></div>
 
+
+% if not request.user.has_roles(GUEST):
 <div class='row'>
 <div class='col-md-6'>
 
@@ -43,7 +48,7 @@
 
 </div>
 <div class='col-md-6'>
-  
+
   <h4>FSA Bulk Uploading</h4>
   <p>Use the form below for uploading a zip or tgz file containing multiple FSA files.</p>
   <div class='row'><div class='col-sm-12'>
@@ -54,7 +59,7 @@
     <a href="${request.route_url('genaf.batch-action',
         _query = dict( batch_id = batch.id, _method = 'list-assay-upload-session'))}">
         <button>List pending sessions</button></a>
-    
+
   </div></div>
 
 </div>
@@ -69,11 +74,13 @@
 </div>
 </div>
 
+% endif
+
 ##
 <%def name="jscode()">
 
   ## single-click file submission
-  $('#add-sample-info').upload( { 
+  $('#add-sample-info').upload( {
     name: 'sampleinfo_file',
     action: '${request.route_url("genaf.batch-action")}',
     params: { _method: 'add-sample-info', batch_id: '${batch.id}' },

@@ -415,6 +415,8 @@ def form2dict( request ):
     d['options'] = {
                 'tip_label': p.get('tip_label', None),
                 'data_format': p.get('data_format', None),
+                'tree_type': p.get('tree_type', None),
+                'font_size': p.get('font_size', None),
     }
 
     return d

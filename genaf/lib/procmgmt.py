@@ -135,6 +135,8 @@ _PROC_QUEUE_ = None
 def init_queue( settings, max_workers = 2, max_queue = 10 ):
     global _PROC_QUEUE_, _MANAGER_
     if _PROC_QUEUE_ is None:
+        if 'genaf.concurrent.workers' in settings:
+            max_workers = int( settings['genaf.concurrent.workers'])
         _PROC_QUEUE_ = ProcQueue( settings, max_workers, max_queue )
         log.info("Multiprocessing queue has been setup with %d process" % max_workers)
     else:

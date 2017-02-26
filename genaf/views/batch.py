@@ -528,16 +528,18 @@ def add_sample_info( batch, ifile, request):
     if ext in [ '.csv', '.tab', '.tsv', '.txt' ]:
         # convert to JSON first
         # consistency checks
-        if ext == '.csv':
-            delim = ','
-        else:
-            delim = '\t'
+        #if ext == '.csv':
+        #    delim = ','
+        #else:
+        #    delim = '\t'
+
+        buf, delim = detect_buffer( ifile.file.read().decode('UTF-8') )
 
         try:
             ## the csv2dict function has to be sample-specific method
             ## use batch.Sample.csv2dict() ??
             dict_samples, errlog, sample_codes = batch.get_sample_class().csv2dict(
-                            StringIO(ifile.file.read().decode('UTF-8')),
+                            StringIO(buf),
                             with_report=True,
                             delimiter = delim )
         except ValueError as err:

@@ -158,8 +158,11 @@ class UploaderSession(object):
         with open('%s/assay_list.yaml' % self.rootpath) as f:
             assay_files = yaml.load( f )
 
-        inrows = csv.DictReader( open('%s/tmp/%s' % (self.rootpath, self.meta['infofile'])),
-                        delimiter = ',' if self.meta['infofile'].endswith('.csv') else '\t' )
+        # check for Mac Excel file
+        with open('%s/tmp/%s' % (self.rootpath, self.meta['infofile'])) as f:
+            buf, delim = detect_buffer( f.read() )
+
+        inrows = csv.DictReader( StringIO(buf), delimiter = delim )
 
         for f in ['SAMPLE', 'FILENAME', 'PANEL', 'OPTIONS']:
             if f not in inrows.fieldnames:

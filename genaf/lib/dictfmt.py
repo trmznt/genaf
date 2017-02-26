@@ -21,7 +21,9 @@ def check_csv_headers( fieldnames, csv_headers ):
 
     # check field names
     if 'SAMPLE' not in fieldnames:
-        err_log.append('WARNING: SAMPLE not in the header!')
+        raise RuntimeError( 'WARNING: SAMPLE not in the header! '
+                            'Please check the header of your file and verify that the extension of the file matches '
+                            'with the delimiter character used in the file.')
 
     for fieldname in fieldnames:
         if fieldname not in csv_headers:
@@ -37,7 +39,10 @@ def check_csv_headers( fieldnames, csv_headers ):
 
 def row2sample(r):
 
-    collection_date = parse_date( r.get('COLLECTION_DATE',''), dayfirst=False,
+    if not r.get('COLLECTION_DATE', None):
+        collection_date = default_date
+    else:
+        collection_date = parse_date( r.get('COLLECTION_DATE',''), dayfirst=False,
                 default=default_date )
 
     sample = dict(

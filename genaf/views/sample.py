@@ -342,6 +342,13 @@ $(document).ready(function() {
     return ( str(T), jscode )
 
 
+def set_format_sampleinfo(func):
+    """ set formatsample_info to this function """
+    global format_sampleinfo
+    format_sampleinfo = func
+
+
+
 modal_delete = '''
 <div class="modal-dialog" role="document"><div class="modal-content">
 <div class="modal-header">

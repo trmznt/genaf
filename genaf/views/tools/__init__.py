@@ -11,7 +11,7 @@ from rhombus.lib.utils import get_dbhandler_notsafe
 from pyramid.settings import asbool
 
 from time import time
-import threading
+import threading, transaction
 
 
 def get_fso_temp_dir(userid, rootdir = TEMP_TOOLS):
@@ -516,7 +516,11 @@ def mp_run_callback( settings, callback, params, user, mode, ns=None):
 
     if ns:
         ns.cerr += 'mp_run_callback(): processing callback...\n'
-    result = callback( q, user )
+        with transaction.manager:
+            result = callback( q, user )
+
+    else:
+        result = callback( q, user )
 
     if type(result) != dict:
         return result

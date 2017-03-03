@@ -61,7 +61,9 @@ def format_output( results, options ):
     if options and 'plotfile_urls' in options:
         for (png, pdf) in options['plotfile_urls']:
             html.add(
-                image(src=png)
+                image(src=png),
+                br(),
+                p(a('Click here to get the plot as a PDF file', href=pdf)),
                 )
 
     html.add(

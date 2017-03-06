@@ -14,6 +14,18 @@ def form_modifier(html, javacode):
     """ add tip labeling form """
     field_set = html.get('additional_fields')
     field_set.add(
+        input_select(name='tree_type', label='Tree type', value='F',
+            options = [ ('F', 'Fan tree'),
+                        ('R', 'Radial tree'),
+                        ('U', 'Unrooted tree'),
+                        ('P', 'Phylogram'),
+                    ]
+            ),
+        input_select(name='branch_coloring', label='Branch coloring', value='Y',
+            options = [ ('Y', 'Yes'),
+                        ('N', 'No'),
+                    ]
+            ),
         input_select(name='tip_label', label='Tip label', value='S',
             options = [ ('S', 'Sample Code'),
                         ('I', 'Sample ID'),
@@ -22,12 +34,7 @@ def form_modifier(html, javacode):
                         ('2', 'Administrative Level 2'),
                         ('3', 'Administrative Level 3'),
                         ('4', 'Administrative Level 4'),
-                    ]
-            ),
-        input_select(name='tree_type', label='Tree type', value='F',
-            options = [ ('F', 'Fan tree'),
-                        ('R', 'Radial tree'),
-                        ('U', 'Unrooted tree')
+                        ('-', 'Dash (-) symbol'),
                     ]
             ),
         input_text(name='font_size', label='Font size', value='0.3'),
@@ -58,14 +65,16 @@ def func_callback( query, user ):
         '2': lambda x: dbh.get_sample_by_id(x).location.level2,
         '3': lambda x: dbh.get_sample_by_id(x).location.level3,
         '4': lambda x: dbh.get_sample_by_id(x).location.level4,
+        '-': lambda x: '-',
     }
 
-    tree_type = { 'F': 'fan', 'R': 'radial', 'U': 'unrooted'}[query.options.get('tree_type', 'F')]
+    tree_type = { 'F': 'fan', 'R': 'radial', 'U': 'unrooted', 'P': 'phylogram'}[query.options.get('tree_type', 'F')]
+    branch_coloring = query.options.get('branch_coloring', 'Y') == 'Y'
 
     njplot_png = plot_nj(dm, fso_dir.abspath, 'png',
-            label_callback = label_callback[tip_label], tree_type=tree_type)
+            label_callback = label_callback[tip_label], tree_type=tree_type, branch_coloring=branch_coloring)
     njplot_pdf = plot_nj(dm, fso_dir.abspath, 'pdf',
-            label_callback = label_callback[tip_label], tree_type=tree_type)
+            label_callback = label_callback[tip_label], tree_type=tree_type, branch_coloring=branch_coloring)
 
     options = { 'png_plot': fso.get_urlpath(njplot_png),
                 'pdf_plot': fso.get_urlpath(njplot_pdf) }

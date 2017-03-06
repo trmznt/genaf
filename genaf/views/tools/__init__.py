@@ -417,6 +417,7 @@ def form2dict( request ):
                 'data_format': p.get('data_format', None),
                 'tree_type': p.get('tree_type', None),
                 'font_size': p.get('font_size', None),
+                'branch_coloring': p.get('branch_coloring', None),
     }
 
     return d

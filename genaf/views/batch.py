@@ -5,6 +5,8 @@ log = logging.getLogger(__name__)
 from rhombus.lib.utils import random_string, silent_remove
 from rhombus.lib.roles import SYSADM, DATAADM, SYSVIEW, DATAVIEW
 
+from fatools.lib.utils import detect_buffer
+
 from genaf.views import *
 from genaf.lib.dictfmt import csv2dict
 from genaf.views import uploadmgr

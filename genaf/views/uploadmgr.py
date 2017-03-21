@@ -11,7 +11,7 @@ from rhombus.lib.roles import SYSADM, DATAADM
 from genaf.views import *
 from genaf.lib.procmgmt import subproc, getproc, getmanager, estimate_time
 
-from fatools.lib.utils import tokenize
+from fatools.lib.utils import tokenize, detect_buffer
 
 from sqlalchemy.exc import IntegrityError
 

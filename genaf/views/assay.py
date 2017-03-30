@@ -206,6 +206,8 @@ def action_post(request):
                     request.POST.get('genaf-assay_stutter_ratio'))
         params.nonladder.stutter_range = float(
                     request.POST.get('genaf-assay_stutter_range'))
+        params.nonladder.expected_peak_number = float(
+                    request.POST.get('genaf-assay_expected_ladder_peak_number'))
 
         # start processing FSA
 
@@ -273,6 +275,8 @@ def assay_process_form(assay, dbh, request, params):
                     value = params.nonladder.stutter_ratio),
             input_text('genaf-assay_stutter_range', 'Stutter Range',
                     value = params.nonladder.stutter_range),
+            input_text('genaf-assay_expected_ladder_peak_number', 'Expected Peak Number',
+                    value = params.nonladder.expected_peak_number),
             submit_bar('Process FSA', 'process_fsa')
         )
     )

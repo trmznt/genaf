@@ -162,7 +162,7 @@ class UploaderSession(object):
         with open('%s/tmp/%s' % (self.rootpath, self.meta['infofile'])) as f:
             buf, delim = detect_buffer( f.read() )
 
-        inrows = csv.DictReader( StringIO(buf), delimiter = delim )
+        inrows = csv.DictReader( io.StringIO(buf), delimiter = delim )
 
         for f in ['SAMPLE', 'FILENAME', 'PANEL', 'OPTIONS']:
             if f not in inrows.fieldnames:

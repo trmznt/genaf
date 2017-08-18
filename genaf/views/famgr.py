@@ -189,19 +189,24 @@ def process(request):
         if not request.user.in_group( batch.group ):
             error_page('You are not authorized to view this batch!')
 
-        if False:
+        if not asbool(request.registry.settings['genaf.concurrent.fragment_analysis']):
             # set the above to True for single-process debugging purpose
-            process_assays(batch_id, request.user.login, None)
+            get_dbhandler().session().global_user = dbh.get_user(user_id)
+            result = process_assays(batch_id, request.user.login, None)
+            get_dbhandler().session().global_user = None
+            msg = div()[ p('Assay processing finished') ]
+            seconds = 0
 
-        with glock:
+        else:
+            with glock:
 
-            procid, msg = subproc( request.user.login, None,
+                procid, msg = subproc( request.user.login, None,
                     mp_process_assays, request.registry.settings,
                     batch_id, request.user.login, request.user.id )
-            local_procs[batch_id] = (procid, request.user.login, batch_code)
+                local_procs[batch_id] = (procid, request.user.login, batch_code)
 
-        msg = div()[ p('Starting assay processing task') ]
-        seconds = 10
+            msg = div()[ p('Starting assay processing task') ]
+            seconds = 10
 
     return render_to_response('genaf:templates/famgr/process.mako',
         {   'msg': msg,

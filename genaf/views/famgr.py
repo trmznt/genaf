@@ -193,7 +193,7 @@ def process(request):
 
         if not asbool(request.registry.settings['genaf.concurrent.fragment_analysis']):
             # set the above to True for single-process debugging purpose
-            get_dbhandler().session().global_user = get_dbhandler().get_user(user_id)
+            get_dbhandler().session().global_user = get_dbhandler().get_user(request.user.id)
             result = process_assays(batch_id, request.user.login, None)
             get_dbhandler().session().global_user = None
             msg = div()[ p('Assay processing finished') ]

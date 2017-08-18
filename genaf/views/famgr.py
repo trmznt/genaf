@@ -12,6 +12,8 @@ from genaf.lib.procmgmt import subproc, getproc, getmanager, estimate_time
 from fatools.lib import params
 from fatools.lib.const import assaystatus
 
+from pyramid.settings import asbool
+
 from collections import defaultdict
 import threading, transaction, os
 from time import time

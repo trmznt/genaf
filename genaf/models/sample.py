@@ -9,7 +9,7 @@ from rhombus.lib.utils import cout, cerr
 from rhombus.lib.roles import SYSADM, DATAADM
 
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy import func
 
 from fatools.lib.const import *
@@ -230,7 +230,10 @@ class Batch(BaseMixIn, Base, BatchMixIn):
     @property
     def bin_batch(self):
         session = object_session(self)
-        return Batch.query(session).filter(Batch.id == self.bin_batch_id).one()
+        try:
+            return Batch.query(session).filter(Batch.id == self.bin_batch_id).one()
+        except NoResultFound:
+            return None
 
 
     @classmethod

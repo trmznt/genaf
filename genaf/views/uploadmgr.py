@@ -16,6 +16,7 @@ from fatools.lib.utils import tokenize, detect_buffer
 from sqlalchemy.exc import IntegrityError
 
 from pyramid.response import Response
+from pyramid.settings import asbool
 from datetime import datetime
 import os, yaml, re, shutil, time, csv, threading, transaction, sys, io
 
@@ -636,7 +637,7 @@ def save(request):
     if not uploader_session.is_authorized( request.user ):
         raise error_page('You are not authorized to view this session')
 
-    if False:
+    if not asbool( request.registry.settings.get('genaf.concurrent.upload', 'false') ):
         # NOTE: set the above condition to True for non-multiprocess flow
         result = uploader_session.upload_payload()
         assay_no, err_log = result
